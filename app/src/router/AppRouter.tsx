@@ -27,6 +27,7 @@ import NonAuthGuard from './guards/notAuthGuard/NonAuthGuard';
 import PatientAccessAuditPage from '../pages/patientAccessAuditPage/PatientAccessAuditPage';
 import MockLoginPage from '../pages/mockLoginPage/MockLoginPage';
 import DocumentUploadPage from '../pages/documentUploadPage/DocumentUploadPage';
+import CookiePolicyPage from '../pages/cookiePolicyPage/CookiePolicyPage';
 
 const {
     START,
@@ -55,6 +56,8 @@ const {
     MOCK_LOGIN,
     DOCUMENT_UPLOAD,
     DOCUMENT_UPLOAD_WILDCARD,
+    COOKIES_POLICY,
+    COOKIES_POLICY_WILDCARD,
 } = routes;
 
 type Routes = {
@@ -133,6 +136,10 @@ export const childRoutes = [
     {
         route: routeChildren.DOCUMENT_UPLOAD_INFECTED,
         parent: DOCUMENT_UPLOAD,
+    },
+    {
+        route: routeChildren.COOKIES_POLICY_UPDATED,
+        parent: COOKIES_POLICY,
     },
 ];
 
@@ -256,6 +263,14 @@ export const routeMap: Routes = {
     [DOCUMENT_UPLOAD_WILDCARD]: {
         page: <DocumentUploadPage />,
         type: ROUTE_TYPE.PATIENT,
+    },
+    [COOKIES_POLICY]: {
+        page: <CookiePolicyPage />,
+        type: ROUTE_TYPE.PUBLIC,
+    },
+    [COOKIES_POLICY_WILDCARD]: {
+        page: <CookiePolicyPage />,
+        type: ROUTE_TYPE.PUBLIC,
     },
 };
 

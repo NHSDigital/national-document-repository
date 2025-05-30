@@ -1,4 +1,3 @@
-import React from 'react';
 import { Footer as NHSFooter } from 'nhsuk-react-components';
 import { routes } from '../../../types/generic/routes';
 
@@ -38,6 +37,9 @@ function Footer() {
                     aria-label="Service updates - Opens in a new tab"
                 >
                     Service updates
+                </NHSFooter.ListItem>
+                <NHSFooter.ListItem href={routes.COOKIES_POLICY} data-testid="cookies-policy-link">
+                    Cookies policy
                 </NHSFooter.ListItem>
             </NHSFooter.List>
             <NHSFooter.Copyright className="footer-copyright-link">

@@ -10,6 +10,17 @@ declare module '*.svg' {
     export default src;
 }
 
+interface Window {
+    NHSCookieConsent: NHSCookieConsent;
+}
+
+interface NHSCookieConsent {
+    getConsented: () => boolean;
+    getStatistics: () => boolean;
+    setStatistics: (value: boolean) => void;
+    setConsented: (value: boolean) => void;
+}
+
 interface ImportMetaEnv {
     readonly VITE_MONITOR_ACCOUNT_ID: string;
     VITE_ENVIRONMENT: string;
