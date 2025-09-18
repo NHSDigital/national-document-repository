@@ -4,7 +4,7 @@ from copy import deepcopy
 import pytest
 from enums.lambda_error import LambdaError
 from enums.snomed_codes import SnomedCodes
-from handlers.get_fhir_document_reference_handler import (
+from handlers.get_document_reference_fhir_handler import (
     extract_bearer_token,
     extract_document_parameters,
     get_id_and_snomed_from_path_parameters,
@@ -45,8 +45,8 @@ MOCK_DOCUMENT_REFERENCE = DocumentReference.model_validate(
 
 @pytest.fixture
 def mock_oidc_service(mocker):
-    mocker.patch("handlers.get_fhir_document_reference_handler.SSMService")
-    mock_oidc = mocker.patch("handlers.get_fhir_document_reference_handler.OidcService")
+    mocker.patch("handlers.get_document_reference_fhir_handler.SSMService")
+    mock_oidc = mocker.patch("handlers.get_document_reference_fhir_handler.OidcService")
     mock_oidc_instance = mock_oidc.return_value
     mock_oidc_instance.fetch_userinfo.return_value = {"user": "info"}
     mock_oidc_instance.fetch_user_org_code.return_value = "TEST_ORG"
@@ -57,7 +57,7 @@ def mock_oidc_service(mocker):
 @pytest.fixture
 def mock_config_service(mocker):
     mock_config = mocker.patch(
-        "handlers.get_fhir_document_reference_handler.DynamicConfigurationService"
+        "handlers.get_document_reference_fhir_handler.DynamicConfigurationService"
     )
     mock_config_instance = mock_config.return_value
     return mock_config_instance
@@ -66,7 +66,7 @@ def mock_config_service(mocker):
 @pytest.fixture
 def mock_document_service(mocker):
     mock_service = mocker.patch(
-        "handlers.get_fhir_document_reference_handler.GetFhirDocumentReferenceService"
+        "handlers.get_document_reference_fhir_handler.GetFhirDocumentReferenceService"
     )
     mock_service_instance = mock_service.return_value
     mock_service_instance.handle_get_document_reference_request.return_value = (
@@ -78,7 +78,7 @@ def mock_document_service(mocker):
 @pytest.fixture
 def mock_search_patient_service(mocker):
     mock_service = mocker.patch(
-        "handlers.get_fhir_document_reference_handler.SearchPatientDetailsService"
+        "handlers.get_document_reference_fhir_handler.SearchPatientDetailsService"
     )
     mock_service_instance = mock_service.return_value
     return mock_service_instance
@@ -224,7 +224,7 @@ def test_lambda_handler_oidc_error(
     set_env, mock_config_service, mock_document_service, context, mocker
 ):
     mocker.patch(
-        "handlers.get_fhir_document_reference_handler.OidcService.set_up_oidc_parameters",
+        "handlers.get_document_reference_fhir_handler.OidcService.set_up_oidc_parameters",
         side_effect=GetFhirDocumentReferenceException(500, LambdaError.MockError),
     )
 
