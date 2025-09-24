@@ -51,9 +51,9 @@ Ensure the following environment variables are set in your shell configuration f
 ```bash
 export NDR_API_ENDPOINT=<your-api-endpoint>         # Get value from API Gateway
 export NDR_API_KEY=<your-api-key>                   # Get value from API Gateway → API Keys for associated env e.g. ndr-dev_apim-api-key
-export NDR_S3_BUCKET=<your-s3-bcuket>     # S3 bucket e.g. ndr-dev-lloyd-george-store
+export NDR_S3_BUCKET=<your-s3-bcuket>               # S3 bucket e.g. ndr-dev-lloyd-george-store
 export MOCK_CIS2_KEY=<mock-key>                     # Get value from Parameter Store: /auth/password/MOCK_KEY
-export NDR_DYNAMO_STORE=<your-dynamo-table>  # DynamoDB table name e.g. ndr-dev_LloydGeorgeReferenceMetadata
+export NDR_DYNAMO_STORE=<your-dynamo-table>         # DynamoDB table name e.g. ndr-dev_LloydGeorgeReferenceMetadata
 ```
 
 After updating your shell config, reload it:
