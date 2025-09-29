@@ -74,8 +74,7 @@ class VersionMigration:
                     key_pair={"ID": item_id},
                     updated_fields=updated_fields,
                 )
-
-        self.logger.info(f"{label} migration completed.")
+                self.logger.info(f"{label} migration completed.")
 
 
     @staticmethod
