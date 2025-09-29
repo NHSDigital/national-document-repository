@@ -21,9 +21,10 @@ on:
         required: true
 
 permissions:
-  pull-requests: write
+  actions: read   # Required for anchore/sbom-action
+  contents: write # Required for anchore/sbom-action
   id-token: write # This is required for requesting the JWT
-  contents: read # This is required for actions/checkout
+  pull-requests: write
 
 jobs:
   react_build_and_deploy_docker_image:
@@ -115,6 +116,32 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA" >> $GITHUB_OUTPUT
+
+      - uses: anchore/sbom-action@v0
+        with:
+          path: ./
+          format: cyclonedx-json
+          artifact-name: sbom-repo.cdx.json
+
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:latest
+          format: cyclonedx-json
+          artifact-name: sbom-image.cdx.json
+
+      - uses: anchore/scan-action@v7
+        with:
+          sbom: sbom-repo.cdx.json
+          fail-build: true
+          severity-cutoff: low
+          only-fixed: true
+
+      - uses: anchore/scan-action@v7
+        with:
+          sbom: sbom-image.cdx.json
+          fail-build: true
+          severity-cutoff: low
+          only-fixed: true
 
       # Looks like the ECS does not check for image updates, as such we need to force a new task definition to run the new image
       # We will always use the "latest" image tag so we do not need to modify the task-definition
