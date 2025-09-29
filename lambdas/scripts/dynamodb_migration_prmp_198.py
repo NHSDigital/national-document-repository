@@ -72,16 +72,7 @@ class VersionMigration:
                     key_pair={"ID": item_id},
                     updated_fields=updated_fields,
                 )
-
-        self.logger.info(f"{label} migration completed.")
-
-    # def run_version_migration(self, all_entries, total_count):
-    #     self.process_entries(
-    #         "Version",
-    #         all_entries,
-    #         total_count,
-    #         lambda e: {"Version": 1} if e.get("Version") != 1 else None,
-    #     )
+                self.logger.info(f"{label} migration completed.")
 
     def run_author_migration(self, all_entries: list[dict], total_count: int) -> None:
         self.logger.info("Running author migration")
@@ -99,10 +90,10 @@ class VersionMigration:
                 continue
 
             stored_report = bulk_upload_report_lookup.get(nhs)
-            if not stored_report or int(timestamp) > int(
-                stored_report.get("Timestamp", 0)
-            ):
-                bulk_upload_report_lookup[nhs] = row
+            if not stored_report:
+                   bulk_upload_report_lookup[nhs] = row
+            elif int(timestamp) > int(stored_report.get("Timestamp", 0)):
+                   bulk_upload_report_lookup[nhs] = row
 
         def author_update(entry: dict) -> dict | None:
             current_author = entry.get("Author")
