@@ -19,7 +19,7 @@ class MetadataFile(BaseModel):
     )
 
     file_path: str = Field(alias="FILEPATH")
-    stored_file_name: Optional[str] = Field(alias="STORED-FILE-NAME", default=None)
+    stored_file_name: str = Field(alias="STORED-FILE-NAME")
     page_count: str = Field(alias="PAGE COUNT")
     nhs_number: Optional[str] = Field(
         alias=NHS_NUMBER_FIELD_NAME, exclude=True, default=None
@@ -38,13 +38,6 @@ class MetadataFile(BaseModel):
             return info.data.get("file_path")
         return value
 
-    # @model_validator(mode="before")
-    # @classmethod
-    # def default_stored_file_name(cls, data):
-    #     if "STORED-FILE-NAME" not in data or data["STORED-FILE-NAME"] is None:
-    #         data["STORED-FILE-NAME"] = data.get("FILEPATH")
-    #     return data
-
     @field_validator("gp_practice_code")
     @classmethod
     def ensure_gp_practice_code_non_empty(
@@ -59,10 +52,6 @@ class MetadataFile(BaseModel):
             )
         return gp_practice_code
 
-    # def model_post_init(self, __context):
-    #     # Ensures stored_file_name is set after model initialization or copying
-    #     if self.stored_file_name is None:
-    #         self.stored_file_name = self.file_path
 
 class StagingMetadata(BaseModel):
     model_config = ConfigDict(validate_by_name=True)
