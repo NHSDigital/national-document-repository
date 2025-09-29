@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import pytest
+from utils.audit_logging_setup import LoggingService
 from botocore.exceptions import ClientError
 from models.document_reference import DocumentReference
 from models.pds_models import Patient, PatientDetails
@@ -366,3 +367,18 @@ def expect_not_to_raise(exception, message_when_fail=""):
 def mock_jwt_encode(mocker):
     decoded_token = {"selected_organisation": {"org_ods_code": "ODS123"}}
     yield mocker.patch("jwt.decode", return_value=decoded_token)
+
+@pytest.fixture(autouse=True)
+def reset_logging_singletons():
+    LoggingService._instances.clear()
+
+@pytest.fixture(autouse=True)
+def attach_caplog_handler(caplog):
+    for instance in LoggingService._instances.values():
+        instance.logger.addHandler(caplog.handler)
+    yield
+    for instance in LoggingService._instances.values():
+        try:
+            instance.logger.removeHandler(caplog.handler)
+        except Exception:
+            pass

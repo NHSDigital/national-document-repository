@@ -3,6 +3,7 @@ import logging
 
 from utils.request_context import request_context
 
+
 class LoggingFormatter(logging.Formatter):
     """
     A JSON formatter that automatically adds key information from the

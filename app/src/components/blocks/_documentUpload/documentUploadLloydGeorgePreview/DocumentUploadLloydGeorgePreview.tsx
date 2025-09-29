@@ -13,21 +13,23 @@ const DocumentUploadLloydGeorgePreview = ({ documents, setMergedPdfBlob }: Props
 
     const runningRef = useRef(false);
     useEffect(() => {
-        if (!documents || runningRef.current) {
+        // If no docs or effect already running, ensure state cleared and exit
+        if (!documents || documents.length === 0) {
+            if (mergedPdfUrl) {
+                setMergedPdfUrl('');
+            }
             return;
         }
+        if (runningRef.current) return;
 
         runningRef.current = true;
 
         const render = async (): Promise<void> => {
             const blob = await getMergedPdfBlob(documents.map((doc) => doc.file));
-
             setMergedPdfBlob(blob);
-
             const url = URL.createObjectURL(blob);
-
             runningRef.current = false;
-            return setMergedPdfUrl(url);
+            setMergedPdfUrl(url);
         };
 
         render().catch((err) => {
