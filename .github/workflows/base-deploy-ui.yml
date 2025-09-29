@@ -121,24 +121,26 @@ jobs:
         with:
           path: ./
           format: cyclonedx-json
+          output-file: /tmp/
           artifact-name: sbom-repo.cdx.json
 
       - uses: anchore/sbom-action@v0
         with:
           image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:latest
           format: cyclonedx-json
+          output-file: /tmp/
           artifact-name: sbom-image.cdx.json
 
       - uses: anchore/scan-action@v7
         with:
-          sbom: sbom-repo.cdx.json
+          sbom: /tmp/sbom-repo.cdx.json
           fail-build: true
           severity-cutoff: low
           only-fixed: true
 
       - uses: anchore/scan-action@v7
         with:
-          sbom: sbom-image.cdx.json
+          sbom: /tmp/sbom-image.cdx.json
           fail-build: true
           severity-cutoff: low
           only-fixed: true
