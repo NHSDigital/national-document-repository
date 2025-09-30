@@ -44,7 +44,6 @@ jobs:
         uses: actions/github-script@v8
         if: always() && failure()
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             // 1. Retrieve existing bot comments for the PR
             const { data: comments } = await github.rest.issues.listComments({
