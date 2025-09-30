@@ -34,7 +34,7 @@ jobs:
           fail-build: true
           severity-cutoff: low
           only-fixed: true
-          output-format: table,sarif
+          output-format: sarif
 
       - name: Upload Anchore scan SARIF report
         if: ${{ always() }}
