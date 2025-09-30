@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+
 from services.mock_pds_service import MockPdsApiService
 from services.pds_api_service import PdsApiService
 from utils.exceptions import InvalidNhsNumberException
@@ -124,6 +125,10 @@ def test_format_cloudfront_url_valid():
         ("12/25/2023", datetime(2023, 12, 25)),
         ("25-12-2023", datetime(2023, 12, 25)),
         ("Dec 25, 2023", datetime(2023, 12, 25)),
+        ("25.12.2023", None),
+        ("", None),
+        ("test_text", None),
+        (None, None),
     ],
 )
 def test_parse_date_returns_correct_date_for_valid_formats(input_date, expected_date):
