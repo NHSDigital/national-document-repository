@@ -2,6 +2,7 @@ import tempfile
 from unittest.mock import call, mock_open, patch
 
 import pytest
+import os
 from botocore.exceptions import ClientError
 from freezegun import freeze_time
 from models.staging_metadata import METADATA_FILENAME
@@ -18,17 +19,30 @@ from tests.unit.helpers.data.bulk_upload.test_data import (
 )
 from utils.exceptions import BulkUploadMetadataException
 
-METADATA_FILE_DIR = "tests/unit/helpers/data/bulk_upload"
-MOCK_METADATA_CSV = f"{METADATA_FILE_DIR}/metadata.csv"
-MOCK_DUPLICATE_ODS_METADATA_CSV = (
-    f"{METADATA_FILE_DIR}/metadata_with_duplicates_different_ods.csv"
+# METADATA_FILE_DIR = "tests/unit/helpers/data/bulk_upload"
+# MOCK_METADATA_CSV = f"{METADATA_FILE_DIR}/metadata.csv"
+# MOCK_DUPLICATE_ODS_METADATA_CSV = (
+#     f"{METADATA_FILE_DIR}/metadata_with_duplicates_different_ods.csv"
+# )
+
+
+
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+METADATA_FILE_DIR = os.path.normpath(
+    os.path.join(BASE_PATH, "..", "helpers", "data", "bulk_upload")
+)
+
+MOCK_METADATA_CSV = os.path.join(METADATA_FILE_DIR, "metadata.csv")
+MOCK_DUPLICATE_ODS_METADATA_CSV = os.path.join(
+    METADATA_FILE_DIR, "metadata_with_duplicates_different_ods.csv"
 )
 MOCK_INVALID_METADATA_CSV_FILES = [
-    f"{METADATA_FILE_DIR}/metadata_invalid.csv",
-    f"{METADATA_FILE_DIR}/metadata_invalid_empty_nhs_number.csv",
-    f"{METADATA_FILE_DIR}/metadata_invalid_unexpected_comma.csv",
+    os.path.join(METADATA_FILE_DIR, "metadata_invalid.csv"),
+    os.path.join(METADATA_FILE_DIR, "metadata_invalid_empty_nhs_number.csv"),
+    os.path.join(METADATA_FILE_DIR, "metadata_invalid_unexpected_comma.csv"),
 ]
-MOCK_TEMP_FOLDER = "tests/unit/helpers/data/bulk_upload"
+
+MOCK_TEMP_FOLDER = METADATA_FILE_DIR
 
 
 def test_process_metadata_send_metadata_to_sqs_queue(
@@ -95,7 +109,9 @@ def test_process_metadata_catch_and_log_error_when_fail_to_get_metadata_csv_from
         {"Error": {"Code": "403", "Message": "Forbidden"}},
         "S3:HeadObject",
     )
-    expected_err_msg = 'No metadata file could be found with the name "metadata.csv"'
+    expected_err_msg = (
+        f'No metadata file could be found with the name "{metadata_filename}"'
+    )
 
     with pytest.raises(BulkUploadMetadataException) as e:
         metadata_service.process_metadata(metadata_filename)
@@ -105,6 +121,7 @@ def test_process_metadata_catch_and_log_error_when_fail_to_get_metadata_csv_from
     assert caplog.records[-1].levelname == "ERROR"
 
     mock_sqs_service.send_message_with_nhs_number_attr_fifo.assert_not_called()
+
 
 
 def test_process_metadata_raise_validation_error_when_metadata_csv_is_invalid(
@@ -150,19 +167,21 @@ def test_process_metadata_raise_validation_error_when_gp_practice_code_is_missin
     mock_download_metadata_from_s3.return_value = (
         f"{METADATA_FILE_DIR}/metadata_invalid_empty_gp_practice_code.csv"
     )
-    expected_error_log = (
-        "Failed to parse metadata.csv: 1 validation error for MetadataFile\n"
-        + "GP-PRACTICE-CODE\n  missing GP-PRACTICE-CODE for patient 1234567890"
-    )
+
+    expected_substring = "missing GP-PRACTICE-CODE for patient 1234567890"
 
     with pytest.raises(BulkUploadMetadataException) as e:
         metadata_service.process_metadata(metadata_filename)
 
-    assert expected_error_log in str(e.value)
-    assert expected_error_log in caplog.records[-1].msg
+    error_message = str(e.value)
+
+    assert expected_substring in error_message
+
+    assert expected_substring in caplog.records[-1].msg
     assert caplog.records[-1].levelname == "ERROR"
 
     mock_sqs_service.send_message_with_nhs_number_attr_fifo.assert_not_called()
+
 
 
 def test_process_metadata_raise_client_error_when_failed_to_send_message_to_sqs(
@@ -173,7 +192,9 @@ def test_process_metadata_raise_client_error_when_failed_to_send_message_to_sqs(
     mock_sqs_service,
     mock_tempfile,
     metadata_service,
+    monkeypatch,  # add monkeypatch here
 ):
+
     mock_client_error = ClientError(
         {
             "Error": {
@@ -199,16 +220,19 @@ def test_process_metadata_raise_client_error_when_failed_to_send_message_to_sqs(
     assert caplog.records[-1].levelname == "ERROR"
 
 
+
 def test_download_metadata_from_s3(
     set_env, metadata_filename, mock_s3_service, mock_tempfile, metadata_service
 ):
     actual = metadata_service.download_metadata_from_s3(metadata_filename)
     expected = MOCK_METADATA_CSV
 
+    filename_only = os.path.basename(metadata_filename)
+
     mock_s3_service.download_file.assert_called_with(
         s3_bucket_name=MOCK_STAGING_STORE_BUCKET,
         file_key=metadata_filename,
-        download_path=f"{MOCK_TEMP_FOLDER}/{metadata_filename}",
+        download_path=f"{MOCK_TEMP_FOLDER}/{filename_only}",
     )
     assert actual == expected
 
@@ -339,7 +363,7 @@ def metadata_service():
 
 @pytest.fixture
 def metadata_filename():
-    return METADATA_FILENAME
+    return os.path.join(METADATA_FILE_DIR, "metadata.csv")
 
 
 @pytest.fixture

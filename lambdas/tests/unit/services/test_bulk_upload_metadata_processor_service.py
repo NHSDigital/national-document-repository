@@ -86,6 +86,7 @@ def mock_sqs_service(test_service):
 def base_metadata_file():
     row = {
         "FILEPATH": "valid/path/to/file.pdf",
+        "STORED-FILE-NAME": "valid/path/to/file.pdf",
         "GP-PRACTICE-CODE": "Y12345",
         "NHS-NO": "1234567890",
         "PAGE COUNT": "1",
@@ -300,45 +301,55 @@ def test_download_metadata_from_s3_raise_error_when_failed_to_download(
 
 def test_duplicates_csv_to_staging_metadata(mocker, test_service):
     header = (
-        "FILEPATH,PAGE COUNT,GP-PRACTICE-CODE,NHS-NO,SECTION,SUB-SECTION,"
+        "FILEPATH,STORED-FILE-NAME,PAGE COUNT,GP-PRACTICE-CODE,NHS-NO,SECTION,SUB-SECTION,"
         "SCAN-DATE,SCAN-ID,USER-ID,UPLOAD"
     )
+
     line1 = (
-        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y12345",'
-        '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
+        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '"","Y12345","1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line2 = (
-        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y12345",'
-        '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
+        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '"","Y12345","1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line3 = (
-        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y6789",'
-        '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
+        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '"","Y6789","1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line4 = (
-        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y6789",'
-        '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
+        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,'
+        '"","Y6789","1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line5 = (
-        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,"","Y12345",'
-        '"123456789","LG","","04/09/2022","NEC","NEC","04/10/2023"'
+        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,'
+        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,'
+        '"","Y12345","123456789","LG","","04/09/2022","NEC","NEC","04/10/2023"'
     )
     line6 = (
-        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,"","Y6789",'
-        '"123456789","LG","","04/09/2022","NEC","NEC","04/10/2023"'
+        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,'
+        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,'
+        '"","Y6789","123456789","LG","","04/09/2022","NEC","NEC","04/10/2023"'
     )
     line7 = (
-        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,"","Y12345","","LG","","04/09/2022",'
-        '"NEC","NEC","04/10/2023"'
+        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,'
+        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,'
+        '"","Y12345","","LG","","04/09/2022","NEC","NEC","04/10/2023"'
     )
     line8 = (
-        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,"","Y6789","","LG","","04/09/2022",'
-        '"NEC","NEC","04/10/2023"'
+        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,'
+        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,'
+        '"","Y6789","","LG","","04/09/2022","NEC","NEC","04/10/2023"'
     )
 
     fake_csv_data = "\n".join(
         [header, line1, line2, line3, line4, line5, line6, line7, line8]
     )
+
     mocker.patch("builtins.open", mocker.mock_open(read_data=fake_csv_data))
     mocker.patch("os.path.isfile", return_value=True)
 
@@ -426,7 +437,7 @@ def test_process_metadata_row_success(mocker, test_service):
 
     mocker.patch.object(
         test_service,
-        "validate_correct_filename",
+        "validate_and_correct_filename",
         return_value="corrected.pdf",
     )
 
@@ -495,7 +506,7 @@ def test_validate_correct_filename_when_valid_filename(
 
     mock_validate = mocker.patch(f"{SERVICE_PATH}.validate_file_name")
 
-    result = test_service.validate_correct_filename(base_metadata_file)
+    result = test_service.validate_and_correct_filename(base_metadata_file)
 
     mock_validate.assert_called_once_with(filename)
     assert result == valid_file_path
@@ -515,7 +526,7 @@ def test_validate_correct_filename_when_invalid_filename_calls_formatter(
         return_value="formatted/path/to/file.pdf"
     )
 
-    result = test_service.validate_correct_filename(base_metadata_file)
+    result = test_service.validate_and_correct_filename(base_metadata_file)
 
     mock_validate.assert_called_once_with(filename)
     mock_format.assert_called_once_with(invalid_file_path)

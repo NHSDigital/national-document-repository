@@ -112,7 +112,7 @@ class BulkUploadMetadataProcessorService:
         patient_record_key = (nhs_number, ods_code)
 
         try:
-            file_metadata.stored_file_name = self.validate_correct_filename(
+            file_metadata.stored_file_name = self.validate_and_correct_filename(
                 file_metadata
             )
         except InvalidFileNameException as error:
@@ -131,7 +131,7 @@ class BulkUploadMetadataProcessorService:
         ods_code = file_metadata.gp_practice_code
         return nhs_number, ods_code
 
-    def validate_correct_filename(
+    def validate_and_correct_filename(
         self,
         file_metadata: MetadataFile,
     ) -> str:
@@ -155,9 +155,10 @@ class BulkUploadMetadataProcessorService:
         logger.error(
             f"Failed to process {file_metadata.file_path} due to error: {error}"
         )
+        files = patients.get(key, [file_metadata])
         failed_entry = StagingMetadata(
             nhs_number=key[0],
-            files=patients[key],
+            files=files,
         )
         self.dynamo_repository.write_report_upload_to_dynamo(
             failed_entry, UploadStatus.FAILED, str(error)
