@@ -1,10 +1,7 @@
-import importlib
-import logging
-import sys
 import argparse
-from enums.snomed_codes import SnomedCodes
 from typing import Iterable, Callable
 
+from enums.snomed_codes import SnomedCodes
 from models.document_reference import DocumentReference
 from services.base.dynamo_service import DynamoDBService
 from utils.audit_logging_setup import LoggingService
@@ -44,10 +41,10 @@ class VersionMigration:
         ]
 
     def process_entries(
-        self,
-        label: str,
-        entries: Iterable[dict],
-        update_fn: Callable[[dict], dict | None],
+            self,
+            label: str,
+            entries: Iterable[dict],
+            update_fn: Callable[[dict], dict | None],
     ):
         self.logger.info(f"Running {label} migration")
 
@@ -116,6 +113,7 @@ class VersionMigration:
 
         self.logger.warning(f"[DocStatus] Cannot determine status for item {entry.get('ID')}")
         return None
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
