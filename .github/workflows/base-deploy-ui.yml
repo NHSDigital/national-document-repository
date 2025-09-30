@@ -125,12 +125,20 @@ jobs:
           artifact-name: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
 
       - uses: anchore/scan-action@v7
+        id: sbom-scan
         with:
           image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:latest
           fail-build: true
           severity-cutoff: low
           only-fixed: true
-          output-format: table
+          output-format: table,sarif
+
+      - name: Upload Anchore scan SARIF report
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.sbom-scan.outputs.sarif }}
+
 
       # Looks like the ECS does not check for image updates, as such we need to force a new task definition to run the new image
       # We will always use the "latest" image tag so we do not need to modify the task-definition
