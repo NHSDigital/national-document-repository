@@ -53,11 +53,11 @@ jobs:
             })
             
             const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Security issues found')
+              return comment.user.type === 'Bot' && comment.body.includes('Code security issues found')
             })
 
             // 2. Prepare format of the comment
-            const output = `### Security issues found
+            const output = `### Code security issues found
             
             View full details [here](https://github.com/${{ github.repository }}/security/code-scanning?query=is%3Aopen+pr%3A${{ github.event.pull_request.number }}).`;
 
@@ -91,7 +91,7 @@ jobs:
             })
             
             const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Security issues found')
+              return comment.user.type === 'Bot' && comment.body.includes('Code security issues found')
             })
 
             // 2. If we have a comment, update it, otherwise create a new one
@@ -99,7 +99,6 @@ jobs:
               github.rest.issues.deleteComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: output
+                comment_id: botComment.id
               })
             }
