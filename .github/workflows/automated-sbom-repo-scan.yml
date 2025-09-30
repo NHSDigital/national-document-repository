@@ -26,7 +26,6 @@ jobs:
 
       - uses: anchore/scan-action@v7
         id: sbom-scan
-        continue-on-error: true
         with:
           path: "."
           fail-build: true
@@ -36,12 +35,13 @@ jobs:
 
       - name: Upload Anchore scan SARIF report
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         with:
           sarif_file: ${{ steps.sbom-scan.outputs.sarif }}
 
       - name: Add/Update SBOM failure comment
         uses: actions/github-script@v8
-        if: failure()
+        if: always() && failure()
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: Delete SBOM failure comment
         uses: actions/github-script@v8
-        if: success()
+        if: always() && success()
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
