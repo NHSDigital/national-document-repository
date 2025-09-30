@@ -104,6 +104,16 @@ class PostFhirDocumentReferenceService:
             logger.error(f"AWS client error: {str(e)}")
             raise CreateDocumentRefException(500, LambdaError.InternalServerError)
 
+    def _validate_headers(self, headers: dict) -> Optional[str]:
+        subject = headers.get("x-amzn-mtls-clientcert-subject", "")
+        common_name = None
+        if "CN=" in subject:
+            for part in subject.split(","):
+                if part.strip().startswith("CN="):
+                    common_name = part.strip().split("=", 1)[1]
+                    break
+        return common_name
+
     def _extract_nhs_number_from_fhir(self, fhir_doc: FhirDocumentReference) -> str:
         """Extract NHS number from FHIR document"""
         # Extract NHS number from subject.identifier where the system identifier is NHS number
