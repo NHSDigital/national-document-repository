@@ -32,9 +32,7 @@ class VersionMigration:
         if entries is None:
             self.logger.info("No entries provided — scanning entire table.")
             raise ValueError("Entries must be provided to main().")
-            # entries = list(self.dynamo_service.stream_whole_table(self.target_table))
 
-        # Return list of (label, update_fn) pairs
         return [
             ("Custodian", self.update_custodian_entry),
             ("Status", self.update_status_entry),
@@ -112,7 +110,7 @@ class VersionMigration:
         if entry.get("Uploading"):
             return {"DocStatus": "preliminary"}
 
-        self.logger.error(f"[DocStatus] Cannot determine status for item {item_id}")
+        self.logger.warning(f"[DocStatus] Cannot determine status for item {item_id}")
         return None
 
 
