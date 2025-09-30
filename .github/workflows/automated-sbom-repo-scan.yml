@@ -7,6 +7,7 @@ on:
 permissions:
   actions: read   # Required for anchore/sbom-action
   contents: write # Required for anchore/sbom-action
+  id-token: write # Required for requesting the JWT
   pull-requests: write
 
 jobs:
