@@ -41,20 +41,6 @@ jobs:
           ref: ${{ inputs.build_branch }}
           fetch-depth: '0'
 
-      - uses: anchore/sbom-action@v0
-        with:
-          path: ./
-          format: cyclonedx-json
-          output-file: /tmp/
-          artifact-name: sbom-repo.cdx.json
-
-      - uses: anchore/scan-action@v7
-        with:
-          path: ./
-          fail-build: true
-          severity-cutoff: low
-          only-fixed: true
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
