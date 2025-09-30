@@ -2,9 +2,12 @@ import importlib
 import logging
 import sys
 import argparse
+from enums.snomed_codes import SnomedCodes
 from typing import Iterable, Callable
 
+from models.document_reference import DocumentReference
 from services.base.dynamo_service import DynamoDBService
+from utils.audit_logging_setup import LoggingService
 
 
 class VersionMigration:
@@ -12,7 +15,7 @@ class VersionMigration:
         self.environment = environment
         self.table_name = table_name
         self.dry_run = dry_run
-        self.logger = logging.getLogger("VersionMigration")
+        self.logger = LoggingService("CustodianMigration")
         self.dynamo_service = DynamoDBService()
 
         self.target_table = f"{self.environment}_{self.table_name}"
@@ -74,13 +77,12 @@ class VersionMigration:
                 )
                 self.logger.info(f"{label} migration completed.")
 
-
     @staticmethod
     def update_custodian_entry(entry: dict) -> dict | None:
-        custodian = entry.get("Custodian")
         current_gp_ods = entry.get("CurrentGpOds")
+        custodian = entry.get("Custodian")
 
-        if not custodian and current_gp_ods:
+        if current_gp_ods and custodian != current_gp_ods:
             return {"Custodian": current_gp_ods}
         return None
 
@@ -92,41 +94,30 @@ class VersionMigration:
 
     @staticmethod
     def update_document_snomed_code_type_entry(entry: dict) -> dict | None:
-        fixed_snomed_code = 16521000000101
-        if entry.get("DocumentSnomedCodeType") != fixed_snomed_code:
-            return {"DocumentSnomedCodeType": fixed_snomed_code}
+        expected_code = SnomedCodes.LLOYD_GEORGE.value.code
+        if entry.get("DocumentSnomedCodeType") != expected_code:
+            return {"DocumentSnomedCodeType": expected_code}
         return None
 
     def update_doc_status_entry(self, entry: dict) -> dict | None:
-        if entry.get("DocStatus"):
+        try:
+            document = DocumentReference(**entry)
+        except Exception as e:
+            self.logger.warning(f"[DocStatus] Skipping invalid item {entry.get('ID')}: {e}")
             return None
 
-        item_id = entry.get("ID")
+        if document.doc_status:
+            return None
 
-        if entry.get("Deleted"):
-            return {"DocStatus": "deprecated"}
-        if entry.get("Uploaded"):
-            return {"DocStatus": "final"}
-        if entry.get("Uploading"):
-            return {"DocStatus": "preliminary"}
+        inferred_status = document.infer_doc_status()
 
-        self.logger.warning(f"[DocStatus] Cannot determine status for item {item_id}")
+        if inferred_status:
+            return {"DocStatus": inferred_status}
+
+        self.logger.warning(f"[DocStatus] Cannot determine status for item {entry.get('ID')}")
         return None
 
-
-def setup_logging():
-    importlib.reload(logging)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        stream=sys.stdout,
-    )
-
-
 if __name__ == "__main__":
-    setup_logging()
-
     parser = argparse.ArgumentParser(
         prog="dynamodb_migration.py",
         description="Migrate DynamoDB table columns",
