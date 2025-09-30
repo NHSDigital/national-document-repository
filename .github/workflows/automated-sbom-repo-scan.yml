@@ -41,7 +41,7 @@ jobs:
           sarif_file: ${{ steps.sbom-scan.outputs.sarif }}
 
       - name: Add/Update SBOM failure comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         if: always() && failure()
         with:
           script: |
@@ -82,10 +82,9 @@ jobs:
             })
 
       - name: Delete SBOM failure comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         if: always() && success()
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             // 1. Retrieve existing bot comments for the PR
             const { data: comments } = await github.rest.issues.listComments({
