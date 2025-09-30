@@ -122,7 +122,7 @@ jobs:
           image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:latest
           format: cyclonedx-json
           output-file: /tmp/
-          artifact-name: sbom-image.cdx.json
+          artifact-name: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
 
       - uses: anchore/scan-action@v7
         with:
@@ -130,6 +130,7 @@ jobs:
           fail-build: true
           severity-cutoff: low
           only-fixed: true
+          output-format: table
 
       # Looks like the ECS does not check for image updates, as such we need to force a new task definition to run the new image
       # We will always use the "latest" image tag so we do not need to modify the task-definition
