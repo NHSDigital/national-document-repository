@@ -1,7 +1,6 @@
 import json
 import os
 import uuid
-from datetime import datetime
 
 import pydantic
 from botocore.exceptions import ClientError
@@ -45,7 +44,7 @@ from utils.unicode_utils import (
     convert_to_nfc_form,
     convert_to_nfd_form,
 )
-from utils.utilities import validate_nhs_number
+from utils.utilities import parse_date, validate_nhs_number
 
 logger = LoggingService(__name__)
 
@@ -391,9 +390,9 @@ class BulkUploadService:
         s3_bucket_name = self.bulk_upload_s3_repository.lg_bucket_name
         file_name = os.path.basename(file_metadata.file_path)
         if file_metadata.scan_date:
-            scan_date_formatted = datetime.strptime(
-                file_metadata.scan_date, "%d/%m/%Y"
-            ).strftime("%Y-%m-%d")
+            scan_date_formatted = parse_date(file_metadata.scan_date).strftime(
+                "%Y-%m-%d"
+            )
         else:
             scan_date_formatted = None
         if current_gp_ods in PatientOdsInactiveStatus.list():
