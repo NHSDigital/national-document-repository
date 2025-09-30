@@ -59,10 +59,9 @@ jobs:
             // 2. Prepare format of the comment
             const output = `### Security issues found
             
-            View full details <a href="https://github.com/\`${{ github.repository }}\`/security/code-scanning?query=is%3Aopen+pr%3A`${{ github.event.pull_request.number }}\`" target="_blank">here</a>.
+            View full details <a href="https://github.com/\`${{ github.repository }}\`/security/code-scanning?query=is%3Aopen+pr%3A\`${{ github.event.pull_request.number }}\`" target="_blank">here</a>.
             
-            View full details [here](https://github.com/\`${{ github.repository }}\`/security/code-scanning?query=is%3Aopen+pr%3A`${{ github.event.pull_request.number }}\`).
-            `;
+            View full details [here](https://github.com/\`${{ github.repository }}\`/security/code-scanning?query=is%3Aopen+pr%3A\`${{ github.event.pull_request.number }}\`).`;
 
             // 3. If we have a comment, update it, otherwise create a new one
             if (botComment) {
