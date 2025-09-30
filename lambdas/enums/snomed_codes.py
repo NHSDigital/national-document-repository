@@ -17,6 +17,9 @@ class SnomedCodes(Enum):
     GENERAL_MEDICAL_PRACTICE = SnomedCode(
         code="1060971000000108", display_name="General practice service"
     )
+    UNSTRUCTURED = SnomedCode(
+        code="1234567890987654", display_name="Unstructured records"
+    )
 
     @classmethod
     def find_by_code(cls, code: str) -> Optional["SnomedCode"]:
