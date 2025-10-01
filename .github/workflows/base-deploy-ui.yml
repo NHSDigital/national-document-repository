@@ -122,12 +122,12 @@ jobs:
         with:
           image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:${{ github.sha }}
           format: cyclonedx-json
-          artifact-name: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
+          output-file: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
 
       - uses: anchore/scan-action@v7
         if: ${{ inputs.environment == 'development' }}
         with:
-          image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:${{ github.sha }}
+          sbom: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
           fail-build: true
           severity-cutoff: low
           only-fixed: true
