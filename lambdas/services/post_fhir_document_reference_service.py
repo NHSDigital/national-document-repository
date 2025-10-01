@@ -104,15 +104,23 @@ class PostFhirDocumentReferenceService:
             logger.error(f"AWS client error: {str(e)}")
             raise CreateDocumentRefException(500, LambdaError.InternalServerError)
 
-    def _validate_headers(self, headers: dict) -> Optional[str]:
+    def _validate_headers(self, headers: dict) -> Optional[MtlsCommonNames]:
         subject = headers.get("x-amzn-mtls-clientcert-subject", "")
-        common_name = None
-        if "CN=" in subject:
-            for part in subject.split(","):
-                if part.strip().startswith("CN="):
-                    common_name = part.strip().split("=", 1)[1]
-                    break
-        return common_name
+        if "CN=" not in subject:
+            return None
+
+        for part in subject.split(","):
+            if part.strip().startswith("CN="):
+                cn_value = part.strip().split("=", 1)[1].lower()
+                try:
+                    return MtlsCommonNames(cn_value)
+                except ValueError:
+                    # Not a valid enum member
+                    logger.error(f"mTLS common name {cn_value} - is not supported")
+                    raise CreateDocumentRefException(
+                        400, LambdaError.CreateDocInvalidType
+                    )
+        return None
 
     def _extract_nhs_number_from_fhir(self, fhir_doc: FhirDocumentReference) -> str:
         """Extract NHS number from FHIR document"""
