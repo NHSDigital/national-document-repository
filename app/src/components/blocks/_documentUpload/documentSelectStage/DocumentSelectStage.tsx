@@ -118,6 +118,19 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
 
         const docs = await Promise.all(documentMap);
 
+        const failedDocs = docs.filter(
+            (doc) => doc.state === DOCUMENT_UPLOAD_STATE.FAILED && doc.error,
+        );
+
+        if (failedDocs.length > 0) {
+            navigate(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS, {
+                state: {
+                    failedDocuments: failedDocs,
+                },
+            });
+            return;
+        }
+
         updateDocuments([...docs, ...documents]);
     };
 
@@ -177,14 +190,14 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
             <Table.Row key={document.id} id={document.file.name}>
                 <Table.Cell className={document.error ? 'error-cell' : ''}>
                     <strong>{document.file.name}</strong>
-                    {document.error && (
+                    {/* {document.error && (
                         <>
                             <br />
                             <span className="nhs-warning-color">
                                 <strong>{fileUploadErrorMessages[document.error!].inline}</strong>
                             </span>
                         </>
-                    )}
+                    )} */}
                 </Table.Cell>
                 <Table.Cell>{formatFileSize(document.file.size)}</Table.Cell>
                 <Table.Cell>
