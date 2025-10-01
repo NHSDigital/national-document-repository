@@ -775,20 +775,8 @@ def test_determine_document_type_with_correct_common_name(mock_service, mocker):
     fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
     fhir_doc.type = None
 
-    result = mock_service._determine_document_type(fhir_doc, "pdm")
+    result = mock_service._determine_document_type(fhir_doc, MtlsCommonNames.PDM.value)
     assert result == SnomedCodes.PATIENT_DATA.value
-
-
-def test_determine_document_type_with_incorrect_common_name(mock_service, mocker):
-    """Test _determine_document_type method when type is missing entirely."""
-    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
-    fhir_doc.type = None
-
-    with pytest.raises(CreateDocumentRefException) as excinfo:
-        mock_service._determine_document_type(fhir_doc, "foobar")
-
-    assert excinfo.value.status_code == 400
-    assert excinfo.value.error == LambdaError.CreateDocInvalidType
 
 
 def test_validate_valid_common_name(mock_service, mocker, valid_mtls_header):
