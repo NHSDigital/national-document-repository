@@ -8,10 +8,7 @@ import { JSX, useState } from 'react';
 import * as ReactRouter from 'react-router-dom';
 import usePatient from '../../../../helpers/hooks/usePatient';
 import { buildLgFile, buildPatientDetails } from '../../../../helpers/test/testBuilders';
-import {
-    fileUploadErrorMessages,
-    PDF_PARSING_ERROR_TYPE,
-} from '../../../../helpers/utils/fileUploadErrorMessages';
+import { PDF_PARSING_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
 import { getFormattedDate } from '../../../../helpers/utils/formatDate';
 import { formatNhsNumber } from '../../../../helpers/utils/formatNhsNumber';
 import { routeChildren, routes } from '../../../../types/generic/routes';

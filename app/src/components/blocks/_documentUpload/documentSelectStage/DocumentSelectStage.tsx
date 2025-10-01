@@ -190,14 +190,6 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
             <Table.Row key={document.id} id={document.file.name}>
                 <Table.Cell className={document.error ? 'error-cell' : ''}>
                     <strong>{document.file.name}</strong>
-                    {/* {document.error && (
-                        <>
-                            <br />
-                            <span className="nhs-warning-color">
-                                <strong>{fileUploadErrorMessages[document.error!].inline}</strong>
-                            </span>
-                        </>
-                    )} */}
                 </Table.Cell>
                 <Table.Cell>{formatFileSize(document.file.size)}</Table.Cell>
                 <Table.Cell>
