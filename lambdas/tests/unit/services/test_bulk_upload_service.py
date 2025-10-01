@@ -1076,7 +1076,6 @@ def test_patient_not_found_is_caught_and_written_to_dynamo(
     repo_under_test, mock_validate_files, mocker
 ):
     expected_error_message = "Could not find the given patient on PDS"
-
     mocker.patch(
         "services.bulk_upload_service.getting_patient_info_from_pds",
         side_effect=PatientNotFoundException(expected_error_message),
@@ -1086,7 +1085,6 @@ def test_patient_not_found_is_caught_and_written_to_dynamo(
 
     repo_under_test.dynamo_repository.write_report_upload_to_dynamo.assert_called_once()
 
-    # Extract args
     call_metadata, call_status, call_reason, call_ods_code = (
         repo_under_test.dynamo_repository.write_report_upload_to_dynamo.call_args[0]
     )
