@@ -775,7 +775,7 @@ def test_determine_document_type_with_correct_common_name(mock_service, mocker):
     fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
     fhir_doc.type = None
 
-    result = mock_service._determine_document_type(fhir_doc, MtlsCommonNames.PDM.value)
+    result = mock_service._determine_document_type(fhir_doc, MtlsCommonNames.PDM)
     assert result == SnomedCodes.PATIENT_DATA.value
 
 
