@@ -118,88 +118,20 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA" >> $GITHUB_OUTPUT
 
       - uses: anchore/sbom-action@v0
+        if: ${{ inputs.environment == 'development' }}
         with:
           image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:${{ github.sha }}
           format: cyclonedx-json
           artifact-name: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
 
       - uses: anchore/scan-action@v7
-        id: sbom-scan
+        if: ${{ inputs.environment == 'development' }}
         with:
           image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:${{ github.sha }}
           fail-build: true
           severity-cutoff: low
           only-fixed: true
-          output-format: sarif
-
-      - name: Upload Anchore scan SARIF report
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: ${{ steps.sbom-scan.outputs.sarif }}
-
-      - name: Add/Update SBOM failure comment
-        uses: actions/github-script@v8
-        if: always() && failure()
-        with:
-          script: |
-            // 1. Retrieve existing bot comments for the PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            })
-            
-            const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Image security issues found')
-            })
-
-            // 2. Prepare format of the comment
-            const output = `### Image security issues found
-
-            View full details [here](https://github.com/${{ github.repository }}/security/code-scanning?query=is%3Aopen+pr%3A${{ github.event.pull_request.number }}).`;
-
-            // 3. If we have a comment, update it, otherwise create a new one
-            if (botComment) {
-              github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: output
-              })
-            }
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-
-      - name: Delete SBOM failure comment
-        uses: actions/github-script@v8
-        if: always() && success()
-        with:
-          script: |
-            // 1. Retrieve existing bot comments for the PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            })
-            
-            const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Image security issues found')
-            })
-
-            // 2. If we have a comment, update it, otherwise create a new one
-            if (botComment) {
-              github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id
-              })
-            }
+          output-format: table
 
       # Looks like the ECS does not check for image updates, as such we need to force a new task definition to run the new image
       # We will always use the "latest" image tag so we do not need to modify the task-definition
