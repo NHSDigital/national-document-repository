@@ -10,6 +10,8 @@ from tests.unit.conftest import (
     TEST_FILE_KEY,
     TEST_NHS_NUMBER,
     TEST_UUID,
+    MOCK_PDM_TABLE_NAME,
+    MOCK_LG_TABLE_NAME,
 )
 from tests.unit.helpers.data.dynamo.dynamo_stream import (
     MOCK_OLD_IMAGE_EVENT,
@@ -167,12 +169,12 @@ def test_parse_dynamo_record_raises_value_error(test_json_string):
 @pytest.mark.parametrize(
     "doc_type, expected_table",
     [
-        (SnomedCodes.LLOYD_GEORGE.value, "foo"),
-        (SnomedCodes.PATIENT_DATA.value, "bar"),
+        (SnomedCodes.LLOYD_GEORGE.value, MOCK_LG_TABLE_NAME),
+        (SnomedCodes.PATIENT_DATA.value, MOCK_PDM_TABLE_NAME),
     ],
 )
-def test_dynamo_table_mapping(doc_type, expected_table):
-    table_router = DocTypeTableRouter("foo", "bar")
+def test_dynamo_table_mapping(set_env, doc_type, expected_table):
+    table_router = DocTypeTableRouter()
     table = table_router.resolve(doc_type)
     assert table == expected_table
 
@@ -183,8 +185,8 @@ def test_dynamo_table_mapping(doc_type, expected_table):
         SnomedCodes.GENERAL_MEDICAL_PRACTICE.value,
     ],
 )
-def test_dynamo_table_mapping_fails(doc_type):
-    table_router = DocTypeTableRouter("foo", "bar")
+def test_dynamo_table_mapping_fails(set_env, doc_type):
+    table_router = DocTypeTableRouter()
     with pytest.raises(CreateDocumentRefException) as excinfo:
         table_router.resolve(doc_type)
 

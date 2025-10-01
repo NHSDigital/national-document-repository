@@ -1,3 +1,5 @@
+import os
+
 from datetime import datetime
 from typing import Any, Dict
 
@@ -156,10 +158,12 @@ def parse_dynamo_record(dynamodb_record: Dict[str, Any]) -> Dict[str, Any]:
 
 
 class DocTypeTableRouter:
-    def __init__(self, lg_dynamo_table: str, pdm_dynamo_table: str):
+    def __init__(self):
+        self.lg_dynamo_table = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
+        self.pdm_dynamo_table = os.getenv("PDM_DYNAMODB_NAME")
         self.mapping = {
-            SnomedCodes.LLOYD_GEORGE.value.code: lg_dynamo_table,
-            SnomedCodes.PATIENT_DATA.value.code: pdm_dynamo_table,
+            SnomedCodes.LLOYD_GEORGE.value.code: self.lg_dynamo_table,
+            SnomedCodes.PATIENT_DATA.value.code: self.pdm_dynamo_table,
         }
 
     def resolve(self, doc_type: SnomedCode) -> str:

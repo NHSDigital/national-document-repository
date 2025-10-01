@@ -18,6 +18,8 @@ from services.post_fhir_document_reference_service import (
 from tests.unit.conftest import APIM_API_URL
 from tests.unit.conftest import (
     EXPECTED_PARSED_PATIENT_BASE_CASE as mock_pds_patient_details,
+    MOCK_PDM_TABLE_NAME,
+    MOCK_LG_TABLE_NAME,
 )
 from tests.unit.helpers.data.bulk_upload.test_data import TEST_DOCUMENT_REFERENCE
 from utils.exceptions import PatientNotFoundException
@@ -433,8 +435,7 @@ def test_get_dynamo_table_for_patient_data_doc_type(mock_service):
     patient_data_code = SnomedCodes.PATIENT_DATA.value
 
     result = mock_service._get_dynamo_table_for_doc_type(patient_data_code)
-
-    assert result == mock_service.pdm_dynamo_table
+    assert result == MOCK_PDM_TABLE_NAME
 
 
 def test_get_dynamo_table_for_unsupported_doc_type(mock_service):
@@ -628,7 +629,7 @@ def test_get_dynamo_table_for_lloyd_george_doc_type(mock_service):
 
     result = mock_service._get_dynamo_table_for_doc_type(lg_code)
 
-    assert result == mock_service.lg_dynamo_table
+    assert result == MOCK_LG_TABLE_NAME
 
 
 def test_process_fhir_document_reference_with_malformed_json(mock_service):

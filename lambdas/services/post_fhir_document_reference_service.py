@@ -40,13 +40,9 @@ class PostFhirDocumentReferenceService:
         self.s3_service = S3Service(custom_aws_role=presigned_aws_role_arn)
         self.dynamo_service = DynamoDBService()
 
-        self.lg_dynamo_table = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
-        self.pdm_dynamo_table = os.getenv("PDM_DYNAMODB_NAME")
         self.staging_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
 
-        self.doc_router = DocTypeTableRouter(
-            self.lg_dynamo_table, self.pdm_dynamo_table
-        )
+        self.doc_router = DocTypeTableRouter()
 
     def process_fhir_document_reference(
         self, fhir_document: str, request_headers: dict = {}
