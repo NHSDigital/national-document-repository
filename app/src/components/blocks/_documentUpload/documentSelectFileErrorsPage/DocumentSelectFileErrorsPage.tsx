@@ -51,8 +51,8 @@ const DocumentSelectFileErrorsPage = (): JSX.Element => {
             <h2 className="nhsuk-heading-m">What you need to do</h2>
             <p>
                 You'll need to resolve the problems with these files then upload all the files
-                again. again. To make sure patient records are complete, you must upload all files
-                for a patient at the same time.
+                again. To make sure patient records are complete, you must upload all files patient
+                at the same time.
             </p>
 
             <h2 className="nhsuk-heading-m">Get help</h2>

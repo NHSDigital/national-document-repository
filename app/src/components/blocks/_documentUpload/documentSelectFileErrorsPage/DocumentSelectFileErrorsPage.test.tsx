@@ -63,14 +63,21 @@ describe('DocumentSelectFileErrorsPage', () => {
 
         expect(screen.getByText('Files with problems')).toBeInTheDocument();
 
+        expect(screen.getByText('What you need to do')).toBeInTheDocument();
+
         expect(
             screen.getByText(
-                /you'll need to resolve the problems with these files then upload all the files again/i,
+                "You'll need to resolve the problems with these files then upload all the files again. To make sure patient records are complete, you must upload all files patient at the same time.",
             ),
         ).toBeInTheDocument();
 
-        expect(screen.getByText('What you need to do')).toBeInTheDocument();
         expect(screen.getByText('Get help')).toBeInTheDocument();
+
+        expect(
+            screen.getByText(
+                'Contact your local IT support desk to resolve the problems with these files.',
+            ),
+        ).toBeInTheDocument();
 
         const helpLink = screen.getByRole('link', {
             name: /Help and guidance - this link will open in a new tab/i,
