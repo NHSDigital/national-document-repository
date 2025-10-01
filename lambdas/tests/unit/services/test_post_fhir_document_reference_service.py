@@ -3,6 +3,7 @@ import json
 import pytest
 from botocore.exceptions import ClientError
 from enums.lambda_error import LambdaError
+from enums.mtls import MtlsCommonNames
 from enums.snomed_codes import SnomedCode, SnomedCodes
 from models.document_reference import DocumentReference
 from models.fhir.R4.base_models import Identifier, Reference
@@ -94,6 +95,14 @@ def valid_fhir_doc_json():
             ],
         }
     )
+
+
+@pytest.fixture
+def valid_non_mtls_header():
+    return {
+        "Accept": "text/json",
+        "Host": "example.com",
+    }
 
 
 @pytest.fixture
@@ -418,14 +427,26 @@ def test_extract_nhs_number_from_fhir_with_invalid_system(mock_service, mocker):
     assert excinfo.value.error == LambdaError.CreateDocNoParse
 
 
-def test_get_dynamo_table_for_non_lloyd_george_doc_type(mock_service):
+def test_get_dynamo_table_for_unstructured_doc_type(mock_service):
+    """Test _get_dynamo_table_for_doc_type method with a non-Lloyd George document type."""
+
+    unstructured_code = SnomedCodes.UNSTRUCTURED.value
+
+    result = mock_service._get_dynamo_table_for_doc_type(unstructured_code)
+
+    assert result == mock_service.pdm_dynamo_table
+
+
+def test_get_dynamo_table_for_unsupported_doc_type(mock_service):
     """Test _get_dynamo_table_for_doc_type method with a non-Lloyd George document type."""
 
     non_lg_code = SnomedCode(code="non-lg-code", display_name="Non Lloyd George")
 
-    result = mock_service._get_dynamo_table_for_doc_type(non_lg_code)
+    with pytest.raises(CreateDocumentRefException) as excinfo:
+        mock_service._get_dynamo_table_for_doc_type(non_lg_code)
 
-    assert result == mock_service.pdm_dynamo_table
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.error == LambdaError.CreateDocInvalidType
 
 
 def test_create_document_reference_with_author(mock_service, mocker):
@@ -768,3 +789,35 @@ def test_determine_document_type_with_incorrect_common_name(mock_service, mocker
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.CreateDocInvalidType
+
+
+def test_validate_valid_common_name(mock_service, mocker, valid_mtls_header):
+    """Test _validate_common_name when mtls and pdm."""
+    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
+    fhir_doc.type = None
+
+    result = mock_service._validate_headers(valid_mtls_header)
+
+    assert result == MtlsCommonNames.PDM.value
+
+
+def test_validate_invalid_common_name(mock_service, mocker, invalid_mtls_header):
+    """Test _validate_common_name when mtls but not pdm."""
+    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
+    fhir_doc.type = None
+
+    with pytest.raises(CreateDocumentRefException) as excinfo:
+        mock_service._validate_headers(invalid_mtls_header)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.error == LambdaError.CreateDocInvalidType
+
+
+def test_validate_valid_non_mtls_header(mock_service, mocker, valid_non_mtls_header):
+    """Test _validate_common_name when mtls and pdm."""
+    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
+    fhir_doc.type = None
+
+    result = mock_service._validate_headers(valid_non_mtls_header)
+
+    assert result is None

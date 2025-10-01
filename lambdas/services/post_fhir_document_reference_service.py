@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from enums.lambda_error import LambdaError
 from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCode, SnomedCodes
+from enums.mtls import MtlsCommonNames
 from models.document_reference import DocumentReference
 from models.fhir.R4.fhir_document_reference import SNOMED_URL, Attachment
 from models.fhir.R4.fhir_document_reference import (
@@ -19,6 +20,7 @@ from pydantic import ValidationError
 from services.base.dynamo_service import DynamoDBService
 from services.base.s3_service import S3Service
 from utils.audit_logging_setup import LoggingService
+from utils.dynamo_utils import DocTypeTableRouter
 from utils.exceptions import (
     InvalidNhsNumberException,
     InvalidResourceIdException,
@@ -41,6 +43,10 @@ class PostFhirDocumentReferenceService:
         self.lg_dynamo_table = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
         self.pdm_dynamo_table = os.getenv("PDM_DYNAMODB_NAME")
         self.staging_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
+
+        self.doc_router = DocTypeTableRouter(
+            self.lg_dynamo_table, self.pdm_dynamo_table
+        )
 
     def process_fhir_document_reference(
         self, fhir_document: str, request_headers: dict = {}
@@ -102,15 +108,23 @@ class PostFhirDocumentReferenceService:
             logger.error(f"AWS client error: {str(e)}")
             raise CreateDocumentRefException(500, LambdaError.InternalServerError)
 
-    def _validate_headers(self, headers: dict) -> Optional[str]:
+    def _validate_headers(self, headers: dict) -> Optional[MtlsCommonNames]:
         subject = headers.get("x-amzn-mtls-clientcert-subject", "")
-        common_name = None
-        if "CN=" in subject:
-            for part in subject.split(","):
-                if part.strip().startswith("CN="):
-                    common_name = part.strip().split("=", 1)[1]
-                    break
-        return common_name
+        if "CN=" not in subject:
+            return None
+
+        for part in subject.split(","):
+            if part.strip().startswith("CN="):
+                cn_value = part.strip().split("=", 1)[1].lower()
+                try:
+                    return MtlsCommonNames(cn_value)
+                except ValueError:
+                    # Not a valid enum member
+                    logger.error(f"mTLS common name {cn_value} - is not supported")
+                    raise CreateDocumentRefException(
+                        400, LambdaError.CreateDocInvalidType
+                    )
+        return None
 
     def _extract_nhs_number_from_fhir(self, fhir_doc: FhirDocumentReference) -> str:
         """Extract NHS number from FHIR document"""
@@ -126,7 +140,7 @@ class PostFhirDocumentReferenceService:
         raise CreateDocumentRefException(400, LambdaError.CreateDocNoParse)
 
     def _determine_document_type(
-        self, fhir_doc: FhirDocumentReference, common_name
+        self, fhir_doc: FhirDocumentReference, common_name: MtlsCommonNames | None
     ) -> SnomedCode:
         if not common_name:
             """Determine the document type based on SNOMED code in the FHIR document"""
@@ -145,18 +159,20 @@ class PostFhirDocumentReferenceService:
             logger.error("SNOMED code not found in FHIR document")
             raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
 
-        if common_name != "pdm":
+        if common_name not in MtlsCommonNames:
             logger.error(f"mTLS common name {common_name} - is not supported")
             raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
 
         return SnomedCodes.UNSTRUCTURED.value
 
     def _get_dynamo_table_for_doc_type(self, doc_type: SnomedCode) -> str:
-        """Get the appropriate DynamoDB table name based on a document type"""
-        if doc_type == SnomedCodes.LLOYD_GEORGE.value:
-            return self.lg_dynamo_table
-        else:
-            return self.pdm_dynamo_table
+        try:
+            return self.doc_router.resolve(doc_type)
+        except KeyError:
+            logger.error(
+                f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
+            )
+            raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
 
     def _create_document_reference(
         self,
