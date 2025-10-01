@@ -99,6 +99,14 @@ def valid_fhir_doc_json():
 
 
 @pytest.fixture
+def valid_non_mtls_header():
+    return {
+        "Accept": "text/json",
+        "Host": "example.com",
+    }
+
+
+@pytest.fixture
 def valid_mtls_header():
     return {
         "Accept": "text/json",
