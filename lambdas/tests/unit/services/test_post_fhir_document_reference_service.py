@@ -100,28 +100,11 @@ def valid_fhir_doc_json():
 
 
 @pytest.fixture
-def valid_non_mtls_header():
-    return {
-        "Accept": "text/json",
-        "Host": "example.com",
-    }
-
-
-@pytest.fixture
 def valid_mtls_header():
     return {
         "Accept": "text/json",
         "Host": "example.com",
         "x-amzn-mtls-clientcert-subject": "CN=pdm",
-    }
-
-
-@pytest.fixture
-def invalid_mtls_header():
-    return {
-        "Accept": "text/json",
-        "Host": "example.com",
-        "x-amzn-mtls-clientcert-subject": "CN=foobar",
     }
 
 
@@ -778,35 +761,3 @@ def test_determine_document_type_with_correct_common_name(mock_service, mocker):
 
     result = mock_service._determine_document_type(fhir_doc, MtlsCommonNames.PDM)
     assert result == SnomedCodes.PATIENT_DATA.value
-
-
-def test_validate_valid_common_name(mock_service, mocker, valid_mtls_header):
-    """Test _validate_common_name when mtls and pdm."""
-    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
-    fhir_doc.type = None
-
-    result = mock_service._validate_headers(valid_mtls_header)
-
-    assert result == MtlsCommonNames.PDM.value
-
-
-def test_validate_invalid_common_name(mock_service, mocker, invalid_mtls_header):
-    """Test _validate_common_name when mtls but not pdm."""
-    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
-    fhir_doc.type = None
-
-    with pytest.raises(CreateDocumentRefException) as excinfo:
-        mock_service._validate_headers(invalid_mtls_header)
-
-    assert excinfo.value.status_code == 400
-    assert excinfo.value.error == LambdaError.CreateDocInvalidType
-
-
-def test_validate_valid_non_mtls_header(mock_service, mocker, valid_non_mtls_header):
-    """Test _validate_common_name when mtls and pdm."""
-    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
-    fhir_doc.type = None
-
-    result = mock_service._validate_headers(valid_non_mtls_header)
-
-    assert result is None
