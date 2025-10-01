@@ -51,3 +51,18 @@ class MetadataFile(MetadataBase):
     scan_id: str
     user_id: str
     upload: str
+
+class StagingSqsMetadata(BaseModel):
+    model_config = ConfigDict(validate_by_name=True)
+
+    nhs_number: str = Field(default=NHS_NUMBER_PLACEHOLDER, alias=NHS_NUMBER_FIELD_NAME)
+    files: list[SqsMetadata]
+    retries: int = 0
+
+    @field_validator("nhs_number")
+    @classmethod
+    def validate_nhs_number(cls, nhs_number: str) -> str:
+        if nhs_number and nhs_number.isdigit():
+            return nhs_number
+
+        return NHS_NUMBER_PLACEHOLDER

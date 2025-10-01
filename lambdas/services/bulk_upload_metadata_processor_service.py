@@ -12,7 +12,7 @@ from enums.upload_status import UploadStatus
 from models.staging_metadata import (
     METADATA_FILENAME,
     MetadataFile,
-    StagingMetadata, SqsMetadata,
+    StagingSqsMetadata, SqsMetadata,
 )
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
@@ -90,7 +90,7 @@ class BulkUploadMetadataProcessorService:
         )
         return local_file_path
 
-    def csv_to_sqs_metadata(self, csv_file_path: str) -> list[StagingMetadata]:
+    def csv_to_sqs_metadata(self, csv_file_path: str) -> list[StagingSqsMetadata]:
         logger.info("Parsing bulk upload metadata")
         patients: dict[tuple[str, str], list[SqsMetadata]] = {}
 
@@ -100,7 +100,7 @@ class BulkUploadMetadataProcessorService:
             for row in csv_reader:
                 self.process_metadata_row(row, patients)
         return [
-            StagingMetadata(
+            StagingSqsMetadata(
                 nhs_number=key[0],
                 files=value,
             )
@@ -186,7 +186,7 @@ class BulkUploadMetadataProcessorService:
             f"Failed to process {file_metadata.file_path} due to error: {error}"
         )
         files = patients.get(key, [file_metadata])
-        failed_entry = StagingMetadata(
+        failed_entry = StagingSqsMetadata(
             nhs_number=key[0],
             files=files,
         )
@@ -195,17 +195,17 @@ class BulkUploadMetadataProcessorService:
         )
 
     def send_metadata_to_fifo_sqs(
-            self, staging_metadata_list: list[StagingMetadata]
+            self, staging_sqs_metadata_list: list[StagingSqsMetadata]
     ) -> None:
         sqs_group_id = f"bulk_upload_{uuid.uuid4()}"
 
-        for staging_metadata in staging_metadata_list:
-            nhs_number = staging_metadata.nhs_number
+        for staging_sqs_metadata in staging_sqs_metadata_list:
+            nhs_number = staging_sqs_metadata.nhs_number
             logger.info(f"Sending metadata for patientId: {nhs_number}")
 
             self.sqs_service.send_message_with_nhs_number_attr_fifo(
                 queue_url=self.metadata_queue_url,
-                message_body=staging_metadata.model_dump_json(by_alias=True),
+                message_body=staging_sqs_metadata.model_dump_json(by_alias=True),
                 nhs_number=nhs_number,
                 group_id=sqs_group_id,
             )
