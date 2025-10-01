@@ -43,7 +43,7 @@ jobs:
           ref: ${{ inputs.build_branch }}
 
       - name: Download the build folder
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           name: build
           path: ./app/build
