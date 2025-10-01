@@ -206,13 +206,13 @@ def test_download_metadata_from_s3_raise_error_when_failed_to_download(
 
 
 def test_csv_to_staging_metadata(set_env, metadata_service):
-    actual = metadata_service.csv_to_staging_metadata(MOCK_METADATA_CSV)
+    actual = metadata_service.csv_to_staging_sqs_metadata(MOCK_METADATA_CSV)
     expected = EXPECTED_PARSED_METADATA
     assert actual == expected
 
 
 def test_duplicates_csv_to_staging_metadata(set_env, metadata_service):
-    actual = metadata_service.csv_to_staging_metadata(MOCK_DUPLICATE_ODS_METADATA_CSV)
+    actual = metadata_service.csv_to_staging_sqs_metadata(MOCK_DUPLICATE_ODS_METADATA_CSV)
     expected = EXPECTED_PARSED_METADATA_2
     assert actual == expected
 
@@ -222,7 +222,7 @@ def test_csv_to_staging_metadata_raise_error_when_metadata_invalid(
 ):
     for invalid_csv_file in MOCK_INVALID_METADATA_CSV_FILES:
         with pytest.raises(ValidationError):
-            metadata_service.csv_to_staging_metadata(invalid_csv_file)
+            metadata_service.csv_to_staging_sqs_metadata(invalid_csv_file)
 
 
 def test_send_metadata_to_sqs(set_env, mocker, mock_sqs_service, metadata_service):

@@ -12,7 +12,7 @@ from models.staging_metadata import (
     NHS_NUMBER_FIELD_NAME,
     ODS_CODE,
     MetadataFile,
-    StagingMetadata,
+    StagingSqsMetadata,
 )
 from services.base.s3_service import S3Service
 from services.base.sqs_service import SQSService
@@ -37,7 +37,7 @@ class BulkUploadMetadataService:
         try:
             metadata_file = self.download_metadata_from_s3(metadata_filename)
 
-            staging_metadata_list = self.csv_to_staging_metadata(metadata_file)
+            staging_metadata_list = self.csv_to_staging_sqs_metadata(metadata_file)
             logger.info("Finished parsing metadata")
 
             self.send_metadata_to_fifo_sqs(staging_metadata_list)
@@ -75,7 +75,7 @@ class BulkUploadMetadataService:
         return local_file_path
 
     @staticmethod
-    def csv_to_staging_metadata(csv_file_path: str) -> list[StagingMetadata]:
+    def csv_to_staging_sqs_metadata(csv_file_path: str) -> list[StagingSqsMetadata]:
         logger.info("Parsing bulk upload metadata")
 
         patients = {}
@@ -94,7 +94,7 @@ class BulkUploadMetadataService:
                     patients[key].append(file_metadata)
 
         return [
-            StagingMetadata(
+            StagingSqsMetadata(
                 nhs_number=nhs_number,
                 files=patients[nhs_number, ods_code],
             )
@@ -102,7 +102,7 @@ class BulkUploadMetadataService:
         ]
 
     def send_metadata_to_fifo_sqs(
-        self, staging_metadata_list: list[StagingMetadata]
+        self, staging_metadata_list: list[StagingSqsMetadata]
     ) -> None:
         sqs_group_id = f"bulk_upload_{uuid.uuid4()}"
 

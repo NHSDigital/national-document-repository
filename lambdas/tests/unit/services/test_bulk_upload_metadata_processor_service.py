@@ -493,7 +493,7 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
     fake_file = mocker.Mock()
     patients = {key: [fake_file]}
 
-    mock_staging_metadata = mocker.patch(f"{SERVICE_PATH}.StagingMetadata")
+    mock_staging_metadata = mocker.patch(f"{SERVICE_PATH}.StagingSQSMetadata")
 
     mock_write = mocker.patch.object(
         test_service.dynamo_repository, "write_report_upload_to_dynamo"

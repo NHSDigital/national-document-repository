@@ -147,7 +147,8 @@ class BulkUploadMetadataProcessorService:
         else:
             patients[patient_record_key].append(sqs_metadata)
 
-    def convert_to_sqs_metadata(self, file: MetadataFile, corrected_file_name: str) -> SqsMetadata:
+    @staticmethod
+    def convert_to_sqs_metadata(file: MetadataFile, corrected_file_name: str) -> SqsMetadata:
         return SqsMetadata.model_validate({
             "FILEPATH": file.file_path,
             "NHS-NO": file.nhs_number,

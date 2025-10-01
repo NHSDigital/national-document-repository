@@ -15,7 +15,8 @@ def to_upper_case_with_hyphen(field_name: str) -> str:
 class MetadataBase(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_upper_case_with_hyphen,
-        validate_by_name=True
+        validate_by_name=True,
+        populate_by_name=True,
     )
 
     file_path: str = Field(alias="FILEPATH")
@@ -66,3 +67,4 @@ class StagingSqsMetadata(BaseModel):
             return nhs_number
 
         return NHS_NUMBER_PLACEHOLDER
+
