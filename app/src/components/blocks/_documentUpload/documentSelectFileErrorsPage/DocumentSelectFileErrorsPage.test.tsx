@@ -7,6 +7,7 @@ import DocumentSelectFileErrorsPage from './DocumentSelectFileErrorsPage';
 import {
     UploadDocument,
     DOCUMENT_UPLOAD_STATE,
+    DOCUMENT_TYPE,
 } from '../../../../types/pages/UploadDocumentsPage/types';
 import { UPLOAD_FILE_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
 import { routes } from '../../../../types/generic/routes';
@@ -26,12 +27,9 @@ const createFailedDocument = (name: string, error: UPLOAD_FILE_ERROR_TYPE): Uplo
     id: `${name}-id`,
     file: new File(['test content'], name, { type: 'application/pdf' }),
     state: DOCUMENT_UPLOAD_STATE.FAILED,
-    docType: undefined as any,
+    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
     error,
     attempts: 0,
-    progress: 0,
-    numPages: 0,
-    validated: true,
 });
 
 const setup = (failedDocuments: UploadDocument[] = []): void => {
