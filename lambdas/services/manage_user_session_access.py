@@ -22,19 +22,18 @@ class ManageUserSessionAccess:
         logger.info(
             f"Retrieving session for session ID ending in: {redact_id_to_last_4_chars(ndr_session_id)}"
         )
-        query_response = self.db_service.query_all_fields(
+        query_response = self.db_service.query_table(
             table_name=self.session_table_name,
             search_key="NDRSessionId",
             search_condition=ndr_session_id,
         )
 
-        try:
-            current_session = query_response["Items"][0]
+        if query_response and len(query_response) > 0:
+            current_session = query_response[0]
             return current_session
-        except (KeyError, IndexError):
-            raise AuthorisationException(
-                f"Unable to find session for session ID ending in: {redact_id_to_last_4_chars(ndr_session_id)}"
-            )
+        raise AuthorisationException(
+            f"Unable to find session for session ID ending in: {redact_id_to_last_4_chars(ndr_session_id)}"
+        )
 
     def update_auth_session_with_permitted_search(
         self,

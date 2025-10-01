@@ -59,30 +59,22 @@ class DocumentService:
         query_filter: Attr | ConditionBase = None,
     ) -> list[DocumentReference]:
         documents = []
-        exclusive_start_key = None
 
-        while True:
-            response = self.dynamo_service.query_table_by_index(
-                table_name=table,
-                index_name=index_name,
-                search_key=search_key,
-                search_condition=search_condition,
-                query_filter=query_filter,
-                exclusive_start_key=exclusive_start_key,
-            )
-
-            for item in response["Items"]:
-                try:
-                    document = DocumentReference.model_validate(item)
-                    documents.append(document)
-                except ValidationError as e:
-                    logger.error(f"Validation error on document: {item}")
-                    logger.error(f"{e}")
-                    continue
-            if "LastEvaluatedKey" in response:
-                exclusive_start_key = response["LastEvaluatedKey"]
-            else:
-                break
+        response = self.dynamo_service.query_table(
+            table_name=table,
+            index_name=index_name,
+            search_key=search_key,
+            search_condition=search_condition,
+            query_filter=query_filter,
+        )
+        for item in response:
+            try:
+                document = DocumentReference.model_validate(item)
+                documents.append(document)
+            except ValidationError as e:
+                logger.error(f"Validation error on document: {item}")
+                logger.error(f"{e}")
+                continue
         return documents
 
     def get_nhs_numbers_based_on_ods_code(self, ods_code: str) -> list[str]:

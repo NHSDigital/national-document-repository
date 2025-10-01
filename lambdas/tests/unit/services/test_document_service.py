@@ -65,7 +65,7 @@ def mock_filter_expression():
 def test_fetch_available_document_references_by_type_lg_returns_list_of_doc_references(
     mock_service, mock_dynamo_service, mock_filter_expression
 ):
-    mock_dynamo_service.query_table_by_index.return_value = MOCK_SEARCH_RESPONSE
+    mock_dynamo_service.query_table.return_value = MOCK_SEARCH_RESPONSE["Items"]
 
     results = mock_service.fetch_available_document_references_by_type(
         TEST_NHS_NUMBER, SupportedDocumentTypes.LG, mock_filter_expression
@@ -75,20 +75,19 @@ def test_fetch_available_document_references_by_type_lg_returns_list_of_doc_refe
     for result in results:
         assert isinstance(result, DocumentReference)
 
-    mock_dynamo_service.query_table_by_index.assert_called_once_with(
+    mock_dynamo_service.query_table.assert_called_once_with(
         table_name=MOCK_LG_TABLE_NAME,
         index_name="NhsNumberIndex",
         search_key="NhsNumber",
         search_condition=TEST_NHS_NUMBER,
         query_filter=mock_filter_expression,
-        exclusive_start_key=None,
     )
 
 
 def test_fetch_available_document_references_by_type_arf_returns_list_of_doc_references(
     mock_service, mock_dynamo_service, mock_filter_expression
 ):
-    mock_dynamo_service.query_table_by_index.return_value = MOCK_SEARCH_RESPONSE
+    mock_dynamo_service.query_table.return_value = MOCK_SEARCH_RESPONSE["Items"]
 
     results = mock_service.fetch_available_document_references_by_type(
         TEST_NHS_NUMBER, SupportedDocumentTypes.ARF, mock_filter_expression
@@ -98,32 +97,30 @@ def test_fetch_available_document_references_by_type_arf_returns_list_of_doc_ref
     for result in results:
         assert isinstance(result, DocumentReference)
 
-    mock_dynamo_service.query_table_by_index.assert_called_once_with(
+    mock_dynamo_service.query_table.assert_called_once_with(
         table_name=MOCK_ARF_TABLE_NAME,
         index_name="NhsNumberIndex",
         search_key="NhsNumber",
         search_condition=TEST_NHS_NUMBER,
         query_filter=mock_filter_expression,
-        exclusive_start_key=None,
     )
 
 
 def test_fetch_available_document_references_by_type_lg_returns_empty_list_of_doc_references(
     mock_service, mock_dynamo_service, mock_filter_expression
 ):
-    mock_dynamo_service.query_table_by_index.return_value = MOCK_EMPTY_RESPONSE
+    mock_dynamo_service.query_table.return_value = MOCK_EMPTY_RESPONSE
 
     result = mock_service.fetch_available_document_references_by_type(
         TEST_NHS_NUMBER, SupportedDocumentTypes.LG, mock_filter_expression
     )
     assert len(result) == 0
-    mock_dynamo_service.query_table_by_index.assert_called_once_with(
+    mock_dynamo_service.query_table.assert_called_once_with(
         table_name=MOCK_LG_TABLE_NAME,
         index_name="NhsNumberIndex",
         search_key="NhsNumber",
         search_condition=TEST_NHS_NUMBER,
         query_filter=mock_filter_expression,
-        exclusive_start_key=None,
     )
 
 
@@ -137,11 +134,10 @@ def test_fetch_documents_from_table_with_filter_returns_list_of_doc_references(
             search_key="NhsNumber",
             search_condition=TEST_NHS_NUMBER,
             query_filter=mock_filter_expression,
-            exclusive_start_key=None,
         )
     ]
 
-    mock_dynamo_service.query_table_by_index.return_value = MOCK_SEARCH_RESPONSE
+    mock_dynamo_service.query_table.return_value = MOCK_SEARCH_RESPONSE["Items"]
 
     results = mock_service.fetch_documents_from_table_with_nhs_number(
         nhs_number=TEST_NHS_NUMBER,
@@ -153,9 +149,7 @@ def test_fetch_documents_from_table_with_filter_returns_list_of_doc_references(
     for result in results:
         assert isinstance(result, DocumentReference)
 
-    mock_dynamo_service.query_table_by_index.assert_has_calls(
-        expected_calls, any_order=True
-    )
+    mock_dynamo_service.query_table.assert_has_calls(expected_calls, any_order=True)
 
 
 def test_fetch_documents_from_table_with_filter_returns_empty_list_of_doc_references(
@@ -168,10 +162,9 @@ def test_fetch_documents_from_table_with_filter_returns_empty_list_of_doc_refere
             search_key="NhsNumber",
             search_condition=TEST_NHS_NUMBER,
             query_filter=mock_filter_expression,
-            exclusive_start_key=None,
         )
     ]
-    mock_dynamo_service.query_table_by_index.return_value = MOCK_EMPTY_RESPONSE
+    mock_dynamo_service.query_table.return_value = MOCK_EMPTY_RESPONSE
 
     results = mock_service.fetch_documents_from_table_with_nhs_number(
         nhs_number=TEST_NHS_NUMBER,
@@ -181,9 +174,7 @@ def test_fetch_documents_from_table_with_filter_returns_empty_list_of_doc_refere
 
     assert len(results) == 0
 
-    mock_dynamo_service.query_table_by_index.assert_has_calls(
-        expected_calls, any_order=True
-    )
+    mock_dynamo_service.query_table.assert_has_calls(expected_calls, any_order=True)
 
 
 @freeze_time("2023-10-1 13:00:00")

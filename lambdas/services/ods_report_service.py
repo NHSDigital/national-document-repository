@@ -101,25 +101,14 @@ class OdsReportService:
             ]
         results = []
         for ods_code in ods_codes:
-            response = self.dynamo_service.query_table_by_index(
+            response = self.dynamo_service.query_table(
                 table_name=self.table_name,
                 index_name="OdsCodeIndex",
                 search_key=DocumentReferenceMetadataFields.CURRENT_GP_ODS.value,
                 search_condition=ods_code,
                 query_filter=NotDeleted,
             )
-            results += response["Items"]
-
-            while "LastEvaluatedKey" in response:
-                response = self.dynamo_service.query_table_by_index(
-                    table_name=self.table_name,
-                    index_name="OdsCodeIndex",
-                    exclusive_start_key=response["LastEvaluatedKey"],
-                    search_key=DocumentReferenceMetadataFields.CURRENT_GP_ODS.value,
-                    search_condition=ods_code,
-                    query_filter=NotDeleted,
-                )
-                results += response["Items"]
+            results += response
 
         if not results:
             logger.info("No records found for ODS code {}".format(ods_code))

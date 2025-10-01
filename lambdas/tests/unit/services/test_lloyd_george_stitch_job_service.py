@@ -107,14 +107,14 @@ def test_query_stitch_trace_with_nhs_number(stitch_service, mocker):
         {"NhsNumber": TEST_NHS_NUMBER, "Deleted": False, "Data": "More data"},
     ]
 
-    stitch_service.dynamo_service.query_table_by_index.return_value = mock_response
+    stitch_service.dynamo_service.query_table.return_value = mock_response
 
     stitch_service.validate_stitch_trace = mocker.MagicMock(return_value=mock_response)
 
     result = stitch_service.query_stitch_trace_with_nhs_number(TEST_NHS_NUMBER)
     assert result == mock_response
 
-    stitch_service.dynamo_service.query_table_by_index.assert_called_once_with(
+    stitch_service.dynamo_service.query_table.assert_called_once_with(
         table_name=STITCH_METADATA_DYNAMODB_NAME_VALUE,
         index_name="NhsNumberIndex",
         search_key="NhsNumber",
@@ -308,12 +308,10 @@ def test_validate_latest_stitch_trace_success(stitch_service):
         nhs_number=TEST_NHS_NUMBER, expire_at=222222222, job_status=TraceStatus.FAILED
     )
 
-    mock_response = {
-        "Items": [
-            mock_stitch_trace_1.model_dump(by_alias=True),
-            mock_stitch_trace_2.model_dump(by_alias=True),
-        ]
-    }
+    mock_response = [
+        mock_stitch_trace_1.model_dump(by_alias=True),
+        mock_stitch_trace_2.model_dump(by_alias=True),
+    ]
 
     result = stitch_service.validate_stitch_trace(mock_response)
 
@@ -323,7 +321,7 @@ def test_validate_latest_stitch_trace_success(stitch_service):
 
 
 def test_validate_latest_stitch_trace_no_items(stitch_service):
-    mock_response = {"Items": []}
+    mock_response = []
 
     result = stitch_service.validate_stitch_trace(mock_response)
     assert result is None

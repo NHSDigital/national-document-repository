@@ -235,7 +235,7 @@ class IMAlertingService:
         logger.info(f"Checking if {alarm_name} already exists on alarm table")
 
         try:
-            results = self.dynamo_service.query_all_fields(
+            results = self.dynamo_service.query_table(
                 table_name=self.table_name,
                 search_key="AlarmNameMetric",
                 search_condition=alarm_name,
@@ -417,7 +417,7 @@ class IMAlertingService:
         for prefix in prefixes:
             alarm_name = alarm_name.replace(prefix, "")
 
-        url_extension = re.sub(r'[-_. ]', '%20', alarm_name)
+        url_extension = re.sub(r"[-_. ]", "%20", alarm_name)
 
         return f"{base_url}{search_query}{url_extension}"
 
