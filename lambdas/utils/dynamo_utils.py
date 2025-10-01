@@ -159,7 +159,7 @@ class DocTypeTableRouter:
     def __init__(self, lg_dynamo_table: str, pdm_dynamo_table: str):
         self.mapping = {
             SnomedCodes.LLOYD_GEORGE.value.code: lg_dynamo_table,
-            SnomedCodes.UNSTRUCTURED.value.code: pdm_dynamo_table,
+            SnomedCodes.PATIENT_DATA.value.code: pdm_dynamo_table,
         }
 
     def resolve(self, doc_type: SnomedCode) -> str:

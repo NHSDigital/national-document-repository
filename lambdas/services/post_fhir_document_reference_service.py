@@ -163,7 +163,7 @@ class PostFhirDocumentReferenceService:
             logger.error(f"mTLS common name {common_name} - is not supported")
             raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
 
-        return SnomedCodes.UNSTRUCTURED.value
+        return SnomedCodes.PATIENT_DATA.value
 
     def _get_dynamo_table_for_doc_type(self, doc_type: SnomedCode) -> str:
         try:

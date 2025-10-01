@@ -168,7 +168,7 @@ def test_parse_dynamo_record_raises_value_error(test_json_string):
     "doc_type, expected_table",
     [
         (SnomedCodes.LLOYD_GEORGE.value, "foo"),
-        (SnomedCodes.UNSTRUCTURED.value, "bar"),
+        (SnomedCodes.PATIENT_DATA.value, "bar"),
     ],
 )
 def test_dynamo_table_mapping(doc_type, expected_table):
@@ -186,7 +186,7 @@ def test_dynamo_table_mapping(doc_type, expected_table):
 def test_dynamo_table_mapping_fails(doc_type):
     table_router = DocTypeTableRouter("foo", "bar")
     with pytest.raises(CreateDocumentRefException) as excinfo:
-        table = table_router.resolve(doc_type)
+        table_router.resolve(doc_type)
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.CreateDocInvalidType

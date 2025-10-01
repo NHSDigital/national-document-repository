@@ -17,8 +17,9 @@ class SnomedCodes(Enum):
     GENERAL_MEDICAL_PRACTICE = SnomedCode(
         code="1060971000000108", display_name="General practice service"
     )
-    UNSTRUCTURED = SnomedCode(
-        code="1234567890987654", display_name="Unstructured records"
+    # Temporary snomed code used.
+    PATIENT_DATA = SnomedCode(
+        code="717391000000106", display_name="Confidential patient data"
     )
 
     @classmethod

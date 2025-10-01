@@ -140,8 +140,8 @@ def valid_mtls_fhir_doc_json():
                 "coding": [
                     {
                         "system": "http://snomed.info/sct",
-                        "code": SnomedCodes.UNSTRUCTURED.value.code,
-                        "display": SnomedCodes.UNSTRUCTURED.value.display_name,
+                        "code": SnomedCodes.PATIENT_DATA.value.code,
+                        "display": SnomedCodes.PATIENT_DATA.value.display_name,
                     }
                 ]
             },
@@ -427,12 +427,12 @@ def test_extract_nhs_number_from_fhir_with_invalid_system(mock_service, mocker):
     assert excinfo.value.error == LambdaError.CreateDocNoParse
 
 
-def test_get_dynamo_table_for_unstructured_doc_type(mock_service):
+def test_get_dynamo_table_for_patient_data_doc_type(mock_service):
     """Test _get_dynamo_table_for_doc_type method with a non-Lloyd George document type."""
 
-    unstructured_code = SnomedCodes.UNSTRUCTURED.value
+    patient_data_code = SnomedCodes.PATIENT_DATA.value
 
-    result = mock_service._get_dynamo_table_for_doc_type(unstructured_code)
+    result = mock_service._get_dynamo_table_for_doc_type(patient_data_code)
 
     assert result == mock_service.pdm_dynamo_table
 
@@ -776,7 +776,7 @@ def test_determine_document_type_with_correct_common_name(mock_service, mocker):
     fhir_doc.type = None
 
     result = mock_service._determine_document_type(fhir_doc, "pdm")
-    assert result == SnomedCodes.UNSTRUCTURED.value
+    assert result == SnomedCodes.PATIENT_DATA.value
 
 
 def test_determine_document_type_with_incorrect_common_name(mock_service, mocker):
