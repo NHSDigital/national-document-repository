@@ -342,7 +342,7 @@ def test_duplicates_csv_to_staging_metadata(mocker, test_service):
     mocker.patch("builtins.open", mocker.mock_open(read_data=fake_csv_data))
     mocker.patch("os.path.isfile", return_value=True)
 
-    actual = test_service.csv_to_staging_metadata("fake/path.csv")
+    actual = test_service.csv_to_sqs_metadata("fake/path.csv")
     expected = EXPECTED_PARSED_METADATA_2
     assert actual == expected
 

@@ -12,7 +12,7 @@ from enums.upload_status import UploadStatus
 from models.staging_metadata import (
     METADATA_FILENAME,
     MetadataFile,
-    StagingMetadata,
+    StagingMetadata, SqsMetadata,
 )
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
@@ -53,7 +53,7 @@ class BulkUploadMetadataProcessorService:
     def process_metadata(self):
         try:
             metadata_file = self.download_metadata_from_s3()
-            staging_metadata_list = self.csv_to_staging_metadata(metadata_file)
+            staging_metadata_list = self.csv_to_sqs_metadata(metadata_file)
             logger.info("Finished parsing metadata")
 
             self.send_metadata_to_fifo_sqs(staging_metadata_list)
@@ -90,12 +90,12 @@ class BulkUploadMetadataProcessorService:
         )
         return local_file_path
 
-    def csv_to_staging_metadata(self, csv_file_path: str) -> list[StagingMetadata]:
+    def csv_to_sqs_metadata(self, csv_file_path: str) -> list[StagingMetadata]:
         logger.info("Parsing bulk upload metadata")
-        patients = {}
-        with open(
-            csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
-        ) as csv_file_handler:
+        patients: dict[tuple[str, str], list[SqsMetadata]] = {}
+
+        with (open(csv_file_path, mode="r", encoding="utf-8-sig", errors="replace")
+              as csv_file_handler):
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
             for row in csv_reader:
                 self.process_metadata_row(row, patients)
@@ -107,61 +107,95 @@ class BulkUploadMetadataProcessorService:
             for (key, value) in patients.items()
         ]
 
-    def process_metadata_row(self, row: dict, patients: dict) -> None:
+    # def process_metadata_row(self, row: dict, patients: dict) -> None:
+    #     file_metadata = MetadataFile.model_validate(row)
+    #     nhs_number, ods_code = self.extract_patient_info(file_metadata)
+    #     patient_record_key = (nhs_number, ods_code)
+    #
+    #     try:
+    #         file_metadata.stored_file_name = self.validate_and_correct_filename(
+    #             file_metadata
+    #         )
+    #     except InvalidFileNameException as error:
+    #         self.handle_invalid_filename(
+    #             file_metadata, error, patient_record_key, patients
+    #         )
+    #         return
+    #
+    #     if patient_record_key not in patients:
+    #         patients[patient_record_key] = [file_metadata]
+    #     else:
+    #         patients[patient_record_key].append(file_metadata)
+
+    def process_metadata_row(self, row: dict, patients: dict[tuple[str, str], list[SqsMetadata]]) -> None:
         file_metadata = MetadataFile.model_validate(row)
         nhs_number, ods_code = self.extract_patient_info(file_metadata)
         patient_record_key = (nhs_number, ods_code)
 
-        if patient_record_key not in patients:
-            patients[patient_record_key] = [file_metadata]
-        else:
-            patients[patient_record_key].append(file_metadata)
-
         try:
-            self.validate_correct_filename(file_metadata)
+            corrected_file_name = self.validate_and_correct_filename(file_metadata)
         except InvalidFileNameException as error:
             self.handle_invalid_filename(
                 file_metadata, error, patient_record_key, patients
             )
+            return
+
+        sqs_metadata = self.convert_to_sqs_metadata(file_metadata, corrected_file_name)
+
+        if patient_record_key not in patients:
+            patients[patient_record_key] = [sqs_metadata]
+        else:
+            patients[patient_record_key].append(sqs_metadata)
+
+    def convert_to_sqs_metadata(self, file: MetadataFile, corrected_file_name: str) -> SqsMetadata:
+        return SqsMetadata.model_validate({
+            "FILEPATH": file.file_path,
+            "NHS-NO": file.nhs_number,
+            "GP-PRACTICE-CODE": file.gp_practice_code,
+            "SCAN-DATE": file.scan_date,
+            "STORED-FILE-NAME": corrected_file_name,
+        })
 
     def extract_patient_info(self, file_metadata: MetadataFile) -> tuple[str, str]:
         nhs_number = file_metadata.nhs_number
         ods_code = file_metadata.gp_practice_code
         return nhs_number, ods_code
 
-    def validate_correct_filename(
-        self,
-        file_metadata: MetadataFile,
-    ) -> None:
+    def validate_and_correct_filename(
+            self,
+            file_metadata: MetadataFile,
+    ) -> str:
         try:
             validate_file_name(file_metadata.file_path.split("/")[-1])
             valid_filepath = file_metadata.file_path
-        except LGInvalidFilesException as error:
-            valid_filepath = self.metadata_formatter_service.validate_record_filename(file_metadata.file_path)
+        except LGInvalidFilesException:
+            valid_filepath = self.metadata_formatter_service.validate_record_filename(
+                file_metadata.file_path
+            )
 
-        if valid_filepath:
-            self.corrections[file_metadata.file_path] = valid_filepath
+        return valid_filepath
 
     def handle_invalid_filename(
-        self,
-        file_metadata: MetadataFile,
-        error: InvalidFileNameException,
-        key: tuple[str, str],
-        patients: dict[tuple[str, str], list[MetadataFile]],
+            self,
+            file_metadata: MetadataFile,
+            error: InvalidFileNameException,
+            key: tuple[str, str],
+            patients: dict[tuple[str, str], list[SqsMetadata]],
     ) -> None:
         logger.error(
             f"Failed to process {file_metadata.file_path} due to error: {error}"
         )
+        files = patients.get(key, [file_metadata])
         failed_entry = StagingMetadata(
             nhs_number=key[0],
-            files=patients[key],
+            files=files,
         )
         self.dynamo_repository.write_report_upload_to_dynamo(
             failed_entry, UploadStatus.FAILED, str(error)
         )
 
     def send_metadata_to_fifo_sqs(
-        self, staging_metadata_list: list[StagingMetadata]
+            self, staging_metadata_list: list[StagingMetadata]
     ) -> None:
         sqs_group_id = f"bulk_upload_{uuid.uuid4()}"
 
