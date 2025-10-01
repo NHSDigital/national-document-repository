@@ -23,12 +23,12 @@ jobs:
         with:
           path: "."
           format: cyclonedx-json
-          artifact-name: sbom-repo-${{ github.event.repository.name }}-${{ github.sha }}.cdx.json
+          output-file: sbom-repo-${{ github.event.repository.name }}-${{ github.sha }}.cdx.json
 
       - uses: anchore/scan-action@v7
         id: sbom-scan
         with:
-          path: "."
+          sbom: sbom-repo-${{ github.event.repository.name }}-${{ github.sha }}.cdx.json
           fail-build: true
           severity-cutoff: low
           only-fixed: true
