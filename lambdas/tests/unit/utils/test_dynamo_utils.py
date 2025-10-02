@@ -25,7 +25,7 @@ from utils.dynamo_utils import (
     create_update_expression,
     parse_dynamo_record,
 )
-from utils.lambda_exceptions import CreateDocumentRefException
+from utils.lambda_exceptions import CreateDocumentRefException, InvalidDocTypeException
 
 from lambdas.enums.snomed_codes import SnomedCodes
 
@@ -188,8 +188,8 @@ def test_dynamo_table_mapping(set_env, doc_type, expected_table):
 )
 def test_dynamo_table_mapping_fails(set_env, doc_type):
     table_router = DocTypeTableRouter()
-    with pytest.raises(CreateDocumentRefException) as excinfo:
+    with pytest.raises(InvalidDocTypeException) as excinfo:
         table_router.resolve(doc_type)
 
     assert excinfo.value.status_code == 400
-    assert excinfo.value.error == LambdaError.CreateDocInvalidType
+    assert excinfo.value.error == LambdaError.DocTypeDB

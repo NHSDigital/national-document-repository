@@ -1,5 +1,6 @@
 import json
 
+from boto3.dynamodb.conditions import In
 import pytest
 from botocore.exceptions import ClientError
 from enums.lambda_error import LambdaError
@@ -22,7 +23,7 @@ from tests.unit.conftest import (
 from tests.unit.conftest import MOCK_LG_TABLE_NAME, MOCK_PDM_TABLE_NAME
 from tests.unit.helpers.data.bulk_upload.test_data import TEST_DOCUMENT_REFERENCE
 from utils.exceptions import PatientNotFoundException
-from utils.lambda_exceptions import CreateDocumentRefException
+from utils.lambda_exceptions import CreateDocumentRefException, InvalidDocTypeException
 
 
 @pytest.fixture
@@ -425,11 +426,11 @@ def test_get_dynamo_table_for_unsupported_doc_type(mock_service):
 
     non_lg_code = SnomedCode(code="non-lg-code", display_name="Non Lloyd George")
 
-    with pytest.raises(CreateDocumentRefException) as excinfo:
+    with pytest.raises(InvalidDocTypeException) as excinfo:
         mock_service._get_dynamo_table_for_doc_type(non_lg_code)
 
     assert excinfo.value.status_code == 400
-    assert excinfo.value.error == LambdaError.CreateDocInvalidType
+    assert excinfo.value.error == LambdaError.DocTypeDB
 
 
 def test_create_document_reference_with_author(mock_service, mocker):
