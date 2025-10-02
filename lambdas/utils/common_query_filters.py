@@ -47,6 +47,16 @@ def get_doc_status_preliminary_filter(filter_builder: DynamoQueryFilterBuilder):
     filter_not_deleted = get_not_deleted_filter(filter_builder)
     return doc_status_filter_expression & filter_not_deleted
 
+def get_doc_status_final_filter(filter_builder: DynamoQueryFilterBuilder):
+    filter_builder.add_condition("DocStatus", AttributeOperator.EQUAL, "final")
+    doc_status_filter_expression = filter_builder.build()
+    filter_not_deleted = get_not_deleted_filter(filter_builder)
+    return doc_status_filter_expression & filter_not_deleted
+
+def not_document_id(document_id: str):
+    filter_builder = DynamoQueryFilterBuilder()
+    filter_builder.add_condition("DocumentId", AttributeOperator.NOT_EQUAL, document_id)
+    return filter_builder.build()
 
 NotDeleted = get_not_deleted_filter(DynamoQueryFilterBuilder())
 
@@ -59,3 +69,5 @@ CleanFiles = get_clean_files_filter(DynamoQueryFilterBuilder())
 CurrentStatusFile = get_current_files_filter(DynamoQueryFilterBuilder())
 
 PreliminaryStatus = get_doc_status_preliminary_filter(DynamoQueryFilterBuilder())
+
+FinalStatusFilter = get_doc_status_final_filter(DynamoQueryFilterBuilder())

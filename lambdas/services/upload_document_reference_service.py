@@ -10,7 +10,7 @@ from services.base.dynamo_service import DynamoDBService
 from services.base.s3_service import S3Service
 from services.document_service import DocumentService
 from utils.audit_logging_setup import LoggingService
-from utils.common_query_filters import PreliminaryStatus
+from utils.common_query_filters import FinalStatusFilter, PreliminaryStatus, not_document_id
 from utils.dynamo_utils import DocTypeTableRouter
 from utils.exceptions import DocumentServiceException, FileProcessingException
 from utils.lambda_exceptions import InvalidDocTypeException
@@ -121,6 +121,7 @@ class UploadDocumentReferenceService:
                     document_reference,
                     object_key,
                 )
+                self._supersede_existing_final_documents(document_reference)
             else:
                 logger.warning(f"Document {document_reference.id} failed virus scan")
             document_reference.file_size = object_size
@@ -203,6 +204,50 @@ class UploadDocumentReferenceService:
 
         except ClientError as e:
             logger.error(f"Error deleting file from staging bucket: {str(e)}")
+
+    def _supersede_existing_final_documents(self, new_document: DocumentReference):
+        """
+        Find existing FINAL documents for the same patient and mark them SUPERSEDED.
+        This should run only after the new clean document has been safely copied.
+        """
+        try:
+            logger.info(
+                f"Checking for existing final documents to supersede for NHS number {new_document.nhs_number}"
+            )
+            # Should only be one final document to supersede, but handle multiples just in case
+            existing_docs: list[DocumentReference] = self.document_service.fetch_documents_from_table(
+                table=self.table_name,
+                search_condition=new_document.nhs_number,
+                search_key="NhsNumber",
+                query_filter=FinalStatusFilter & not_document_id(new_document.id),
+            )
+
+            if not existing_docs:
+                return
+
+            logger.info(
+                f"Superseding {len(existing_docs)} existing final document(s) for NHS number {new_document.nhs_number}"
+            )
+
+            for doc in existing_docs:
+                if doc.id == new_document.id:
+                    continue
+                doc.doc_status = "superseded"
+                try:
+                    self.document_service.update_document(
+                        table_name=self.table_name,
+                        document_reference=doc,
+                        update_fields_name={"doc_status"},
+                    )
+                except Exception as inner_e:
+                    logger.error(
+                        f"Failed to mark document {doc.id} as superseded: {inner_e}"
+                    )
+
+        except Exception as e:
+            logger.error(
+                f"Error checking for documents to supersede: {str(e)}"
+            )
 
     def update_dynamo_table(
         self,

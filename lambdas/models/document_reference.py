@@ -66,6 +66,7 @@ class DocumentReference(BaseModel):
         "entered-in-error",
         "deprecated",
         "unknown",
+        "superseded",
     ] = Field(default="preliminary")
     doc_type: str = Field(default=None, exclude=True)
     document_snomed_code_type: Optional[str] = Field(
