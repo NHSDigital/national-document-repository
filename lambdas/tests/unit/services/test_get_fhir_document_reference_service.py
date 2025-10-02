@@ -4,12 +4,14 @@ import json
 from io import BytesIO
 
 import pytest
+
 from enums.lambda_error import LambdaError
 from enums.snomed_codes import SnomedCodes
 from services.get_fhir_document_reference_service import GetFhirDocumentReferenceService
 from tests.unit.conftest import MOCK_LG_TABLE_NAME
 from tests.unit.helpers.data.test_documents import create_test_doc_store_refs
 from utils.lambda_exceptions import GetFhirDocumentReferenceException
+from utils.ods_utils import PCSE_ODS_CODE
 
 
 @pytest.fixture
@@ -165,3 +167,19 @@ def test_create_document_reference_fhir_response_non_final_status(
     # Verify methods were not called
     patched_service.s3_service.get_binary_file.assert_not_called()
     patched_service.get_presigned_url.assert_not_called()
+
+def test_create_document_reference_fhir_response_when_patient_is_deceased(
+    patched_service, mocker
+):
+    """Test FHIR response creation for documents with non-final status."""
+    test_doc = create_test_doc_store_refs()[0]
+    modified_doc = copy.deepcopy(test_doc)
+    modified_doc.custodian = "DECE"
+    modified_doc.doc_status = "preliminary"
+
+    patched_service.get_presigned_url = mocker.MagicMock()
+
+    result = patched_service.create_document_reference_fhir_response(modified_doc)
+    result_json = json.loads(result)
+
+    assert result_json["custodian"]["identifier"]["value"] == PCSE_ODS_CODE

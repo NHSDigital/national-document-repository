@@ -4,17 +4,17 @@ import io
 import os
 
 from botocore.exceptions import ClientError
+from pydantic import ValidationError
+
 from enums.lambda_error import LambdaError
-from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCode, SnomedCodes
 from models.document_reference import DocumentReference
-from models.fhir.R4.fhir_document_reference import SNOMED_URL, Attachment
 from models.fhir.R4.fhir_document_reference import (
     DocumentReference as FhirDocumentReference,
 )
 from models.fhir.R4.fhir_document_reference import DocumentReferenceInfo
+from models.fhir.R4.fhir_document_reference import SNOMED_URL, Attachment
 from models.pds_models import PatientDetails
-from pydantic import ValidationError
 from services.base.dynamo_service import DynamoDBService
 from services.base.s3_service import S3Service
 from utils.audit_logging_setup import LoggingService
@@ -25,7 +25,6 @@ from utils.exceptions import (
     PdsErrorException,
 )
 from utils.lambda_exceptions import CreateDocumentRefException
-from utils.ods_utils import PCSE_ODS_CODE
 from utils.utilities import create_reference_id, get_pds_service, validate_nhs_number
 
 logger = LoggingService(__name__)
@@ -145,11 +144,7 @@ class PostFhirDocumentReferenceService:
 
         custodian = fhir_doc.custodian.identifier.value if fhir_doc.custodian else None
         if not custodian:
-            custodian = (
-                current_gp_ods
-                if current_gp_ods not in PatientOdsInactiveStatus.list()
-                else PCSE_ODS_CODE
-            )
+            custodian = current_gp_ods
         document_reference = DocumentReference(
             id=document_id,
             nhs_number=nhs_number,

@@ -2,6 +2,7 @@ import json
 
 import pytest
 from botocore.exceptions import ClientError
+
 from enums.lambda_error import LambdaError
 from enums.snomed_codes import SnomedCode, SnomedCodes
 from models.document_reference import DocumentReference
@@ -411,7 +412,7 @@ def test_create_document_reference_without_custodian(mock_service, mocker):
     fhir_doc.custodian = None
 
     doc_type = SnomedCode(code="test-code", display_name="Test Type")
-    current_gp_ods = "C13579"
+    current_gp_ods = "REST"
 
     result = mock_service._create_document_reference(
         nhs_number="9000000009",
@@ -422,7 +423,7 @@ def test_create_document_reference_without_custodian(mock_service, mocker):
 
     assert (
         result.custodian == current_gp_ods
-    )  # Custodian should default to current_gp_ods
+    )
 
 
 def test_create_fhir_response_with_presigned_url(mock_service, mocker):
