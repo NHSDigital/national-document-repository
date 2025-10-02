@@ -42,7 +42,7 @@ const DocumentSelectFileErrorsPage = (): JSX.Element => {
 
             {failedDocuments.map((doc) => (
                 <div key={doc.id}>
-                    <ErrorMessage className="selected-file-error">{doc.file.name}</ErrorMessage>
+                    <ErrorMessage className="mb-1">{doc.file.name}</ErrorMessage>
                     <p>{fileErrorText(doc.error!)}</p>
                 </div>
             ))}
