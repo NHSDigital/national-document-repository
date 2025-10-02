@@ -1,7 +1,7 @@
 import { BackLink } from 'nhsuk-react-components';
 import { useLocation } from 'react-router-dom';
 import { UploadDocument } from '../../../../types/pages/UploadDocumentsPage/types';
-import { UPLOAD_FILE_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
+import { fileUploadErrorMessages, UPLOAD_FILE_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
 import { JSX } from 'react';
 import { routes } from '../../../../types/generic/routes';
 
@@ -12,16 +12,14 @@ type ErrorPageState = {
     failedDocuments: UploadDocument[];
 };
 
-const fileErrorText = (errorType: UPLOAD_FILE_ERROR_TYPE): string => {
+const fileErrorText = (errorType: UPLOAD_FILE_ERROR_TYPE): string | undefined => {
     switch (errorType) {
         case UPLOAD_FILE_ERROR_TYPE.invalidPdf:
-            return 'This file is damaged or unreadable.';
+            return fileUploadErrorMessages.invalidPdf.selectFileError;
         case UPLOAD_FILE_ERROR_TYPE.emptyPdf:
-            return 'This file is empty.';
+            return fileUploadErrorMessages.emptyPdf.selectFileError;
         case UPLOAD_FILE_ERROR_TYPE.passwordProtected:
-            return 'This file is password protected.';
-        default:
-            return 'There was a problem with this file.';
+            return fileUploadErrorMessages.passwordProtected.selectFileError;
     }
 };
 

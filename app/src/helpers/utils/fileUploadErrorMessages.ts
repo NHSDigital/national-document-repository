@@ -20,6 +20,7 @@ export enum PDF_PARSING_ERROR_TYPE {
 export type fileUploadErrorMessageType = {
     inline: string;
     errorBox: string;
+    selectFileError?: string;
 };
 
 export const getUploadErrorBoxErrorMessage = (error: UploadFilesError): string =>
@@ -40,14 +41,17 @@ export const fileUploadErrorMessages: ErrorMessageType = {
     invalidPdf: {
         inline: 'The selected file is be damaged or unreadable. Fix it to continue with upload.',
         errorBox: 'The selected file is be damaged or unreadable. Fix it to continue with upload.',
+        selectFileError: 'This file is damaged or unreadable.',
     },
     passwordProtected: {
         inline: 'The selected file is password protected. Remove password and upload again.',
         errorBox: 'The selected file is password protected. Remove password and upload again.',
+        selectFileError: 'This file is password protected.',
     },
     emptyPdf: {
         inline: 'The selected file is empty. Check it to continue with upload.',
         errorBox: 'The selected file is empty. Check it to continue with upload.',
+        selectFileError: 'This file is empty.',
     },
     duplicatePositionError: {
         inline: 'You have selected the same position number for two or more files',
