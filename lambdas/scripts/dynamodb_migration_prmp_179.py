@@ -34,7 +34,7 @@ class FileSizeMigration:
         self.logger.info(f"Dry run mode: {self.dry_run}")
 
         if entries is None:
-            self.logger.info("No entries provided — scanning entire table.")
+            self.logger.info("No entries provided")
             raise ValueError("Entries must be provided to main().")
 
         # Return list of (label, update_fn) pairs
@@ -77,62 +77,67 @@ class FileSizeMigration:
 
         self.logger.info(f"{label} migration completed.")
 
-    def get_s3_values(self, bucket: str, key: str) -> dict:
-        """Retrieve object metadata from S3"""
-        try:
-            return {
-                'ContentLength': self.s3_service.get_file_size(
-                    s3_bucket_name=bucket, object_key=key
-                ),
-                'VersionId': self.s3_service.get_version_id(
-                    s3_bucket_name=bucket, object_key=key
-                )
-            }
-        except ClientError as e:
-            self.logger.error(f"Error retrieving S3 metadata for {bucket}/{key}: {e}")
-            return {}
+    @staticmethod
+    def parse_s3_path(s3_path: str) -> tuple[str, str] | None:
+        """Parse S3 path into bucket and key components"""
+        if not s3_path or not s3_path.startswith("s3://"):
+            return None
+
+        path = s3_path[5:]
+        parts = path.split("/", 1)
+
+        if len(parts) != 2 or not parts[0] or not parts[1]:
+            return None
+
+        return parts[0], parts[1]
 
     def update_s3_metadata_entry(self, entry: dict) -> dict | None:
         """Update entry with S3 metadata (FileSize, S3Key, S3VersionID)"""
+
+        # TODO make idempotent
         # Cancel if any of the fields already exist
-        if any(field in entry for field in ("FileSize", "S3Key", "S3VersionID")):
+        # if any(field in entry for field in ( "S3Key", "S3VersionID")):
+        #   return None
+
+        file_location = entry.get("FileLocation")
+        if not file_location:
+            self.logger.warning(f"Missing FileLocation for entry: {entry.get('ID')}")
             return None
 
-        s3_bucket_path = entry.get("FileLocation")
+        s3_bucket_path_parts = FileSizeMigration.parse_s3_path(file_location)
 
-        if not s3_bucket_path or not s3_bucket_path.startswith("s3://"):
-            self.logger.warning(f"Invalid S3 path: {s3_bucket_path}")
+        if not s3_bucket_path_parts:
+            self.logger.warning(f"Invalid S3 path: {file_location}")
             return None
 
-        path = s3_bucket_path[5:]  # Remove "s3://"
-        parts = path.split("/", 1)
-
-        if len(parts) != 2:
-            self.logger.warning(f"Invalid S3 path format: {s3_bucket_path}")
-            return None
-
-        s3_bucket = parts[0]
-        s3_key = parts[1]
-
-        if not s3_bucket or not s3_key:
-            self.logger.warning(f"Item missing S3 bucket or key information")
-            return None
+        s3_bucket, s3_key = s3_bucket_path_parts
 
         # Get metadata from S3
-        s3_values = self.get_s3_values(s3_bucket, s3_key)
+        s3_head = self.s3_service.get_head_object(s3_bucket, s3_key)
 
-        if not s3_values or not s3_values.get('ContentLength'):
+        if not s3_head:
             self.logger.warning(f"Could not retrieve S3 metadata for item {s3_key}")
             return None
 
-        updated_fields = {
-            'FileSize': s3_values.get('ContentLength'),
-            'S3Key': s3_key,
-            'S3VersionID': s3_values.get('VersionId')
-        }
+        content_length = s3_head.get('ContentLength')
+        version_id = s3_head.get('VersionId')
 
-        return updated_fields
+        updated_fields = {}
 
+        if 'FileSize' not in entry:
+            if content_length is None:
+                raise ValueError(f"FileSize missing in both DynamoDB and S3 for item {s3_key}")
+            updated_fields['FileSize'] = content_length
+
+        if 'S3Key' not in entry:
+            updated_fields['S3Key'] = s3_key
+
+        if 'S3VersionID' not in entry:
+            if version_id is None:
+                raise ValueError(f"S3VersionID missing in both DynamoDB and S3 for item {s3_key}")
+            updated_fields['S3VersionID'] = version_id
+
+        return updated_fields if updated_fields else None
 
 def setup_logging():
     importlib.reload(logging)
@@ -167,7 +172,7 @@ if __name__ == "__main__":
     )
 
     entries_to_process = list(
-        migration.dynamo_service.stream_whole_table(migration.target_table)
+        migration.dynamo_service.scan_table(migration.target_table)
     )
 
     update_functions = migration.main(entries=entries_to_process)
