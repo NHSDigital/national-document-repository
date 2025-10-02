@@ -41,7 +41,6 @@ class BulkUploadMetadataProcessorService:
 
         self.temp_download_dir = tempfile.mkdtemp()
 
-        self.corrections = {}
         self.practice_directory = metadata_formatter_service.practice_directory
         self.file_key = (
             f"{metadata_formatter_service.practice_directory}/{METADATA_FILENAME}"
@@ -106,26 +105,6 @@ class BulkUploadMetadataProcessorService:
             )
             for (key, value) in patients.items()
         ]
-
-    # def process_metadata_row(self, row: dict, patients: dict) -> None:
-    #     file_metadata = MetadataFile.model_validate(row)
-    #     nhs_number, ods_code = self.extract_patient_info(file_metadata)
-    #     patient_record_key = (nhs_number, ods_code)
-    #
-    #     try:
-    #         file_metadata.stored_file_name = self.validate_and_correct_filename(
-    #             file_metadata
-    #         )
-    #     except InvalidFileNameException as error:
-    #         self.handle_invalid_filename(
-    #             file_metadata, error, patient_record_key, patients
-    #         )
-    #         return
-    #
-    #     if patient_record_key not in patients:
-    #         patients[patient_record_key] = [file_metadata]
-    #     else:
-    #         patients[patient_record_key].append(file_metadata)
 
     def process_metadata_row(self, row: dict, patients: dict[tuple[str, str], list[SqsMetadata]]) -> None:
         file_metadata = MetadataFile.model_validate(row)

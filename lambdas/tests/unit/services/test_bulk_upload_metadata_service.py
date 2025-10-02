@@ -1,5 +1,6 @@
 import tempfile
 from unittest.mock import call
+from pathlib import Path
 
 import pytest
 from botocore.exceptions import ClientError
@@ -18,17 +19,17 @@ from tests.unit.helpers.data.bulk_upload.test_data import (
 )
 from utils.exceptions import BulkUploadMetadataException
 
-METADATA_FILE_DIR = "tests/unit/helpers/data/bulk_upload"
-MOCK_METADATA_CSV = f"{METADATA_FILE_DIR}/metadata.csv"
-MOCK_DUPLICATE_ODS_METADATA_CSV = (
-    f"{METADATA_FILE_DIR}/metadata_with_duplicates_different_ods.csv"
-)
+BASE_DIR = Path(__file__).resolve().parent.parent / "helpers" / "data" / "bulk_upload"
+
+MOCK_METADATA_CSV = str(BASE_DIR / "metadata.csv")
+MOCK_DUPLICATE_ODS_METADATA_CSV = str(BASE_DIR / "metadata_with_duplicates_different_ods.csv")
 MOCK_INVALID_METADATA_CSV_FILES = [
-    f"{METADATA_FILE_DIR}/metadata_invalid.csv",
-    f"{METADATA_FILE_DIR}/metadata_invalid_empty_nhs_number.csv",
-    f"{METADATA_FILE_DIR}/metadata_invalid_unexpected_comma.csv",
+    str(BASE_DIR / "metadata_invalid.csv"),
+    str(BASE_DIR / "metadata_invalid_empty_nhs_number.csv"),
+    str(BASE_DIR / "metadata_invalid_unexpected_comma.csv"),
 ]
-MOCK_TEMP_FOLDER = "tests/unit/helpers/data/bulk_upload"
+MOCK_TEMP_FOLDER = str(BASE_DIR)
+
 
 
 def test_process_metadata_send_metadata_to_sqs_queue(
@@ -127,9 +128,8 @@ def test_process_metadata_raise_validation_error_when_gp_practice_code_is_missin
     mock_download_metadata_from_s3,
     metadata_service,
 ):
-    mock_download_metadata_from_s3.return_value = (
-        f"{METADATA_FILE_DIR}/metadata_invalid_empty_gp_practice_code.csv"
-    )
+    mock_download_metadata_from_s3.return_value = str(BASE_DIR / "metadata_invalid_empty_gp_practice_code.csv")
+
     expected_error_log = (
         "Failed to parse metadata.csv: 1 validation error for MetadataFile\n"
         + "GP-PRACTICE-CODE\n  missing GP-PRACTICE-CODE for patient 1234567890"

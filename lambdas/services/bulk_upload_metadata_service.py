@@ -16,6 +16,7 @@ from models.staging_metadata import (
 )
 from services.base.s3_service import S3Service
 from services.base.sqs_service import SQSService
+from services.bulk_upload_metadata_processor_service import BulkUploadMetadataProcessorService
 from utils.audit_logging_setup import LoggingService
 from utils.exceptions import BulkUploadMetadataException
 
@@ -80,12 +81,11 @@ class BulkUploadMetadataService:
 
         patients = {}
         with open(
-            csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
-        ) as csv_file_handler:
+                csv_file_path, mode="r", encoding="utf-8-sig", errors="replace") as csv_file_handler:
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
             for row in csv_reader:
                 file_metadata = MetadataFile.model_validate(row)
-                nhs_number = row[NHS_NUMBER_FIELD_NAME]
+                nhs_number = row[NHS_NUMBER_FIELD_NAME] or "0000000000"
                 ods_code = row[ODS_CODE]
                 key = (nhs_number, ods_code)
                 if key not in patients:
@@ -96,7 +96,11 @@ class BulkUploadMetadataService:
         return [
             StagingSqsMetadata(
                 nhs_number=nhs_number,
-                files=patients[nhs_number, ods_code],
+                files=[
+                    BulkUploadMetadataProcessorService.convert_to_sqs_metadata(f, f.file_path)
+                    for f in patients[nhs_number, ods_code]
+                ],
+                retries=0,
             )
             for (nhs_number, ods_code) in patients
         ]

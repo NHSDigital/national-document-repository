@@ -6,7 +6,7 @@ import pytest
 from botocore.exceptions import ClientError
 from enums.upload_status import UploadStatus
 from freezegun import freeze_time
-from models.staging_metadata import METADATA_FILENAME, MetadataFile
+from models.staging_metadata import METADATA_FILENAME, MetadataFile, SqsMetadata
 from services.bulk_upload_metadata_preprocessor_service import MetadataPreprocessorService
 from services.bulk_upload_metadata_processor_service import (
     BulkUploadMetadataProcessorService,
@@ -37,7 +37,7 @@ SERVICE_PATH = "services.bulk_upload_metadata_processor_service"
 
 class MockMetadataPreprocessorService(MetadataPreprocessorService):
     def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
-        return "corrected.pdf"
+        return original_filename
 
 
 @pytest.fixture(autouse=True)
@@ -136,7 +136,7 @@ def test_process_metadata_send_metadata_to_sqs_queue(
     ]
     mocker.patch.object(
         test_service,
-        "csv_to_staging_metadata",
+        "csv_to_sqs_metadata",
         return_value=fake_metadata,
     )
 
@@ -183,7 +183,7 @@ def test_process_metadata_raise_validation_error_when_metadata_csv_is_invalid(
 
     mocker.patch.object(
         test_service,
-        "csv_to_staging_metadata",
+        "csv_to_sqs_metadata",
         side_effect=BulkUploadMetadataException("validation error"),
     )
 
@@ -210,7 +210,7 @@ def test_process_metadata_raise_validation_error_when_gp_practice_code_is_missin
 
     mocker.patch.object(
         test_service,
-        "csv_to_staging_metadata",
+        "csv_to_sqs_metadata",
         side_effect=BulkUploadMetadataException(expected_error_log),
     )
 
@@ -236,7 +236,7 @@ def test_process_metadata_raise_client_error_when_failed_to_send_message_to_sqs(
     dummy_staging_metadata.nhs_number = "1234567890"
     mocker.patch.object(
         test_service,
-        "csv_to_staging_metadata",
+        "csv_to_sqs_metadata",
         return_value=[dummy_staging_metadata],
     )
 
@@ -297,8 +297,16 @@ def test_download_metadata_from_s3_raise_error_when_failed_to_download(
     with pytest.raises(ClientError):
         test_service.download_metadata_from_s3()
 
+class TestMetadataPreprocessorService(MetadataPreprocessorService):
+    def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
+        return original_filename
+@pytest.fixture
+def bulk_upload_service():
+    return BulkUploadMetadataProcessorService(
+        TestMetadataPreprocessorService(practice_directory="test_practice_directory")
+    )
 
-def test_duplicates_csv_to_staging_metadata(mocker, test_service):
+def test_duplicates_csv_to_sqs_metadata(mocker,bulk_upload_service):
     header = (
         "FILEPATH,PAGE COUNT,GP-PRACTICE-CODE,NHS-NO,SECTION,SUB-SECTION,"
         "SCAN-DATE,SCAN-ID,USER-ID,UPLOAD"
@@ -342,7 +350,7 @@ def test_duplicates_csv_to_staging_metadata(mocker, test_service):
     mocker.patch("builtins.open", mocker.mock_open(read_data=fake_csv_data))
     mocker.patch("os.path.isfile", return_value=True)
 
-    actual = test_service.csv_to_sqs_metadata("fake/path.csv")
+    actual = bulk_upload_service.csv_to_sqs_metadata("fake/path.csv")
     expected = EXPECTED_PARSED_METADATA_2
     assert actual == expected
 
@@ -399,7 +407,7 @@ def test_clear_temp_storage(set_env, mocker, mock_tempfile, test_service):
     mocked_rm.assert_called_once_with(test_service.temp_download_dir)
 
 
-def test_process_metadata_row_success(mocker, test_service):
+def test_process_metadata_row_success(mocker):
     patients = {}
     row = {
         "FILEPATH": "/some/path/file.pdf",
@@ -414,31 +422,46 @@ def test_process_metadata_row_success(mocker, test_service):
         "UPLOAD": "01/01/2023",
     }
 
-    mock_metadata = mocker.Mock()
+    metadata = MetadataFile.model_validate(row)
+
     mocker.patch(
-        f"{SERVICE_PATH}.MetadataFile.model_validate",
-        return_value=mock_metadata,
+        "services.bulk_upload_metadata_processor_service.MetadataFile.model_validate",
+        return_value=metadata,
     )
 
-    mock_metadata.nhs_number = "1234567890"
-    mock_metadata.gp_practice_code = "Y12345"
-    mock_metadata.file_path = "/some/path/file.pdf"
+    class TestPreprocessor(MetadataPreprocessorService):
+        def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
+            return "corrected.pdf"
 
-    test_service.process_metadata_row(row, patients)
+    service = BulkUploadMetadataProcessorService(
+        TestPreprocessor(practice_directory="test_practice_directory")
+    )
+
+    service.process_metadata_row(row, patients)
 
     key = ("1234567890", "Y12345")
     assert key in patients
-    assert patients[key] == [mock_metadata]
-    assert test_service.corrections == {
-        "/some/path/file.pdf": "corrected.pdf"
-    }
+
+    expected_sqs_metadata = SqsMetadata.model_validate({
+        "FILEPATH": "/some/path/file.pdf",
+        "NHS-NO": "1234567890",
+        "GP-PRACTICE-CODE": "Y12345",
+        "SCAN-DATE": "01/01/2023",
+        "STORED-FILE-NAME": "corrected.pdf",
+    })
+
+    assert patients[key] == [expected_sqs_metadata]
 
 
-def test_process_metadata_row_adds_to_existing_entry(
-    mocker, test_service
-):
+def test_process_metadata_row_adds_to_existing_entry(mocker):
     key = ("1234567890", "Y12345")
-    mock_metadata_existing = mocker.Mock()
+    mock_metadata_existing = SqsMetadata.model_validate({
+        "FILEPATH": "/some/path/file1.pdf",
+        "NHS-NO": "1234567890",
+        "GP-PRACTICE-CODE": "Y12345",
+        "SCAN-DATE": "01/01/2023",
+        "STORED-FILE-NAME": "/some/path/file1.pdf",
+    })
     patients = {key: [mock_metadata_existing]}
 
     row = {
@@ -454,25 +477,29 @@ def test_process_metadata_row_adds_to_existing_entry(
         "UPLOAD": "02/01/2023",
     }
 
-    mock_metadata = mocker.Mock()
-
-    mock_metadata.nhs_number = "1234567890"
-    mock_metadata.gp_practice_code = "Y12345"
-    mock_metadata.file_path = "/some/path/file2.pdf"
+    # Return a real MetadataFile
+    metadata = MetadataFile.model_validate(row)
 
     mocker.patch(
         f"{SERVICE_PATH}.MetadataFile.model_validate",
-        return_value=mock_metadata,
+        return_value=metadata,
     )
 
-    test_service.process_metadata_row(row, patients)
+    preprocessor = mocker.Mock(practice_directory="test_practice_directory")
+    preprocessor.validate_record_filename.return_value = "/some/path/file2.pdf"
+
+    service = BulkUploadMetadataProcessorService(
+        metadata_formatter_service=preprocessor
+    )
+
+    service.process_metadata_row(row, patients)
 
     assert len(patients[key]) == 2
-    assert patients[key][1] == mock_metadata
-    assert (
-            test_service.corrections["/some/path/file2.pdf"]
-            == "corrected.pdf"
-    )
+    assert patients[key][0] == mock_metadata_existing
+    assert isinstance(patients[key][1], SqsMetadata)
+    assert patients[key][1].file_path == "/some/path/file2.pdf"
+    assert patients[key][1].stored_file_name == "/some/path/file2.pdf"
+
 
 
 def test_extract_patient_info(test_service, base_metadata_file):
@@ -493,7 +520,9 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
     fake_file = mocker.Mock()
     patients = {key: [fake_file]}
 
-    mock_staging_metadata = mocker.patch(f"{SERVICE_PATH}.StagingSQSMetadata")
+    mock_staging_metadata = mocker.patch(
+        "services.bulk_upload_metadata_processor_service.StagingSqsMetadata"
+    )
 
     mock_write = mocker.patch.object(
         test_service.dynamo_repository, "write_report_upload_to_dynamo"
@@ -513,3 +542,4 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
         UploadStatus.FAILED,
         str(error),
     )
+
