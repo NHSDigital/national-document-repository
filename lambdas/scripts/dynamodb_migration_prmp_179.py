@@ -51,6 +51,13 @@ class FileSizeMigration:
         self.logger.info(f"Running {label} migration")
 
         for index, entry in enumerate(entries, start=1):
+
+            if not isinstance(entry, dict):
+                self.logger.warning(
+                    f"[{label}] Skipping item {index}: Expected dict, found {type(entry).__name__}. Value: {entry}"
+                )
+                continue
+
             item_id = entry.get("ID")
             self.logger.info(
                 f"[{label}] Processing item {index} (ID: {item_id})"
