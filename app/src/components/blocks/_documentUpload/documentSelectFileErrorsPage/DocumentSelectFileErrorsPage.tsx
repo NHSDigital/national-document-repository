@@ -1,7 +1,10 @@
-import { BackLink } from 'nhsuk-react-components';
+import { BackLink, ErrorMessage } from 'nhsuk-react-components';
 import { useLocation } from 'react-router-dom';
 import { UploadDocument } from '../../../../types/pages/UploadDocumentsPage/types';
-import { fileUploadErrorMessages, UPLOAD_FILE_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
+import {
+    fileUploadErrorMessages,
+    UPLOAD_FILE_ERROR_TYPE,
+} from '../../../../helpers/utils/fileUploadErrorMessages';
 import { JSX } from 'react';
 import { routes } from '../../../../types/generic/routes';
 
@@ -38,11 +41,9 @@ const DocumentSelectFileErrorsPage = (): JSX.Element => {
             <h2 className="nhsuk-heading-m">Files with problems</h2>
 
             {failedDocuments.map((doc) => (
-                <div key={doc.id} style={{ marginBottom: '1rem' }}>
-                    <p style={{ color: 'red', fontWeight: 'bold', marginBottom: 0 }}>
-                        {doc.file.name}
-                    </p>
-                    <p style={{ marginTop: 0 }}>{fileErrorText(doc.error!)}</p>
+                <div key={doc.id}>
+                    <ErrorMessage className="selected-file-error">{doc.file.name}</ErrorMessage>
+                    <p>{fileErrorText(doc.error!)}</p>
                 </div>
             ))}
 
