@@ -284,7 +284,7 @@ describe('GP Workflow: Upload Lloyd George record when user is GP admin and pati
         )
         
 
-        it.skip(
+        it(
             `User's upload journey is stopped if an infected file is detected`,
             { tags: 'regression' },
             () => {
@@ -312,8 +312,8 @@ describe('GP Workflow: Upload Lloyd George record when user is GP admin and pati
                     uploadedFileNames.LG[singleFileUsecaseIndex],
                 );
                 cy.getByTestId('form-submit-button').click();
-                cy.url().should('contain', lloydGeorgeInfectedUrl);
-                cy.get('#maincontnet').should('contain', 'We couldn\'t upload your files because we found a virus');
+                cy.url({timeout: 25000}).should('contain', lloydGeorgeInfectedUrl);
+                cy.get('#maincontent').should('contain', 'We couldn\'t upload your files because we found a virus');
                 cy.getByTestId('go-to-home-button').should('exist');
                 cy.getByTestId('go-to-home-button').click();
                 cy.url().should('eq', baseUrl + routes.HOME);
