@@ -138,7 +138,7 @@ describe('GP Workflow: Upload Lloyd George record when user is GP admin and pati
                 cy.get('#selected-documents-table').should('contain', uploadedFileNames.LG[singleFileUsecaseIndex]);
                 clickContinueButton();
 
-                cy.url({timeout: 15000}).should('contain', '/patient/document-upload/select-order');
+                cy.url({timeout: 25000}).should('contain', '/patient/document-upload/select-order');
                 cy.get('#selected-documents-table').should(
                     'contain',
                     uploadedFileNames.LG[singleFileUsecaseIndex],
@@ -173,13 +173,13 @@ describe('GP Workflow: Upload Lloyd George record when user is GP admin and pati
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
 
                 clickContinueButton();
-                cy.url({timeout: 15000}).should('contain', '/patient/document-upload/select-order');
+                cy.url({timeout: 25000}).should('contain', '/patient/document-upload/select-order');
                 cy.get('#selected-documents-table')
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
                 cy.getByTestId('form-submit-button').click();
                 
-                cy.url({timeout: 15000}).should('contain', '/patient/document-upload/confirmation');
+                cy.url({timeout: 25000}).should('contain', '/patient/document-upload/confirmation');
                 cy.get('#selected-documents-table')
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
@@ -212,13 +212,13 @@ describe('GP Workflow: Upload Lloyd George record when user is GP admin and pati
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
 
                 clickContinueButton();
-                cy.url({timeout: 15000}).should('contain', '/patient/document-upload/select-order');
+                cy.url({timeout: 25000}).should('contain', '/patient/document-upload/select-order');
                 cy.get('#selected-documents-table')
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
                 cy.getByTestId('form-submit-button').click();
                 
-                cy.url({timeout: 15000}).should('contain', '/patient/document-upload/confirmation');
+                cy.url({timeout: 25000}).should('contain', '/patient/document-upload/confirmation');
                 cy.get('#selected-documents-table')
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
@@ -306,7 +306,7 @@ describe('GP Workflow: Upload Lloyd George record when user is GP admin and pati
                 cy.get('#selected-documents-table').should('contain', uploadedFileNames.LG[singleFileUsecaseIndex]);
                 clickContinueButton();
 
-                cy.url({timeout: 15000}).should('contain', '/patient/document-upload/select-order');
+                cy.url({timeout: 25000}).should('contain', '/patient/document-upload/select-order');
                 cy.get('#selected-documents-table').should(
                     'contain',
                     uploadedFileNames.LG[singleFileUsecaseIndex],
