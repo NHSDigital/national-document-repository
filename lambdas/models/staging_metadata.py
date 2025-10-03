@@ -50,8 +50,8 @@ class MetadataFile(MetadataBase):
     page_count: str = Field(alias="PAGE COUNT")
     section: str
     sub_section: Optional[str]
-    scan_id: str
-    user_id: str
+    scan_id: Optional[str]
+    user_id: Optional[str]
     upload: str
 
 
