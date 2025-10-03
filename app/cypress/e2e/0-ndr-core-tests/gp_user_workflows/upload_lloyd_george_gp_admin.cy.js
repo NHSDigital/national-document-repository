@@ -316,74 +316,7 @@ describe('GP Workflow: Upload Lloyd George record when user is GP admin and pati
                 cy.get('#maincontent').should('contain', 'We couldn\'t upload your files because we found a virus');
                 cy.getByTestId('go-to-home-button').should('exist');
                 cy.getByTestId('go-to-home-button').click();
-                cy.url().should('eq', baseUrl + routes.HOME);
-
-
-            },
-        );
-
-        it.skip(
-            `User is shown an error screen when the upload complete endpoint fails to complete`,
-            { tags: 'regression' },
-            () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler).as(
-                    'doc_upload',
-                );
-
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                        delay: 1500,
-                    });
-                }).as('s3_upload');
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('virus_scan');
-
-                cy.intercept('POST', '**/UploadConfirm*', (req) => {
-                    req.reply({
-                        statusCode: 500,
-                    });
-                }).as('upload_confirm');
-
-                cy.getByTestId('button-input').selectFile(
-                    uploadedFilePathNames.LG[singleFileUsecaseIndex],
-                    { force: true },
-                );
-
-                clickUploadButton();
-                cy.wait(['@doc_upload', '@s3_upload']);
-
-                cy.getByTestId('lloyd-george-upload-failed-panel').should('exist');
-                cy.getByTestId('lloyd-george-upload-failed-panel').should(
-                    'include.text',
-                    'One or more files failed to upload, which prevented the full record being uploaded',
-                );
-
-                cy.getByTestId('retry-upload-btn').should('exist');
-                cy.getByTestId('retry-upload-btn').click();
-                cy.url().should('eq', baseUrl + lloydGeorgeUploadUrl);
-            },
-        );
-        it.skip(
-            `It navigate to error page when uploading Lloyd George record is in progress for the patient`,
-            { tags: 'regression' },
-            () => {
-                const stubbedResponse = {
-                    statusCode: 423,
-                    data: { err_code: 'LGL_423' },
-                };
-
-                cy.intercept('POST', '**/DocumentReference**', stubbedResponse);
-
-                cy.getByTestId('button-input').selectFile(
-                    uploadedFilePathNames.LG[singleFileUsecaseIndex],
-                    { force: true },
-                );
-                clickUploadButton();
-                cy.contains('Sorry, there is a problem with the service').should('be.visible');
+                cy.url().should('eq', baseUrl + routes.home);
             },
         );
     });
