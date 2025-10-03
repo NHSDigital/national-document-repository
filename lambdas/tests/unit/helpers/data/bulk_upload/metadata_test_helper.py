@@ -1,5 +1,7 @@
 import os
+
 from models.staging_metadata import MetadataFile, SqsMetadata
+
 
 def convert_metadata_file_to_sqs_metadata(metadata_file: MetadataFile) -> SqsMetadata:
     return SqsMetadata(

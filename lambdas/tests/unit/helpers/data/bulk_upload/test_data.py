@@ -1,16 +1,18 @@
 import os
 
+from freezegun import freeze_time
+
 from enums.snomed_codes import SnomedCodes
 from enums.virus_scan_result import VirusScanResult
-from freezegun import freeze_time
+from lambdas.enums.nrl_sqs_upload import NrlActionTypes
 from models.document_reference import DocumentReference
 from models.sqs.nrl_sqs_message import NrlSqsMessage
 from models.sqs.pdf_stitching_sqs_message import PdfStitchingSqsMessage
-from models.staging_metadata import MetadataFile, StagingSqsMetadata, SqsMetadata
+from models.staging_metadata import MetadataFile, SqsMetadata, StagingSqsMetadata
+from services.bulk_upload_metadata_processor_service import (
+    BulkUploadMetadataProcessorService,
+)
 from tests.unit.conftest import MOCK_LG_BUCKET, TEST_CURRENT_GP_ODS, TEST_UUID
-from services.bulk_upload_metadata_processor_service import BulkUploadMetadataProcessorService
-
-from lambdas.enums.nrl_sqs_upload import NrlActionTypes
 
 convert_to_sqs_metadata = BulkUploadMetadataProcessorService.convert_to_sqs_metadata
 
@@ -55,9 +57,9 @@ patient_2_file_1 = sample_metadata_model.model_copy(
 )
 patient_2 = StagingSqsMetadata(
     nhs_number="123456789",
-    files=[
-        convert_to_sqs_metadata(patient_2_file_1, patient_2_file_1.file_path)],
-    retries=0)
+    files=[convert_to_sqs_metadata(patient_2_file_1, patient_2_file_1.file_path)],
+    retries=0,
+)
 MOCK_METADATA = [patient_1, patient_2]
 
 patient_1_file_1_with_temp_nhs_number = patient_1_file_1.model_copy(
@@ -111,9 +113,13 @@ patient_1_with_temp_nhs_number = StagingSqsMetadata(
     nhs_number="1234567890",
     files=[
         convert_to_sqs_metadata(
-            patient_1_file_1_with_temp_nhs_number,patient_1_file_1_with_temp_nhs_number.file_path),
+            patient_1_file_1_with_temp_nhs_number,
+            patient_1_file_1_with_temp_nhs_number.file_path,
+        ),
         convert_to_sqs_metadata(
-            patient_1_file_2_with_temp_nhs_number,patient_1_file_2_with_temp_nhs_number.file_path),
+            patient_1_file_2_with_temp_nhs_number,
+            patient_1_file_2_with_temp_nhs_number.file_path,
+        ),
     ],
 )
 
@@ -121,9 +127,13 @@ patient_1_with_temp_nhs_number_different_ods_code = StagingSqsMetadata(
     nhs_number="1234567890",
     files=[
         convert_to_sqs_metadata(
-            patient_1_file_1_with_temp_nhs_number_different_ods_code,patient_1_file_1_with_temp_nhs_number_different_ods_code.file_path),
+            patient_1_file_1_with_temp_nhs_number_different_ods_code,
+            patient_1_file_1_with_temp_nhs_number_different_ods_code.file_path,
+        ),
         convert_to_sqs_metadata(
-            patient_1_file_2_with_temp_nhs_number_different_ods_code,patient_1_file_2_with_temp_nhs_number_different_ods_code.file_path),
+            patient_1_file_2_with_temp_nhs_number_different_ods_code,
+            patient_1_file_2_with_temp_nhs_number_different_ods_code.file_path,
+        ),
     ],
 )
 
@@ -131,7 +141,9 @@ patient_2_with_short_nhs_number = StagingSqsMetadata(
     nhs_number="123456789",
     files=[
         convert_to_sqs_metadata(
-            patient_2_file_1_with_short_nhs_number,patient_2_file_1_with_short_nhs_number.file_path),
+            patient_2_file_1_with_short_nhs_number,
+            patient_2_file_1_with_short_nhs_number.file_path,
+        ),
     ],
 )
 
@@ -139,7 +151,9 @@ patient_2_with_short_nhs_number_different_ods_code = StagingSqsMetadata(
     nhs_number="123456789",
     files=[
         convert_to_sqs_metadata(
-            patient_2_file_1_with_short_nhs_number_different_ods_code,patient_2_file_1_with_short_nhs_number_different_ods_code.file_path),
+            patient_2_file_1_with_short_nhs_number_different_ods_code,
+            patient_2_file_1_with_short_nhs_number_different_ods_code.file_path,
+        ),
     ],
 )
 
@@ -147,7 +161,9 @@ patient_3_with_missing_nhs_number = StagingSqsMetadata(
     nhs_number="0000000000",
     files=[
         convert_to_sqs_metadata(
-            patient_3_with_missing_nhs_number_metadata_file,patient_3_with_missing_nhs_number_metadata_file.file_path),
+            patient_3_with_missing_nhs_number_metadata_file,
+            patient_3_with_missing_nhs_number_metadata_file.file_path,
+        ),
     ],
 )
 
@@ -156,7 +172,8 @@ patient_3_with_missing_nhs_number_different_ods_code = StagingSqsMetadata(
     files=[
         convert_to_sqs_metadata(
             patient_3_with_missing_nhs_number_metadata_file_different_ods_code,
-            patient_3_with_missing_nhs_number_metadata_file_different_ods_code.file_path),
+            patient_3_with_missing_nhs_number_metadata_file_different_ods_code.file_path,
+        ),
     ],
 )
 
@@ -195,7 +212,7 @@ EXPECTED_SQS_MSG_FOR_PATIENT_0000000000 = readfile(
 
 
 def make_valid_lg_file_names(
-        total_number: int, nhs_number: str = "9000000009", patient_name: str = "Jane Smith"
+    total_number: int, nhs_number: str = "9000000009", patient_name: str = "Jane Smith"
 ):
     return [
         f"{i}of{total_number}_Lloyd_George_Record_[{patient_name}]_[{nhs_number}]_[22-10-2010].pdf"
@@ -208,7 +225,7 @@ def make_s3_file_paths(file_names: list[str], nhs_number: str = "9000000009"):
 
 
 def build_test_staging_metadata_from_patient_name(
-        patient_name: str, nhs_number: str = "9000000009"
+    patient_name: str, nhs_number: str = "9000000009"
 ) -> StagingSqsMetadata:
     file_names = make_valid_lg_file_names(
         total_number=3, nhs_number=nhs_number, patient_name=patient_name
@@ -254,7 +271,7 @@ def build_test_nrl_sqs_fifo_message(nhs_number: str, action: str) -> NrlSqsMessa
 
 
 def build_test_pdf_stitching_sqs_message(
-        nhs_number: str, snomed_code_doc_type
+    nhs_number: str, snomed_code_doc_type
 ) -> PdfStitchingSqsMessage:
     message_body = {
         "nhs_number": nhs_number,

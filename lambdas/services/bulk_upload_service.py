@@ -5,13 +5,14 @@ from datetime import datetime
 
 import pydantic
 from botocore.exceptions import ClientError
+
 from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCodes
 from enums.upload_status import UploadStatus
 from enums.virus_scan_result import VirusScanResult
 from models.document_reference import DocumentReference
 from models.sqs.pdf_stitching_sqs_message import PdfStitchingSqsMessage
-from models.staging_metadata import StagingSqsMetadata, SqsMetadata
+from models.staging_metadata import SqsMetadata, StagingSqsMetadata
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
 )
@@ -417,8 +418,6 @@ class BulkUploadService:
 
     @staticmethod
     def strip_leading_slash(filepath: str) -> str:
-        # Handle the filepaths irregularity in the given example of metadata.csv,
-        # where some filepaths begin with '/' and some does not.
         return filepath.lstrip("/")
 
     @staticmethod

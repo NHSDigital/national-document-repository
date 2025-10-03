@@ -1,4 +1,5 @@
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 from pydantic_core import PydanticCustomError
 
@@ -53,6 +54,7 @@ class MetadataFile(MetadataBase):
     user_id: str
     upload: str
 
+
 class StagingSqsMetadata(BaseModel):
     model_config = ConfigDict(validate_by_name=True)
 
@@ -67,4 +69,3 @@ class StagingSqsMetadata(BaseModel):
             return nhs_number
 
         return NHS_NUMBER_PLACEHOLDER
-

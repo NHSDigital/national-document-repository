@@ -1,12 +1,13 @@
 import tempfile
-from unittest.mock import call
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from botocore.exceptions import ClientError
 from freezegun import freeze_time
-from models.staging_metadata import METADATA_FILENAME
 from pydantic import ValidationError
+
+from models.staging_metadata import METADATA_FILENAME
 from services.bulk_upload_metadata_service import BulkUploadMetadataService
 from tests.unit.conftest import MOCK_LG_METADATA_SQS_QUEUE, MOCK_STAGING_STORE_BUCKET
 from tests.unit.helpers.data.bulk_upload.test_data import (
@@ -22,14 +23,15 @@ from utils.exceptions import BulkUploadMetadataException
 BASE_DIR = Path(__file__).resolve().parent.parent / "helpers" / "data" / "bulk_upload"
 
 MOCK_METADATA_CSV = str(BASE_DIR / "metadata.csv")
-MOCK_DUPLICATE_ODS_METADATA_CSV = str(BASE_DIR / "metadata_with_duplicates_different_ods.csv")
+MOCK_DUPLICATE_ODS_METADATA_CSV = str(
+    BASE_DIR / "metadata_with_duplicates_different_ods.csv"
+)
 MOCK_INVALID_METADATA_CSV_FILES = [
     str(BASE_DIR / "metadata_invalid.csv"),
     str(BASE_DIR / "metadata_invalid_empty_nhs_number.csv"),
     str(BASE_DIR / "metadata_invalid_unexpected_comma.csv"),
 ]
 MOCK_TEMP_FOLDER = str(BASE_DIR)
-
 
 
 def test_process_metadata_send_metadata_to_sqs_queue(
@@ -128,7 +130,9 @@ def test_process_metadata_raise_validation_error_when_gp_practice_code_is_missin
     mock_download_metadata_from_s3,
     metadata_service,
 ):
-    mock_download_metadata_from_s3.return_value = str(BASE_DIR / "metadata_invalid_empty_gp_practice_code.csv")
+    mock_download_metadata_from_s3.return_value = str(
+        BASE_DIR / "metadata_invalid_empty_gp_practice_code.csv"
+    )
 
     expected_error_log = (
         "Failed to parse metadata.csv: 1 validation error for MetadataFile\n"
@@ -212,7 +216,9 @@ def test_csv_to_staging_metadata(set_env, metadata_service):
 
 
 def test_duplicates_csv_to_staging_metadata(set_env, metadata_service):
-    actual = metadata_service.csv_to_staging_sqs_metadata(MOCK_DUPLICATE_ODS_METADATA_CSV)
+    actual = metadata_service.csv_to_staging_sqs_metadata(
+        MOCK_DUPLICATE_ODS_METADATA_CSV
+    )
     expected = EXPECTED_PARSED_METADATA_2
     assert actual == expected
 

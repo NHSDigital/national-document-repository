@@ -8,6 +8,7 @@ from typing import Iterable
 
 import pydantic
 from botocore.exceptions import ClientError
+
 from models.staging_metadata import (
     NHS_NUMBER_FIELD_NAME,
     ODS_CODE,
@@ -16,7 +17,9 @@ from models.staging_metadata import (
 )
 from services.base.s3_service import S3Service
 from services.base.sqs_service import SQSService
-from services.bulk_upload_metadata_processor_service import BulkUploadMetadataProcessorService
+from services.bulk_upload_metadata_processor_service import (
+    BulkUploadMetadataProcessorService,
+)
 from utils.audit_logging_setup import LoggingService
 from utils.exceptions import BulkUploadMetadataException
 
@@ -81,7 +84,8 @@ class BulkUploadMetadataService:
 
         patients = {}
         with open(
-                csv_file_path, mode="r", encoding="utf-8-sig", errors="replace") as csv_file_handler:
+            csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
+        ) as csv_file_handler:
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
             for row in csv_reader:
                 file_metadata = MetadataFile.model_validate(row)
@@ -97,7 +101,9 @@ class BulkUploadMetadataService:
             StagingSqsMetadata(
                 nhs_number=nhs_number,
                 files=[
-                    BulkUploadMetadataProcessorService.convert_to_sqs_metadata(f, f.file_path)
+                    BulkUploadMetadataProcessorService.convert_to_sqs_metadata(
+                        f, f.file_path
+                    )
                     for f in patients[nhs_number, ods_code]
                 ],
                 retries=0,

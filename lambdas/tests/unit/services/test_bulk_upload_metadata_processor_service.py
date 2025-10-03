@@ -4,10 +4,13 @@ from unittest.mock import call
 
 import pytest
 from botocore.exceptions import ClientError
-from enums.upload_status import UploadStatus
 from freezegun import freeze_time
+
+from enums.upload_status import UploadStatus
 from models.staging_metadata import METADATA_FILENAME, MetadataFile, SqsMetadata
-from services.bulk_upload_metadata_preprocessor_service import MetadataPreprocessorService
+from services.bulk_upload_metadata_preprocessor_service import (
+    MetadataPreprocessorService,
+)
 from services.bulk_upload_metadata_processor_service import (
     BulkUploadMetadataProcessorService,
 )
@@ -35,6 +38,7 @@ MOCK_TEMP_FOLDER = "tests/unit/helpers/data/bulk_upload"
 
 SERVICE_PATH = "services.bulk_upload_metadata_processor_service"
 
+
 class MockMetadataPreprocessorService(MetadataPreprocessorService):
     def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
         return original_filename
@@ -45,7 +49,9 @@ class MockMetadataPreprocessorService(MetadataPreprocessorService):
 def test_service(mocker, set_env, mock_tempfile):
     mocker.patch("services.bulk_upload_metadata_processor_service.S3Service")
     mocker.patch("services.bulk_upload_metadata_processor_service.SQSService")
-    mocker.patch("services.bulk_upload_metadata_processor_service.BulkUploadDynamoRepository")
+    mocker.patch(
+        "services.bulk_upload_metadata_processor_service.BulkUploadDynamoRepository"
+    )
     service = BulkUploadMetadataProcessorService(
         MockMetadataPreprocessorService(practice_directory="test_practice_directory")
     )
@@ -123,9 +129,7 @@ def test_process_metadata_send_metadata_to_sqs_queue(
     mocker.patch.object(
         test_service.s3_service, "copy_across_bucket", return_value=None
     )
-    mocker.patch.object(
-        test_service.s3_service, "delete_object", return_value=None
-    )
+    mocker.patch.object(test_service.s3_service, "delete_object", return_value=None)
 
     mocker.patch("uuid.uuid4", return_value=fake_uuid)
 
@@ -273,9 +277,7 @@ def test_download_metadata_from_s3(mock_s3_service, test_service):
     expected_download_path = os.path.join(
         test_service.temp_download_dir, METADATA_FILENAME
     )
-    expected_file_key = (
-        f"{test_service.practice_directory}/{METADATA_FILENAME}"
-    )
+    expected_file_key = f"{test_service.practice_directory}/{METADATA_FILENAME}"
 
     mock_s3_service.download_file.assert_called_once_with(
         s3_bucket_name=test_service.staging_bucket_name,
@@ -297,16 +299,20 @@ def test_download_metadata_from_s3_raise_error_when_failed_to_download(
     with pytest.raises(ClientError):
         test_service.download_metadata_from_s3()
 
+
 class TestMetadataPreprocessorService(MetadataPreprocessorService):
     def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
         return original_filename
+
+
 @pytest.fixture
 def bulk_upload_service():
     return BulkUploadMetadataProcessorService(
         TestMetadataPreprocessorService(practice_directory="test_practice_directory")
     )
 
-def test_duplicates_csv_to_sqs_metadata(mocker,bulk_upload_service):
+
+def test_duplicates_csv_to_sqs_metadata(mocker, bulk_upload_service):
     header = (
         "FILEPATH,PAGE COUNT,GP-PRACTICE-CODE,NHS-NO,SECTION,SUB-SECTION,"
         "SCAN-DATE,SCAN-ID,USER-ID,UPLOAD"
@@ -355,9 +361,7 @@ def test_duplicates_csv_to_sqs_metadata(mocker,bulk_upload_service):
     assert actual == expected
 
 
-def test_send_metadata_to_sqs(
-    set_env, mocker, mock_sqs_service, test_service
-):
+def test_send_metadata_to_sqs(set_env, mocker, mock_sqs_service, test_service):
     mocker.patch("uuid.uuid4", return_value="123412342")
     expected_calls = [
         call(
@@ -430,7 +434,9 @@ def test_process_metadata_row_success(mocker):
     )
 
     class TestPreprocessor(MetadataPreprocessorService):
-        def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
+        def validate_record_filename(
+            self, original_filename: str, *args, **kwargs
+        ) -> str:
             return "corrected.pdf"
 
     service = BulkUploadMetadataProcessorService(
@@ -442,26 +448,30 @@ def test_process_metadata_row_success(mocker):
     key = ("1234567890", "Y12345")
     assert key in patients
 
-    expected_sqs_metadata = SqsMetadata.model_validate({
-        "FILEPATH": "/some/path/file.pdf",
-        "NHS-NO": "1234567890",
-        "GP-PRACTICE-CODE": "Y12345",
-        "SCAN-DATE": "01/01/2023",
-        "STORED-FILE-NAME": "corrected.pdf",
-    })
+    expected_sqs_metadata = SqsMetadata.model_validate(
+        {
+            "FILEPATH": "/some/path/file.pdf",
+            "NHS-NO": "1234567890",
+            "GP-PRACTICE-CODE": "Y12345",
+            "SCAN-DATE": "01/01/2023",
+            "STORED-FILE-NAME": "corrected.pdf",
+        }
+    )
 
     assert patients[key] == [expected_sqs_metadata]
 
 
 def test_process_metadata_row_adds_to_existing_entry(mocker):
     key = ("1234567890", "Y12345")
-    mock_metadata_existing = SqsMetadata.model_validate({
-        "FILEPATH": "/some/path/file1.pdf",
-        "NHS-NO": "1234567890",
-        "GP-PRACTICE-CODE": "Y12345",
-        "SCAN-DATE": "01/01/2023",
-        "STORED-FILE-NAME": "/some/path/file1.pdf",
-    })
+    mock_metadata_existing = SqsMetadata.model_validate(
+        {
+            "FILEPATH": "/some/path/file1.pdf",
+            "NHS-NO": "1234567890",
+            "GP-PRACTICE-CODE": "Y12345",
+            "SCAN-DATE": "01/01/2023",
+            "STORED-FILE-NAME": "/some/path/file1.pdf",
+        }
+    )
     patients = {key: [mock_metadata_existing]}
 
     row = {
@@ -501,11 +511,8 @@ def test_process_metadata_row_adds_to_existing_entry(mocker):
     assert patients[key][1].stored_file_name == "/some/path/file2.pdf"
 
 
-
 def test_extract_patient_info(test_service, base_metadata_file):
-    nhs_number, ods_code = test_service.extract_patient_info(
-        base_metadata_file
-    )
+    nhs_number, ods_code = test_service.extract_patient_info(base_metadata_file)
 
     assert nhs_number == "1234567890"
     assert ods_code == "Y12345"
@@ -528,9 +535,7 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
         test_service.dynamo_repository, "write_report_upload_to_dynamo"
     )
 
-    test_service.handle_invalid_filename(
-        base_metadata_file, error, key, patients
-    )
+    test_service.handle_invalid_filename(base_metadata_file, error, key, patients)
 
     mock_staging_metadata.assert_called_once_with(
         nhs_number=key[0],
@@ -542,4 +547,3 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
         UploadStatus.FAILED,
         str(error),
     )
-
