@@ -1,0 +1,37 @@
+Rotherham meeting notes 07-10-2022
+Sally Atkinson
+Tracey Holmes - contact centre manager.
+
+AL: No unattended access API for at least a year
+
+SA: Trying to streamline process as it stands, not needing individual smartcard access
+
+SA: They're hoping to automate the process of downloading from e-RS
+
+SA: Event reports come out of e-RS
+
+SA: Don't pull referral into medtech until appointment booked.
+	e-RS system logs user out every 3 minutes!
+	e-RS system - Appointmenr Slot Issues to see incoming referrals
+	Click on UBRN - Review Referral
+	(Clinician doesn't book the appointment)
+	Record Triage outcome - most likely accept and refer or return to referrer
+	Moves into Appointments for Booking list
+	Then booked in, which generates the pathway on Meditech (with a Unique pathway identifier, then the last 12 digits being the UBRN frome-RS)
+	This is the point they need to pull attachments over.
+
+//Medtech looks like an early XP app!!! Or is that a win 95/98 look feel? 
+
+SA: Pull up a list in medtech of referal status of e-RS and you can see there is no image attached
+	Open the referal click on scan select the folder with the attachments and it will attach all files in that folder
+	Will confirm uploadable file types
+	Automating document download will save 60-75%
+	Sometimes multipage documents will be stored as a file per document
+	Currently doing about 15 documents an hour on downloading/converting/saving.
+	
+	Process due to change with triaging done in meditech instead of e-RS. Trigger point for attachment download is unchanged - booking created with status of e-RS.
+	Will send flow diagrams on.
+	
+	Do not go back and add new documents to existing referrals.
+	No way to distinguish different referrals for same patient except the UBRN
+

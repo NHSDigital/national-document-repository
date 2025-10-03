@@ -4,11 +4,11 @@ import searchPatientPayload from '../../../fixtures/requests/GET_SearchPatientLG
 
 const baseUrl = Cypress.config('baseUrl');
 const lloydGeorgeViewUrl = '/patient/lloyd-george-record';
-const lloydGeorgeUploadUrl = '/patient/lloyd-george-record/upload';
-const lloydGeorgeInfectedUrl = '/patient/lloyd-george-record/upload/infected';
+const lloydGeorgeUploadUrl = '/patient/document-upload';
+const lloydGeorgeInfectedUrl = '/patient/document-upload/infected';
 
-const clickUploadButton = () => {
-    cy.get('#upload-button').click();
+const clickContinueButton = () => {
+    cy.get('#continue-button').click();
 };
 
 const testSearchPatientButton = () => {
@@ -16,40 +16,47 @@ const testSearchPatientButton = () => {
     cy.getByTestId('search-patient-btn').click();
     cy.url().should('eq', baseUrl + routes.patientSearch);
 };
-const testViewRecordButton = () => {
-    cy.getByTestId('view-record-btn').should('be.visible');
-    cy.getByTestId('view-record-btn').click();
-    cy.url().should('eq', baseUrl + lloydGeorgeViewUrl);
-};
 
 const testUploadCompletePageContent = () => {
     cy.getByTestId('upload-complete-card').should('be.visible');
-    cy.getByTestId('view-record-btn').should('be.visible');
-    cy.getByTestId('search-patient-btn').should('be.visible');
+    cy.getByTestId('search-patient-link').should('be.visible');
+    cy.getByTestId('home-btn').should('be.visible');
+    cy.getByTestId('search-patient-link').click();
 };
 
 const uploadedFilePathNames = {
     LG: [
-        'cypress/fixtures/lg-files/testy_test/1of1_Lloyd_George_Record_[Testy Test]_[0123456789]_[01-01-2011].pdf',
+        'cypress/fixtures/lg-files/paula_inkley/1of3_Lloyd_George_Record_[Paula Inkley]_[9730211914]_[30-03-2023].pdf',
         [
-            'cypress/fixtures/lg-files/testy_test/1of2_Lloyd_George_Record_[Testy Test]_[0123456789]_[01-01-2011].pdf',
-            'cypress/fixtures/lg-files/testy_test/2of2_Lloyd_George_Record_[Testy Test]_[0123456789]_[01-01-2011].pdf',
+            'cypress/fixtures/lg-files/paula_inkley/1of3_Lloyd_George_Record_[Paula Inkley]_[9730211914]_[30-03-2023].pdf',
+            'cypress/fixtures/lg-files/paula_inkley/2of3_Lloyd_George_Record_[Paula Inkley]_[9730211914]_[30-03-2023].pdf',
+        ],
+        [
+            'cypress/fixtures/lg-files/error_files/empty_file.pdf',
+            'cypress/fixtures/lg-files/error_files/invalid_file.pdf',
+            'cypress/fixtures/lg-files/error_files/password_protected.pdf',
         ],
     ],
 };
 
 const uploadedFileNames = {
     LG: [
-        '1of1_Lloyd_George_Record_[Testy Test]_[0123456789]_[01-01-2011].pdf',
+        '1of3_Lloyd_George_Record_[Paula Inkley]_[9730211914]_[30-03-2023].pdf',
         [
-            '1of2_Lloyd_George_Record_[Testy Test]_[0123456789]_[01-01-2011].pdf',
-            '2of2_Lloyd_George_Record_[Testy Test]_[0123456789]_[01-01-2011].pdf',
+            '1of3_Lloyd_George_Record_[Paula Inkley]_[9730211914]_[30-03-2023].pdf',
+            '2of3_Lloyd_George_Record_[Paula Inkley]_[9730211914]_[30-03-2023].pdf',
+        ],
+        [
+            'empty_file.pdf',
+            'invalid_file.pdf',
+            'password_protected.pdf',
         ],
     ],
 };
 const bucketUrlIdentifer = 'https://localhost:3000/Document';
 const singleFileUsecaseIndex = 0;
 const multiFileUsecaseIndex = 1;
+const errorFileUsecaseIndex = 2;
 
 const mockCreateDocRefHandler = (req) => {
     const uploadPayload = req.body.content[0].attachment;
@@ -74,7 +81,7 @@ const mockCreateDocRefHandler = (req) => {
     req.reply(response);
 };
 
-describe.skip('GP Workflow: Upload Lloyd George record when user is GP admin and patient has no record', () => {
+describe('GP Workflow: Upload Lloyd George record when user is GP admin and patient has no record', () => {
     const beforeEachConfiguration = () => {
         cy.login(Roles.GP_ADMIN);
         cy.visit(routes.patientSearch);
@@ -86,7 +93,7 @@ describe.skip('GP Workflow: Upload Lloyd George record when user is GP admin and
         cy.intercept('POST', '/LloydGeorgeStitch*', {
             statusCode: 404,
         }).as('stitch');
-
+        
         cy.getByTestId('nhs-number-input').type(searchPatientPayload.nhsNumber);
         cy.getByTestId('search-submit-btn').click();
         cy.wait('@search');
@@ -101,6 +108,7 @@ describe.skip('GP Workflow: Upload Lloyd George record when user is GP admin and
                 statusCode: 204,
             });
         });
+        
     };
 
     beforeEach(() => {
@@ -112,53 +120,37 @@ describe.skip('GP Workflow: Upload Lloyd George record when user is GP admin and
             `User can upload a single LG file using the "Select files" button and can then view LG record`,
             { tags: 'regression' },
             () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler);
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                        delay: 1500,
-                    });
+                cy.intercept('POST', '**/CreateDocumentReference**', mockCreateDocRefHandler);
+                cy.intercept('GET', '**/DocumentStatus*', {
+                    statusCode: 200,
+                    body: {"test key 0": {"status": "final"}},
                 });
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('virus_scan');
-                cy.intercept('POST', '**/UploadConfirm*', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                    });
-                }).as('upload_confirm');
+
                 cy.title().should(
                     'eq',
-                    'Upload a Lloyd George record - Access and store digital patient documents',
+                    'Choose Lloyd George files to upload - Access and store digital patient documents',
                 );
 
                 cy.getByTestId('button-input').selectFile(
                     uploadedFilePathNames.LG[singleFileUsecaseIndex],
                     { force: true },
                 );
-                clickUploadButton();
+                cy.get('#selected-documents-table').should('contain', uploadedFileNames.LG[singleFileUsecaseIndex]);
+                clickContinueButton();
 
-                cy.getByTestId('upload-documents-table').should(
+                cy.url().should('contain', '/patient/document-upload/select-order');
+                cy.get('#selected-documents-table').should(
                     'contain',
                     uploadedFileNames.LG[singleFileUsecaseIndex],
                 );
-                cy.wait('@upload_confirm');
+                cy.getByTestId('form-submit-button').click();
+                
 
+                cy.getByTestId('upload-complete-page', { timeout: 25000 }).should('exist');
                 cy.getByTestId('upload-complete-page')
-                    .should('include.text', 'Record uploaded for')
-                    .should('include.text', 'You have successfully uploaded 1 file')
-                    .should('include.text', 'Hide files')
-                    .should('contain', uploadedFileNames.LG[singleFileUsecaseIndex]);
+                    .should('include.text', 'You have successfully uploaded a digital Lloyd George record for');
 
                 testUploadCompletePageContent();
-                cy.title().should(
-                    'eq',
-                    'Record upload complete - Access and store digital patient documents',
-                );
-
-                testViewRecordButton();
             },
         );
 
@@ -166,43 +158,38 @@ describe.skip('GP Workflow: Upload Lloyd George record when user is GP admin and
             `User can upload multiple LG files using the "Select files" button and can then view LG record`,
             { tags: 'regression' },
             () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler);
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                        delay: 1500,
-                    });
+                cy.intercept('POST', '**/CreateDocumentReference**', mockCreateDocRefHandler);
+                cy.intercept('GET', '**/DocumentStatus*', {
+                    statusCode: 200,
+                    body: {"test key 0": {"status": "final"}},
                 });
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('virus_scan');
-                cy.intercept('POST', '**/UploadConfirm*', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                    });
-                }).as('upload_confirm');
 
                 cy.getByTestId('button-input').selectFile(
                     uploadedFilePathNames.LG[multiFileUsecaseIndex],
                     { force: true },
                 );
-                clickUploadButton();
-                cy.getByTestId('upload-documents-table')
+                cy.get('#selected-documents-table')
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
 
-                cy.wait('@upload_confirm');
+                clickContinueButton();
+                cy.url().should('contain', '/patient/document-upload/select-order');
+                cy.get('#selected-documents-table')
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
+                cy.getByTestId('form-submit-button').click();
+                
+                cy.url().should('contain', '/patient/document-upload/confirmation');
+                cy.get('#selected-documents-table')
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
+                cy.getByTestId('confirm-button').click();
 
+                cy.getByTestId('upload-complete-page', { timeout: 25000 }).should('exist');
                 cy.getByTestId('upload-complete-page')
-                    .should('include.text', 'Record uploaded for')
-                    .should('include.text', 'You have successfully uploaded 2 files')
-                    .should('include.text', 'Hide files');
+                    .should('include.text', 'You have successfully uploaded a digital Lloyd George record for');
 
                 testUploadCompletePageContent();
-
-                testSearchPatientButton();
             },
         );
 
@@ -210,295 +197,132 @@ describe.skip('GP Workflow: Upload Lloyd George record when user is GP admin and
             `User can upload a multiple LG file using drag and drop and can then view LG record`,
             { tags: 'regression' },
             () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler);
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                        delay: 1500,
-                    });
+                cy.intercept('POST', '**/CreateDocumentReference**', mockCreateDocRefHandler);
+                cy.intercept('GET', '**/DocumentStatus*', {
+                    statusCode: 200,
+                    body: {"test key 0": {"status": "final"}},
                 });
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('virus_scan');
-                cy.intercept('POST', '**/UploadConfirm*', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                    });
-                }).as('upload_confirm');
 
                 cy.getByTestId('dropzone').selectFile(
                     uploadedFilePathNames.LG[multiFileUsecaseIndex],
                     { force: true, action: 'drag-drop' },
                 );
-                clickUploadButton();
-                cy.getByTestId('upload-documents-table')
+                cy.get('#selected-documents-table')
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
                     .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
 
-                cy.wait('@upload_confirm');
+                clickContinueButton();
+                cy.url().should('contain', '/patient/document-upload/select-order');
+                cy.get('#selected-documents-table')
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
+                cy.getByTestId('form-submit-button').click();
+                
+                cy.url().should('contain', '/patient/document-upload/confirmation');
+                cy.get('#selected-documents-table')
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
+                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
+                cy.getByTestId('confirm-button').click();
 
+                cy.getByTestId('upload-complete-page', { timeout: 25000 }).should('exist');
                 cy.getByTestId('upload-complete-page')
-                    .should('include.text', 'Record uploaded for')
-                    .should('include.text', 'You have successfully uploaded 2 files')
-                    .should('include.text', 'Hide files')
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
-                testUploadCompletePageContent();
+                    .should('include.text', 'You have successfully uploaded a digital Lloyd George record for');
 
-                testSearchPatientButton();
+                testUploadCompletePageContent();
             },
         );
 
-        it(
-            `User can retry failed upload with a single LG file using the "Retry upload" button and can then view LG record`,
+        it.skip(
+            'Error page is displayed when an empty file is uploaded',
             { tags: 'regression' },
             () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler).as(
-                    'doc_upload',
-                );
-
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 407,
-                        delay: 1500,
-                    });
-                }).as('s3_upload');
-
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('virus_scan');
-
-                cy.intercept('POST', '**/UploadConfirm*', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                    });
-                }).as('upload_confirm');
+                cy.intercept('POST', '**/CreateDocumentReference**', mockCreateDocRefHandler);
+                cy.intercept('GET', '**/DocumentStatus*', {
+                    statusCode: 200,
+                    body: {"test key 0": {"status": "final"}},
+                });
 
                 cy.getByTestId('button-input').selectFile(
-                    uploadedFilePathNames.LG[singleFileUsecaseIndex],
+                    uploadedFilePathNames.LG[errorFileUsecaseIndex][0],
                     { force: true },
                 );
-
-                clickUploadButton();
-                cy.wait(['@doc_upload', '@s3_upload']);
-
-                cy.getByTestId('retry-upload-error-box').should('exist');
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                        delay: 1500,
-                    });
-                }).as('s3_retry_upload');
-
-                cy.getByTestId('upload-documents-table').should(
-                    'contain',
-                    uploadedFileNames.LG[singleFileUsecaseIndex],
-                );
-
-                cy.getByTestId('error-box-link').should('exist');
-                cy.getByTestId('error-box-link').click();
-
-                cy.wait('@s3_retry_upload');
-
-                cy.getByTestId('upload-complete-page')
-                    .should('include.text', 'Record uploaded for')
-                    .should('include.text', 'You have successfully uploaded 1 file')
-                    .should('include.text', 'Hide files')
-                    .should('contain', uploadedFileNames.LG[singleFileUsecaseIndex]);
-
-                testUploadCompletePageContent();
-
-                testViewRecordButton();
-            },
-        );
-
-        it(
-            `User can retry a multiple failed LG files using the "Retry all uploads" warning button and can then view LG record`,
+            }
+        )
+        
+        it.skip(
+            'Error page is displayed when an invalid file is uploaded',
             { tags: 'regression' },
             () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler).as(
-                    'doc_upload',
-                );
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 403,
-                        delay: 1500,
-                    });
-                }).as('s3_upload');
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('virus_scan');
-                cy.intercept('POST', '**/UploadConfirm*', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                    });
-                }).as('upload_confirm');
+                cy.intercept('POST', '**/CreateDocumentReference**', mockCreateDocRefHandler);
+                cy.intercept('GET', '**/DocumentStatus*', {
+                    statusCode: 200,
+                    body: {"test key 0": {"status": "final"}},
+                });
 
                 cy.getByTestId('button-input').selectFile(
-                    uploadedFilePathNames.LG[multiFileUsecaseIndex],
+                    uploadedFilePathNames.LG[errorFileUsecaseIndex][1],
                     { force: true },
                 );
+            }
+        )
 
-                clickUploadButton();
-
-                cy.wait(['@doc_upload', '@s3_upload']);
-
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                        delay: 2500,
-                    });
-                }).as('s3_retry_upload');
-
-                cy.getByTestId('upload-documents-table')
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
-
-                cy.getByTestId('retry-upload-error-box').should('exist');
-
-                cy.getByTestId('error-box-link').should('exist');
-                cy.getByTestId('error-box-link').click();
-                cy.wait(['@s3_retry_upload', '@upload_confirm']);
-
-                cy.getByTestId('upload-complete-page')
-                    .should('include.text', 'Record uploaded for')
-                    .should('include.text', 'You have successfully uploaded 2 files')
-                    .should('include.text', 'Hide files')
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
-                testUploadCompletePageContent();
-
-                testSearchPatientButton();
-            },
-        );
-
-        it(
-            `User can restart upload LG files journey when document upload fails more than once`,
+        it.skip(
+            'Error page is displayed when a password protected file is uploaded',
             { tags: 'regression' },
             () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler).as(
-                    'doc_upload',
-                );
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 403,
-                        delay: 1500,
-                    });
-                }).as('s3_upload');
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('virus_scan');
-                cy.intercept('POST', '**/UploadConfirm*', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                    });
-                }).as('upload_confirm');
+                cy.intercept('POST', '**/CreateDocumentReference**', mockCreateDocRefHandler);
+                cy.intercept('GET', '**/DocumentStatus*', {
+                    statusCode: 200,
+                    body: {"test key 0": {"status": "final"}},
+                });
 
                 cy.getByTestId('button-input').selectFile(
-                    uploadedFilePathNames.LG[multiFileUsecaseIndex],
+                    uploadedFilePathNames.LG[errorFileUsecaseIndex][2],
                     { force: true },
                 );
+            }
+        )
+        
 
-                clickUploadButton();
-                cy.wait(['@doc_upload', '@s3_upload']);
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 403,
-                        delay: 2500,
-                    });
-                }).as('s3_retry_upload');
-                cy.getByTestId('upload-documents-table')
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
-
-                cy.getByTestId('retry-upload-error-box').should('exist');
-
-                cy.getByTestId('error-box-link').should('exist');
-                cy.getByTestId('error-box-link').click();
-                cy.wait('@s3_retry_upload');
-
-                cy.get('#upload-retry-button').should('exist');
-                // eslint-disable-next-line cypress/no-unnecessary-waiting
-                cy.wait(1000);
-                cy.get('#upload-retry-button').click();
-
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 204,
-                        delay: 1500,
-                    });
-                }).as('retry_success');
-
-                cy.getByTestId('button-input').selectFile(
-                    uploadedFilePathNames.LG[multiFileUsecaseIndex],
-                    { force: true },
-                );
-
-                clickUploadButton();
-
-                cy.wait('@retry_success');
-                cy.getByTestId('upload-complete-page')
-                    .should('include.text', 'Record uploaded for')
-                    .should('include.text', 'You have successfully uploaded 2 files')
-                    .should('include.text', 'Hide files')
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][0])
-                    .should('contain', uploadedFileNames.LG[multiFileUsecaseIndex][1]);
-                testUploadCompletePageContent();
-
-                testViewRecordButton();
-            },
-        );
-
-        it(
+        it.skip(
             `User's upload journey is stopped if an infected file is detected`,
             { tags: 'regression' },
             () => {
-                cy.intercept('POST', '**/DocumentReference**', mockCreateDocRefHandler).as(
-                    'doc_upload',
-                );
-                cy.intercept('POST', '**/Document', (req) => {
-                    req.reply({
-                        statusCode: 200,
-                    });
-                }).as('s3_upload');
-                cy.intercept('POST', '**/VirusScan*', (req) => {
-                    req.reply({
-                        statusCode: 500,
-                    });
-                }).as('virus_scan');
-
-                cy.getByTestId('button-input').selectFile(
+                cy.intercept('POST', '**/CreateDocumentReference**', mockCreateDocRefHandler);
+                cy.intercept('GET', '**/DocumentStatus*', {
+                    statusCode: 200,
+                    body: {
+                        "test key 0": 
+                        {
+                            "status": "infected",
+                            "error_code": "UC_4005"
+                        }
+                    },
+                });
+                 cy.getByTestId('button-input').selectFile(
                     uploadedFilePathNames.LG[singleFileUsecaseIndex],
                     { force: true },
                 );
+                cy.get('#selected-documents-table').should('contain', uploadedFileNames.LG[singleFileUsecaseIndex]);
+                clickContinueButton();
 
-                clickUploadButton();
-                cy.wait(['@doc_upload', '@s3_upload']);
-
-                cy.getByTestId('failure-complete-page')
-                    .should('include.text', 'Some of your files failed a virus scan')
-                    .should('include.text', uploadedFileNames.LG[singleFileUsecaseIndex]);
-                cy.title().should(
-                    'eq',
-                    'The record did not upload - Access and store digital patient documents',
+                cy.url().should('contain', '/patient/document-upload/select-order');
+                cy.get('#selected-documents-table').should(
+                    'contain',
+                    uploadedFileNames.LG[singleFileUsecaseIndex],
                 );
-                cy.url().should('eq', baseUrl + lloydGeorgeInfectedUrl);
+                cy.getByTestId('form-submit-button').click();
+                cy.url().should('contain', lloydGeorgeInfectedUrl);
+                cy.get('#maincontnet').should('contain', 'We couldn\'t upload your files because we found a virus');
+                cy.getByTestId('go-to-home-button').should('exist');
+                cy.getByTestId('go-to-home-button').click();
+                cy.url().should('eq', baseUrl + routes.HOME);
 
-                cy.getByTestId('retry-upload-btn').should('exist');
-                cy.getByTestId('retry-upload-btn').click();
-                cy.url().should('eq', baseUrl + lloydGeorgeUploadUrl);
+
             },
         );
 
-        it(
+        it.skip(
             `User is shown an error screen when the upload complete endpoint fails to complete`,
             { tags: 'regression' },
             () => {
@@ -543,7 +367,7 @@ describe.skip('GP Workflow: Upload Lloyd George record when user is GP admin and
                 cy.url().should('eq', baseUrl + lloydGeorgeUploadUrl);
             },
         );
-        it(
+        it.skip(
             `It navigate to error page when uploading Lloyd George record is in progress for the patient`,
             { tags: 'regression' },
             () => {
