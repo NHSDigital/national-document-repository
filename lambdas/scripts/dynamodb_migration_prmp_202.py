@@ -150,7 +150,7 @@ class VersionMigration:
 
         inferred_status = document.infer_doc_status()
 
-        if document.doc_status == inferred_status:
+        if entry.get("DocStatus", "") == inferred_status:
             return None
 
         self.logger.warning(f"{entry.get('ID')}: {inferred_status}")
