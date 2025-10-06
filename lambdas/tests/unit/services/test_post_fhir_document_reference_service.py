@@ -104,7 +104,7 @@ def valid_mtls_header():
     return {
         "Accept": "text/json",
         "Host": "example.com",
-        "x-amzn-mtls-clientcert-subject": "CN=pdm",
+        "x-amzn-mtls-clientcert-subject": "CN=foobar.main.dev.pdm.national.foobar.uk",
     }
 
 

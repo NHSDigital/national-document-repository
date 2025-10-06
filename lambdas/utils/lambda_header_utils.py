@@ -15,8 +15,10 @@ def validate_common_name_in_mtls(headers: dict) -> Optional[MtlsCommonNames]:
     for part in subject.split(","):
         if part.strip().startswith("CN="):
             cn_value = part.strip().split("=", 1)[1].lower()
+            cn_parts = cn_value.split(".")
+            cn_identifier = cn_parts[3] if len(cn_parts) > 3 else cn_parts[-1]
             try:
-                return MtlsCommonNames(cn_value)
+                return MtlsCommonNames(cn_identifier)
             except ValueError:
                 # Not a valid enum member
                 logger.error(f"mTLS common name {cn_value} - is not supported")
