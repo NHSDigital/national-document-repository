@@ -34,9 +34,9 @@ const DocumentSelectFileErrorsPage = (): JSX.Element => {
     const failedDocuments = state?.failedDocuments || [];
 
     const handleGoHome = (e: React.MouseEvent<HTMLAnchorElement>): void => {
-        e.preventDefault(); // prevent default anchor navigation
+        e.preventDefault();
         sessionStorage.removeItem('fromErrorsPage');
-        navigate(routes.HOME, { replace: true }); // optionally replace to prevent "back"
+        navigate(routes.HOME, { replace: true });
     };
 
     return (
