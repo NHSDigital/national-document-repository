@@ -95,3 +95,6 @@ class AccessAuditException(LambdaException):
 
 class PdfStitchingException(LambdaException):
     pass
+
+class UpdateFhirDocumentReferenceException(LambdaException):
+    pass
