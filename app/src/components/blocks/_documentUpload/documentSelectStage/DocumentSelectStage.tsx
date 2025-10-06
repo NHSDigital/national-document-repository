@@ -1,6 +1,6 @@
 import { Button, Fieldset, Table, TextInput } from 'nhsuk-react-components';
 import { getDocument } from 'pdfjs-dist';
-import { JSX, ReactElement, ReactEventHandler, useEffect, useRef, useState } from 'react';
+import { JSX, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import useTitle from '../../../../helpers/hooks/useTitle';
