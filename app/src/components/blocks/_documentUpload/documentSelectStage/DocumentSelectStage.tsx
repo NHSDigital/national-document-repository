@@ -127,6 +127,7 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
                 state: {
                     failedDocuments: failedDocs,
                 },
+                replace: true,
             });
             return;
         }
