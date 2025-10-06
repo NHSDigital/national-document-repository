@@ -136,7 +136,6 @@ const DocumentSelectStage = ({
         );
 
         if (failedDocs.length > 0) {
-            // sessionStorage.setItem('fromErrorsPage', 'true');
             filesErrorRef.current = true;
             setDocuments(failedDocs);
             navigate(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS);

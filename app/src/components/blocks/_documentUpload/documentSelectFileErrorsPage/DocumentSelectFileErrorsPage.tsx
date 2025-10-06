@@ -34,8 +34,12 @@ const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
         navigate(routes.HOME, { replace: true });
     };
 
-    // if docs are empty navigate home -> use effect
-    // useEffect
+    useEffect(() => {
+        if (documents.length === 0) {
+            navigate(routes.HOME);
+            return;
+        }
+    }, []);
 
     return (
         <>
