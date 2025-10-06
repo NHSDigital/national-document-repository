@@ -20,9 +20,9 @@ class VersionMigration:
     def main(
             self, entries: Iterable[dict]
     ) -> list[tuple[str, Callable[[dict], dict | None]]]:
-
         """
-        Main entry point. Returns a list of update functions with labels.
+        Main entry point for the migration.
+        Returns a list of (label, update function) tuples.
         Accepts a list of entries for Lambda-based execution, or scans the table if `entries` is None.
         """
         self.logger.info("Starting version migration")
@@ -34,10 +34,7 @@ class VersionMigration:
             raise ValueError("Entries must be provided to main().")
 
         return [
-            ("Custodian", self.update_custodian_entry),
-            ("Status", self.update_status_entry),
-            ("DocumentSnomedCodeType", self.update_document_snomed_code_type_entry),
-            ("DocStatus", self.update_doc_status_entry),
+            ("LGTableValues", self.update_entry)
         ]
 
     def process_entries(
@@ -46,6 +43,10 @@ class VersionMigration:
             entries: Iterable[dict],
             update_fn: Callable[[dict], dict | None],
     ):
+        """
+        Processes a list of entries, applying the update function to each.
+        Logs progress and handles dry-run mode.
+        """
         self.logger.info(f"Running {label} migration")
 
         for index, entry in enumerate(entries, start=1):
@@ -72,31 +73,75 @@ class VersionMigration:
                     key_pair={"ID": item_id},
                     updated_fields=updated_fields,
                 )
-                self.logger.info(f"{label} migration completed.")
+        self.logger.info(f"{label} migration completed.")  # Moved outside the loop
 
-    @staticmethod
-    def update_custodian_entry(entry: dict) -> dict | None:
+    def update_entry(self, entry: dict ) -> dict | None:
+        """
+        Aggregates updates from all update methods for a single entry.
+        Returns a dict of fields to update, or None if no update is needed.
+        """
+        updates = {}
+
+        custodian_update = self.update_custodian_entry(entry)
+        if custodian_update:
+            updates.update(custodian_update)
+
+        status_update = self.update_status_entry(entry)
+        if status_update:
+            updates.update(status_update)
+
+        snomed_code_update = self.update_document_snomed_code_type_entry(entry)
+        if snomed_code_update:
+            updates.update(snomed_code_update)
+
+        doc_status_update = self.update_doc_status_entry(entry)
+        if doc_status_update:
+            updates.update(doc_status_update)
+
+        return updates if updates else None
+
+    def update_custodian_entry(self, entry: dict) -> dict | None:
+        """
+        Updates the 'Custodian' field if it does not match 'CurrentGpOds'.
+        Returns a dict with the update or None.
+        """
         current_gp_ods = entry.get("CurrentGpOds")
         custodian = entry.get("Custodian")
 
-        if current_gp_ods and custodian != current_gp_ods:
+        if current_gp_ods is None:
+            self.logger.warning(f"[Custodian] CurrentGpOds is missing for item {entry.get('ID')}")
+            return None
+        if current_gp_ods is None or current_gp_ods != custodian:
             return {"Custodian": current_gp_ods}
+
         return None
 
     @staticmethod
     def update_status_entry(entry: dict) -> dict | None:
+        """
+        Ensures the 'Status' field is set to 'current'.
+        Returns a dict with the update or None.
+        """
         if entry.get("Status") != "current":
             return {"Status": "current"}
         return None
 
     @staticmethod
     def update_document_snomed_code_type_entry(entry: dict) -> dict | None:
+        """
+        Ensures the 'DocumentSnomedCodeType' field matches the expected SNOMED code.
+        Returns a dict with the update or None.
+        """
         expected_code = SnomedCodes.LLOYD_GEORGE.value.code
         if entry.get("DocumentSnomedCodeType") != expected_code:
             return {"DocumentSnomedCodeType": expected_code}
         return None
 
     def update_doc_status_entry(self, entry: dict) -> dict | None:
+        """
+        Infers and updates the 'DocStatus' field if missing.
+        Returns a dict with the update or None.
+        """
         try:
             document = DocumentReference(**entry)
         except Exception as e:
