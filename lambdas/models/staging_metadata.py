@@ -21,9 +21,6 @@ class MetadataBase(BaseModel):
     )
 
     file_path: str = Field(alias="FILEPATH")
-    nhs_number: Optional[str] = Field(
-        alias=NHS_NUMBER_FIELD_NAME, exclude=True, default=None
-    )
     gp_practice_code: str
     scan_date: str
 
@@ -42,16 +39,20 @@ class MetadataBase(BaseModel):
         return gp_practice_code
 
 
-class SqsMetadata(MetadataBase):
-    stored_file_name: str = Field(alias="STORED-FILE-NAME")
+class BulkUploadQueueMetadata(MetadataBase):
+    stored_file_name: str
 
 
 class MetadataFile(MetadataBase):
+    model_config = ConfigDict(
+        alias_generator=to_upper_case_with_hyphen,
+    )
+    nhs_number: Optional[str] = Field(alias=NHS_NUMBER_FIELD_NAME, default=None)
     page_count: str = Field(alias="PAGE COUNT")
     section: str
     sub_section: Optional[str]
-    scan_id: Optional[str]
-    user_id: Optional[str]
+    scan_id: Optional[str] = None
+    user_id: Optional[str] = None
     upload: str
 
 
@@ -59,7 +60,7 @@ class StagingSqsMetadata(BaseModel):
     model_config = ConfigDict(validate_by_name=True)
 
     nhs_number: str = Field(default=NHS_NUMBER_PLACEHOLDER, alias=NHS_NUMBER_FIELD_NAME)
-    files: list[SqsMetadata]
+    files: list[BulkUploadQueueMetadata]
     retries: int = 0
 
     @field_validator("nhs_number")

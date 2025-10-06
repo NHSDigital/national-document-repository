@@ -8,7 +8,11 @@ from lambdas.enums.nrl_sqs_upload import NrlActionTypes
 from models.document_reference import DocumentReference
 from models.sqs.nrl_sqs_message import NrlSqsMessage
 from models.sqs.pdf_stitching_sqs_message import PdfStitchingSqsMessage
-from models.staging_metadata import MetadataFile, SqsMetadata, StagingSqsMetadata
+from models.staging_metadata import (
+    BulkUploadQueueMetadata,
+    MetadataFile,
+    StagingSqsMetadata,
+)
 from services.bulk_upload_metadata_processor_service import (
     BulkUploadMetadataProcessorService,
 )
@@ -27,7 +31,7 @@ sample_metadata_model = MetadataFile(
     user_id="NEC",
     upload="04/10/2023",
 )
-sample_sqs_metadata_model = SqsMetadata(
+sample_sqs_metadata_model = BulkUploadQueueMetadata(
     file_path="/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf",
     gp_practice_code="Y12345",
     scan_date="03/09/2022",

@@ -3,17 +3,17 @@ import os
 import shutil
 import tempfile
 import uuid
+from collections import defaultdict
 from datetime import datetime
 from typing import Iterable
 
 import pydantic
 from botocore.exceptions import ClientError
-
 from enums.upload_status import UploadStatus
 from models.staging_metadata import (
     METADATA_FILENAME,
+    BulkUploadQueueMetadata,
     MetadataFile,
-    SqsMetadata,
     StagingSqsMetadata,
 )
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
@@ -95,9 +95,29 @@ class BulkUploadMetadataProcessorService:
         )
         return local_file_path
 
+    # def csv_to_sqs_metadata(self, csv_file_path: str) -> list[StagingSqsMetadata]:
+    #     logger.info("Parsing bulk upload metadata")
+    #     patients = defaultdict(list)
+    #
+    #     with open(
+    #         csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
+    #     ) as csv_file_handler:
+    #         csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
+    #         for row in csv_reader:
+    #             self.process_metadata_row(row, patients)
+    #     return [
+    #         StagingSqsMetadata(
+    #             nhs_number=key[0],
+    #             files=value,
+    #         )
+    #         for (key, value) in patients.items()
+    #     ]
+
     def csv_to_sqs_metadata(self, csv_file_path: str) -> list[StagingSqsMetadata]:
         logger.info("Parsing bulk upload metadata")
-        patients: dict[tuple[str, str], list[SqsMetadata]] = {}
+        patients: defaultdict[tuple[str, str], list[BulkUploadQueueMetadata]] = (
+            defaultdict(list)
+        )
 
         with open(
             csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
@@ -105,48 +125,39 @@ class BulkUploadMetadataProcessorService:
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
             for row in csv_reader:
                 self.process_metadata_row(row, patients)
+
         return [
             StagingSqsMetadata(
-                nhs_number=key[0],
-                files=value,
+                nhs_number=nhs_number,
+                files=files,
             )
-            for (key, value) in patients.items()
+            for (nhs_number, _), files in patients.items()
         ]
 
     def process_metadata_row(
-        self, row: dict, patients: dict[tuple[str, str], list[SqsMetadata]]
+        self, row: dict, patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]]
     ) -> None:
         file_metadata = MetadataFile.model_validate(row)
         nhs_number, ods_code = self.extract_patient_info(file_metadata)
-        patient_record_key = (nhs_number, ods_code)
 
         try:
-            corrected_file_name = self.validate_and_correct_filename(file_metadata)
+            correct_file_name = self.validate_and_correct_filename(file_metadata)
         except InvalidFileNameException as error:
             self.handle_invalid_filename(
-                file_metadata, error, patient_record_key, patients
+                file_metadata, error, nhs_number, ods_code, patients
             )
             return
 
-        sqs_metadata = self.convert_to_sqs_metadata(file_metadata, corrected_file_name)
+        sqs_metadata = self.convert_to_sqs_metadata(file_metadata, correct_file_name)
 
-        if patient_record_key not in patients:
-            patients[patient_record_key] = [sqs_metadata]
-        else:
-            patients[patient_record_key].append(sqs_metadata)
+        patients[(nhs_number, ods_code)].append(sqs_metadata)
 
     @staticmethod
     def convert_to_sqs_metadata(
         file: MetadataFile, corrected_file_name: str
-    ) -> SqsMetadata:
-        return SqsMetadata.model_validate(
-            {
-                "FILEPATH": file.file_path,
-                "NHS-NO": file.nhs_number,
-                "GP-PRACTICE-CODE": file.gp_practice_code,
-                "SCAN-DATE": file.scan_date,
-                "STORED-FILE-NAME": corrected_file_name,
-            }
+    ) -> BulkUploadQueueMetadata:
+        return BulkUploadQueueMetadata(
+            **file.model_dump(), stored_file_name=corrected_file_name
         )
 
     def extract_patient_info(self, file_metadata: MetadataFile) -> tuple[str, str]:
@@ -172,15 +183,16 @@ class BulkUploadMetadataProcessorService:
         self,
         file_metadata: MetadataFile,
         error: InvalidFileNameException,
-        key: tuple[str, str],
-        patients: dict[tuple[str, str], list[SqsMetadata]],
+        nhs_number: str,
+        ods_code: str,
+        patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]],
     ) -> None:
         logger.error(
             f"Failed to process {file_metadata.file_path} due to error: {error}"
         )
-        files = patients.get(key, [file_metadata])
+        files = patients.get((nhs_number, ods_code), [file_metadata])
         failed_entry = StagingSqsMetadata(
-            nhs_number=key[0],
+            nhs_number=nhs_number,
             files=files,
         )
         self.dynamo_repository.write_report_upload_to_dynamo(

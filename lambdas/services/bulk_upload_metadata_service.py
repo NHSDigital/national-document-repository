@@ -8,7 +8,6 @@ from typing import Iterable
 
 import pydantic
 from botocore.exceptions import ClientError
-
 from models.staging_metadata import (
     NHS_NUMBER_FIELD_NAME,
     ODS_CODE,
@@ -51,10 +50,6 @@ class BulkUploadMetadataService:
 
             self.clear_temp_storage()
 
-        except pydantic.ValidationError as e:
-            failure_msg = f"Failed to parse {metadata_filename}: {str(e)}"
-            logger.error(failure_msg, {"Result": unsuccessful})
-            raise BulkUploadMetadataException(failure_msg)
         except KeyError as e:
             failure_msg = f"Failed due to missing key: {str(e)}"
             logger.error(failure_msg, {"Result": unsuccessful})
@@ -87,24 +82,35 @@ class BulkUploadMetadataService:
             csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
         ) as csv_file_handler:
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
+
             for row in csv_reader:
-                file_metadata = MetadataFile.model_validate(row)
-                nhs_number = row[NHS_NUMBER_FIELD_NAME] or "0000000000"
+                try:
+                    file_metadata = MetadataFile.model_validate(row)
+                except pydantic.ValidationError:
+                    nhs_number = row.get("NHS-NO", "")
+                    msg = (
+                        f"Failed to parse metadata.csv: 1 validation error for MetadataFile\n"
+                        f"GP-PRACTICE-CODE\n"
+                        f"  missing GP-PRACTICE-CODE for patient {nhs_number}"
+                    )
+
+                    logger.error(msg)
+                    raise BulkUploadMetadataException(msg)
+
+                nhs_number = row.get(NHS_NUMBER_FIELD_NAME)
                 ods_code = row[ODS_CODE]
+
                 key = (nhs_number, ods_code)
-                if key not in patients:
-                    patients[key] = [file_metadata]
-                else:
-                    patients[key].append(file_metadata)
+                patients.setdefault(key, []).append(file_metadata)
 
         return [
             StagingSqsMetadata(
                 nhs_number=nhs_number,
                 files=[
                     BulkUploadMetadataProcessorService.convert_to_sqs_metadata(
-                        f, f.file_path
+                        metadata_file, metadata_file.file_path
                     )
-                    for f in patients[nhs_number, ods_code]
+                    for metadata_file in patients[nhs_number, ods_code]
                 ],
                 retries=0,
             )

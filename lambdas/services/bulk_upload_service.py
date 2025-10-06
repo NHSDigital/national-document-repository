@@ -5,14 +5,13 @@ from datetime import datetime
 
 import pydantic
 from botocore.exceptions import ClientError
-
 from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCodes
 from enums.upload_status import UploadStatus
 from enums.virus_scan_result import VirusScanResult
 from models.document_reference import DocumentReference
 from models.sqs.pdf_stitching_sqs_message import PdfStitchingSqsMessage
-from models.staging_metadata import SqsMetadata, StagingSqsMetadata
+from models.staging_metadata import BulkUploadQueueMetadata, StagingSqsMetadata
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
 )
@@ -387,7 +386,10 @@ class BulkUploadService:
             )
 
     def convert_to_document_reference(
-        self, file_metadata: SqsMetadata, nhs_number: str, current_gp_ods: str
+        self,
+        file_metadata: BulkUploadQueueMetadata,
+        nhs_number: str,
+        current_gp_ods: str,
     ) -> DocumentReference:
         s3_bucket_name = self.bulk_upload_s3_repository.lg_bucket_name
         file_name = os.path.basename(file_metadata.file_path)

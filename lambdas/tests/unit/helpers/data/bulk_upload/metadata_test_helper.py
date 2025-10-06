@@ -1,10 +1,12 @@
 import os
 
-from models.staging_metadata import MetadataFile, SqsMetadata
+from models.staging_metadata import BulkUploadQueueMetadata, MetadataFile
 
 
-def convert_metadata_file_to_sqs_metadata(metadata_file: MetadataFile) -> SqsMetadata:
-    return SqsMetadata(
+def convert_metadata_file_to_sqs_metadata(
+    metadata_file: MetadataFile,
+) -> BulkUploadQueueMetadata:
+    return BulkUploadQueueMetadata(
         file_path=metadata_file.file_path,
         nhs_number=metadata_file.nhs_number,
         gp_practice_code=metadata_file.gp_practice_code,

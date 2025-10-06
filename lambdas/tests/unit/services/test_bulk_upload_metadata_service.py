@@ -5,8 +5,6 @@ from unittest.mock import call
 import pytest
 from botocore.exceptions import ClientError
 from freezegun import freeze_time
-from pydantic import ValidationError
-
 from models.staging_metadata import METADATA_FILENAME
 from services.bulk_upload_metadata_service import BulkUploadMetadataService
 from tests.unit.conftest import MOCK_LG_METADATA_SQS_QUEUE, MOCK_STAGING_STORE_BUCKET
@@ -227,7 +225,7 @@ def test_csv_to_staging_metadata_raise_error_when_metadata_invalid(
     set_env, metadata_service
 ):
     for invalid_csv_file in MOCK_INVALID_METADATA_CSV_FILES:
-        with pytest.raises(ValidationError):
+        with pytest.raises(BulkUploadMetadataException):
             metadata_service.csv_to_staging_sqs_metadata(invalid_csv_file)
 
 
