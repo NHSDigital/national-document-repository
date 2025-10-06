@@ -760,3 +760,37 @@ def test_determine_document_type_with_correct_common_name(mock_service, mocker):
 
     result = mock_service._determine_document_type(fhir_doc, MtlsCommonNames.PDM)
     assert result == SnomedCodes.PATIENT_DATA.value
+
+
+def test_s3_file_key_for_pdm(mock_service):
+    """Test PDM snomed preprended to filekey."""
+    document_ref = DocumentReference(
+        id="test-id",
+        nhs_number="9000000009",
+        current_gp_ods="A12345",
+        custodian="A12345",
+        s3_bucket_name="test-bucket",
+        content_type="application/pdf",
+        file_name="test-file.pdf",
+        document_snomed_code_type=SnomedCodes.PATIENT_DATA.value.code,
+    )
+
+    result = mock_service._format_file_key(document_ref)
+    assert SnomedCodes.PATIENT_DATA.value.code in result
+
+
+def test_s3_file_key_for_lg(mock_service):
+    """Test PDM snomed preprended to filekey."""
+    document_ref = DocumentReference(
+        id="test-id",
+        nhs_number="9000000009",
+        current_gp_ods="A12345",
+        custodian="A12345",
+        s3_bucket_name="test-bucket",
+        content_type="application/pdf",
+        file_name="test-file.pdf",
+        document_snomed_code_type=SnomedCodes.LLOYD_GEORGE.value.code,
+    )
+
+    result = mock_service._format_file_key(document_ref)
+    assert SnomedCodes.LLOYD_GEORGE.value.code not in result

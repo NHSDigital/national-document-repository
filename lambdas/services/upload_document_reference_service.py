@@ -20,6 +20,7 @@ class UploadDocumentReferenceService:
         self.staging_s3_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
         self.table_name = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
         self.lg_bucket_name = os.getenv("LLOYD_GEORGE_BUCKET_NAME")
+        self.pdm_bucket_name = os.getenv("PDM_BUCKET_NAME")
         self.document_service = DocumentService()
         self.dynamo_service = DynamoDBService()
         self.virus_scan_service = get_virus_scan_service()
