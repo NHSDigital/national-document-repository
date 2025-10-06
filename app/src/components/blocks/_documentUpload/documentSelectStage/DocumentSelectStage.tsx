@@ -1,6 +1,6 @@
 import { Button, Fieldset, Table, TextInput } from 'nhsuk-react-components';
 import { getDocument } from 'pdfjs-dist';
-import { JSX, useEffect, useRef, useState } from 'react';
+import { JSX, ReactElement, ReactEventHandler, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import useTitle from '../../../../helpers/hooks/useTitle';
@@ -49,6 +49,15 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
 
         return true;
     };
+
+    useEffect(() => {
+        const fromErrors = sessionStorage.getItem('fromErrorsPage');
+        if (fromErrors === 'true') {
+            sessionStorage.removeItem('fromErrorsPage');
+            navigate(routes.HOME);
+            return;
+        }
+    }, [navigate]);
 
     const onFileDrop = (e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
@@ -123,11 +132,11 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
         );
 
         if (failedDocs.length > 0) {
+            sessionStorage.setItem('fromErrorsPage', 'true');
             navigate(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS, {
                 state: {
                     failedDocuments: failedDocs,
                 },
-                replace: true,
             });
             return;
         }
