@@ -2,7 +2,7 @@
 // @vitest-environment happy-dom
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import DocumentSelectFileErrorsPage from './DocumentSelectFileErrorsPage';
 import {
     UploadDocument,
@@ -11,17 +11,6 @@ import {
 } from '../../../../types/pages/UploadDocumentsPage/types';
 import { UPLOAD_FILE_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
 import { routes } from '../../../../types/generic/routes';
-import { useLocation } from 'react-router-dom';
-
-vi.mock('react-router-dom', async () => {
-    const actual = await vi.importActual('react-router-dom');
-    return {
-        ...actual,
-        useLocation: vi.fn(),
-    };
-});
-
-const mockedUseLocation = vi.mocked(useLocation);
 
 const createFailedDocument = (name: string, error: UPLOAD_FILE_ERROR_TYPE): UploadDocument => ({
     id: `${name}-id`,
@@ -32,24 +21,18 @@ const createFailedDocument = (name: string, error: UPLOAD_FILE_ERROR_TYPE): Uplo
     attempts: 0,
 });
 
-const setup = (failedDocuments: UploadDocument[] = []): void => {
-    mockedUseLocation.mockReturnValue({
-        state: { failedDocuments },
-    } as any);
+const renderDocs = (documents: UploadDocument[] = []): void => {
     render(
         <MemoryRouter>
-            <DocumentSelectFileErrorsPage />
+            <DocumentSelectFileErrorsPage documents={documents} />
         </MemoryRouter>,
     );
 };
 
 describe('DocumentSelectFileErrorsPage', () => {
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
 
     it('renders all static page content', () => {
-        setup([]);
+        renderDocs([]);
 
         expect(
             screen.getByRole('heading', { name: 'We could not upload your files' }),
@@ -108,7 +91,7 @@ describe('DocumentSelectFileErrorsPage', () => {
     ])('displays correct error message for "$error" file', ({ error, expectedMessage }) => {
         const fileName = `file-${error}.pdf`;
         const doc = createFailedDocument(fileName, error);
-        setup([doc]);
+        renderDocs([doc]);
 
         expect(screen.getByText(fileName)).toBeInTheDocument();
         expect(screen.getByText(expectedMessage)).toBeInTheDocument();
@@ -119,15 +102,12 @@ describe('DocumentSelectFileErrorsPage', () => {
             createFailedDocument('bad1.pdf', UPLOAD_FILE_ERROR_TYPE.invalidPdf),
             createFailedDocument('bad2.pdf', UPLOAD_FILE_ERROR_TYPE.passwordProtected),
         ];
-        setup(docs);
-
-        const expectedMessageInvalidPdf = 'This file is damaged or unreadable.';
-        const expectedMessagePasswordProtected = 'This file is password protected.';
+        renderDocs(docs);
 
         expect(screen.getByText('bad1.pdf')).toBeInTheDocument();
-        expect(screen.getByText(expectedMessageInvalidPdf)).toBeInTheDocument();
+        expect(screen.getByText('This file is damaged or unreadable.')).toBeInTheDocument();
 
         expect(screen.getByText('bad2.pdf')).toBeInTheDocument();
-        expect(screen.getByText(expectedMessagePasswordProtected)).toBeInTheDocument();
+        expect(screen.getByText('This file is password protected.')).toBeInTheDocument();
     });
 });

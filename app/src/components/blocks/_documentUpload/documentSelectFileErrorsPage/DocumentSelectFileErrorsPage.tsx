@@ -1,43 +1,41 @@
 import { BackLink, ErrorMessage } from 'nhsuk-react-components';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { UploadDocument } from '../../../../types/pages/UploadDocumentsPage/types';
 import {
     fileUploadErrorMessages,
     UPLOAD_FILE_ERROR_TYPE,
 } from '../../../../helpers/utils/fileUploadErrorMessages';
-import { JSX } from 'react';
+import { JSX, useEffect } from 'react';
 import { routes } from '../../../../types/generic/routes';
 
 const helpAndGuidanceLink =
     'https://digital.nhs.uk/services/access-and-store-digital-patient-documents/help-and-guidance';
 
-type ErrorPageState = {
-    failedDocuments: UploadDocument[];
+type Props = {
+    documents: Array<UploadDocument>;
 };
 
-const fileErrorText = (errorType: UPLOAD_FILE_ERROR_TYPE): string | undefined => {
-    switch (errorType) {
-        case UPLOAD_FILE_ERROR_TYPE.invalidPdf:
-            return fileUploadErrorMessages.invalidPdf.selectFileError;
-        case UPLOAD_FILE_ERROR_TYPE.emptyPdf:
-            return fileUploadErrorMessages.emptyPdf.selectFileError;
-        case UPLOAD_FILE_ERROR_TYPE.passwordProtected:
-            return fileUploadErrorMessages.passwordProtected.selectFileError;
-    }
-};
-
-const DocumentSelectFileErrorsPage = (): JSX.Element => {
-    const location = useLocation();
+const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
     const navigate = useNavigate();
-    const state = location.state as ErrorPageState;
 
-    const failedDocuments = state?.failedDocuments || [];
+    const fileErrorText = (errorType: UPLOAD_FILE_ERROR_TYPE): string | undefined => {
+        switch (errorType) {
+            case UPLOAD_FILE_ERROR_TYPE.invalidPdf:
+                return fileUploadErrorMessages.invalidPdf.selectFileError;
+            case UPLOAD_FILE_ERROR_TYPE.emptyPdf:
+                return fileUploadErrorMessages.emptyPdf.selectFileError;
+            case UPLOAD_FILE_ERROR_TYPE.passwordProtected:
+                return fileUploadErrorMessages.passwordProtected.selectFileError;
+        }
+    };
 
     const handleGoHome = (e: React.MouseEvent<HTMLAnchorElement>): void => {
         e.preventDefault();
-        sessionStorage.removeItem('fromErrorsPage');
         navigate(routes.HOME, { replace: true });
     };
+
+    // if docs are empty navigate home -> use effect
+    // useEffect
 
     return (
         <>
@@ -47,7 +45,7 @@ const DocumentSelectFileErrorsPage = (): JSX.Element => {
 
             <h2 className="nhsuk-heading-m">Files with problems</h2>
 
-            {failedDocuments.map((doc) => (
+            {documents.map((doc) => (
                 <div key={doc.id}>
                     <ErrorMessage className="mb-1">{doc.file.name}</ErrorMessage>
                     <p>{fileErrorText(doc.error!)}</p>

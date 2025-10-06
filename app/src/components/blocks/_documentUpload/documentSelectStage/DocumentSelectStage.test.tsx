@@ -4,7 +4,7 @@ import { fireEvent, render, RenderResult, screen, waitFor } from '@testing-libra
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory, MemoryHistory } from 'history';
 import { getDocument } from 'pdfjs-dist';
-import { JSX, useState } from 'react';
+import { JSX, useRef, useState } from 'react';
 import * as ReactRouter from 'react-router-dom';
 import usePatient from '../../../../helpers/hooks/usePatient';
 import { buildLgFile, buildPatientDetails } from '../../../../helpers/test/testBuilders';
@@ -199,7 +199,6 @@ describe('DocumentSelectStage', () => {
                 await waitFor(() => {
                     expect(mockedUseNavigate).toHaveBeenCalledWith(
                         routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS,
-                        expect.anything(),
                     );
                 });
             },
@@ -208,12 +207,14 @@ describe('DocumentSelectStage', () => {
 
     const TestApp = (props: Partial<Props>): JSX.Element => {
         const [documents, setDocuments] = useState<Array<UploadDocument>>([]);
+        const filesErrorRef = useRef<boolean>(false);
 
         return (
             <DocumentSelectStage
                 documents={documents}
                 setDocuments={setDocuments}
                 documentType={props.documentType || DOCUMENT_TYPE.LLOYD_GEORGE}
+                filesErrorRef={filesErrorRef}
             />
         );
     };

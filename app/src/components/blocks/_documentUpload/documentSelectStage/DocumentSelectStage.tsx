@@ -1,6 +1,6 @@
 import { Button, Fieldset, Table, TextInput } from 'nhsuk-react-components';
 import { getDocument } from 'pdfjs-dist';
-import { JSX, useEffect, useRef, useState } from 'react';
+import { JSX, Ref, RefObject, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import useTitle from '../../../../helpers/hooks/useTitle';
@@ -29,11 +29,17 @@ export type Props = {
     setDocuments: SetUploadDocuments;
     documents: Array<UploadDocument>;
     documentType: DOCUMENT_TYPE;
+    filesErrorRef: RefObject<boolean>;
 };
 
 type UploadFilesError = ErrorMessageListItem<UPLOAD_FILE_ERROR_TYPE>;
 
-const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): JSX.Element => {
+const DocumentSelectStage = ({
+    documents,
+    setDocuments,
+    documentType,
+    filesErrorRef,
+}: Props): JSX.Element => {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [noFilesSelected, setNoFilesSelected] = useState<boolean>(false);
     const scrollToRef = useRef<HTMLDivElement>(null);
@@ -51,13 +57,11 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
     };
 
     useEffect(() => {
-        const fromErrors = sessionStorage.getItem('fromErrorsPage');
-        if (fromErrors === 'true') {
-            sessionStorage.removeItem('fromErrorsPage');
+        if (filesErrorRef.current) {
             navigate(routes.HOME);
             return;
         }
-    }, [navigate]);
+    }, []);
 
     const onFileDrop = (e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
@@ -132,12 +136,10 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
         );
 
         if (failedDocs.length > 0) {
-            sessionStorage.setItem('fromErrorsPage', 'true');
-            navigate(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS, {
-                state: {
-                    failedDocuments: failedDocs,
-                },
-            });
+            // sessionStorage.setItem('fromErrorsPage', 'true');
+            filesErrorRef.current = true;
+            setDocuments(failedDocs);
+            navigate(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS);
             return;
         }
 
