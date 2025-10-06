@@ -123,6 +123,7 @@ class BulkUploadMetadataProcessorService:
             self.handle_invalid_filename(
                 file_metadata, error, patient_record_key, patients
             )
+            patients.pop(patient_record_key)
 
     def extract_patient_info(self, file_metadata: MetadataFile) -> tuple[str, str]:
         nhs_number = file_metadata.nhs_number
