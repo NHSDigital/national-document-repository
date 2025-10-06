@@ -32,6 +32,15 @@ def invalid_mtls_header():
     }
 
 
+@pytest.fixture
+def invalid_mtls_header_wrong_cn_format():
+    return {
+        "Accept": "text/json",
+        "Host": "example.com",
+        "x-amzn-mtls-clientcert-subject": "CN=pdm.pdm.pdm",
+    }
+
+
 def test_validate_valid_common_name(valid_mtls_header):
     """Test validate_common_name when mtls and pdm."""
     result = validate_common_name_in_mtls(valid_mtls_header)
@@ -53,3 +62,14 @@ def test_validate_valid_non_mtls_header(valid_non_mtls_header):
     result = validate_common_name_in_mtls(valid_non_mtls_header)
 
     assert result is None
+
+
+def test_validate_invalid_common_name_wrong_cn_format(
+    invalid_mtls_header_wrong_cn_format,
+):
+    """Test validate_common_name when mtls but incorrect cn format."""
+    with pytest.raises(CreateDocumentRefException) as excinfo:
+        validate_common_name_in_mtls(invalid_mtls_header_wrong_cn_format)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.error == LambdaError.CreateDocInvalidType

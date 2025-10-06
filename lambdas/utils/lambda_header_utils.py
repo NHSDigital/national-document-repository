@@ -16,7 +16,10 @@ def validate_common_name_in_mtls(headers: dict) -> Optional[MtlsCommonNames]:
         if part.strip().startswith("CN="):
             cn_value = part.strip().split("=", 1)[1].lower()
             cn_parts = cn_value.split(".")
-            cn_identifier = cn_parts[3] if len(cn_parts) > 3 else cn_parts[-1]
+            if len(cn_parts) != 7:
+                logger.error(f"mTLS common name {cn_value} - is not supported")
+                raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
+            cn_identifier = cn_parts[3]
             try:
                 return MtlsCommonNames(cn_identifier)
             except ValueError:
