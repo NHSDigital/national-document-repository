@@ -2,6 +2,8 @@ import os
 from typing import Optional
 
 from botocore.exceptions import ClientError
+from enums.lambda_error import LambdaError
+from enums.snomed_codes import SnomedCodes
 from enums.virus_scan_result import VirusScanResult
 from models.document_reference import DocumentReference
 from services.base.dynamo_service import DynamoDBService
@@ -9,7 +11,9 @@ from services.base.s3_service import S3Service
 from services.document_service import DocumentService
 from utils.audit_logging_setup import LoggingService
 from utils.common_query_filters import PreliminaryStatus
+from utils.dynamo_utils import DocTypeTableRouter
 from utils.exceptions import DocumentServiceException, FileProcessingException
+from utils.lambda_exceptions import InvalidDocTypeException
 from utils.utilities import get_virus_scan_service
 
 logger = LoggingService(__name__)
@@ -18,13 +22,13 @@ logger = LoggingService(__name__)
 class UploadDocumentReferenceService:
     def __init__(self):
         self.staging_s3_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
-        self.table_name = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
         self.lg_bucket_name = os.getenv("LLOYD_GEORGE_BUCKET_NAME")
         self.pdm_bucket_name = os.getenv("PDM_BUCKET_NAME")
         self.document_service = DocumentService()
         self.dynamo_service = DynamoDBService()
         self.virus_scan_service = get_virus_scan_service()
         self.s3_service = S3Service()
+        self.doc_router = DocTypeTableRouter()
 
     def handle_upload_document_reference_request(
         self, object_key: str, object_size: int = 0
@@ -35,7 +39,12 @@ class UploadDocumentReferenceService:
             return
 
         try:
-            document_key = object_key.split("/")[-1]
+            # document_key = object_key.split("/")[-1]
+            document_start, document_key = (
+                object_key.split("/")[0],
+                object_key.split("/")[-1],
+            )
+            self.table_name = self._get_dynamo_table_for_document_key(document_start)
 
             document_reference = self._fetch_document_reference(document_key)
             if not document_reference:
@@ -49,6 +58,19 @@ class UploadDocumentReferenceService:
             logger.error(f"Unexpected error processing document reference: {str(e)}")
             logger.error(f"Failed to process document reference: {object_key}")
             return
+
+    def _get_dynamo_table_for_document_key(self, document_start: str) -> str:
+        doc_type = SnomedCodes.find_by_code(document_start)
+        if doc_type:
+            try:
+                return self.doc_router.resolve(doc_type)
+            except KeyError:
+                logger.error(
+                    f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
+                )
+                raise InvalidDocTypeException(400, LambdaError.DocTypeDB)
+        doc_type = SnomedCodes.LLOYD_GEORGE.value
+        return self.doc_router.resolve(doc_type)
 
     def _fetch_document_reference(
         self, document_key: str
