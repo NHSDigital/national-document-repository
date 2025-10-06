@@ -1,5 +1,5 @@
 import { BackLink, ErrorMessage } from 'nhsuk-react-components';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { UploadDocument } from '../../../../types/pages/UploadDocumentsPage/types';
 import {
     fileUploadErrorMessages,
@@ -28,9 +28,16 @@ const fileErrorText = (errorType: UPLOAD_FILE_ERROR_TYPE): string | undefined =>
 
 const DocumentSelectFileErrorsPage = (): JSX.Element => {
     const location = useLocation();
+    const navigate = useNavigate();
     const state = location.state as ErrorPageState;
 
     const failedDocuments = state?.failedDocuments || [];
+
+    const handleGoHome = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault(); // prevent default anchor navigation
+        sessionStorage.removeItem('fromErrorsPage');
+        navigate(routes.HOME, { replace: true }); // optionally replace to prevent "back"
+    };
 
     return (
         <>
@@ -71,7 +78,7 @@ const DocumentSelectFileErrorsPage = (): JSX.Element => {
                 pages.
             </p>
 
-            <BackLink asElement="a" href={routes.HOME}>
+            <BackLink asElement="a" href={routes.HOME} onClick={handleGoHome}>
                 Go to home
             </BackLink>
         </>
