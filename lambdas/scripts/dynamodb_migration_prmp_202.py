@@ -148,10 +148,12 @@ class VersionMigration:
             self.logger.warning(f"[DocStatus] Skipping invalid item {entry.get('ID')}: {e}")
             return None
 
-        if document.doc_status:
+        inferred_status = document.infer_doc_status()
+
+        if document.doc_status == inferred_status:
             return None
 
-        inferred_status = document.infer_doc_status()
+        self.logger.warning(f"{entry.get('ID')}: {inferred_status}")
 
         if inferred_status:
             return {"DocStatus": inferred_status}
