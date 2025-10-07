@@ -117,22 +117,29 @@ class BulkUploadMetadataProcessorService:
         ]
 
     def process_metadata_row(
-        self, row: dict, patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]]
+            self, row: dict, patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]]
     ) -> None:
         file_metadata = MetadataFile.model_validate(row)
         nhs_number, ods_code = self.extract_patient_info(file_metadata)
-
-        sqs_metadata = self.convert_to_sqs_metadata(file_metadata, correct_file_name)
-
-        patients[(nhs_number, ods_code)].append(sqs_metadata)
 
         try:
             correct_file_name = self.validate_and_correct_filename(file_metadata)
         except InvalidFileNameException as error:
             self.handle_invalid_filename(
-                file_metadata, error, nhs_number, ods_code, patients
+                file_metadata, error, nhs_number
             )
-            patients.pop((nhs_number, ods_code))
+            return
+
+        sqs_metadata = self.convert_to_sqs_metadata(file_metadata, correct_file_name)
+        patients[(nhs_number, ods_code)].append(sqs_metadata)
+
+    @staticmethod
+    def convert_to_sqs_metadata(
+            file: MetadataFile, corrected_file_name: str
+    ) -> BulkUploadQueueMetadata:
+        return BulkUploadQueueMetadata(
+            **file.model_dump(), stored_file_name=corrected_file_name
+        )
 
     def extract_patient_info(self, file_metadata: MetadataFile) -> tuple[str, str]:
         nhs_number = file_metadata.nhs_number
@@ -158,16 +165,14 @@ class BulkUploadMetadataProcessorService:
         file_metadata: MetadataFile,
         error: InvalidFileNameException,
         nhs_number: str,
-        ods_code: str,
-        patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]],
     ) -> None:
         logger.error(
             f"Failed to process {file_metadata.file_path} due to error: {error}"
         )
-        files = patients.get((nhs_number, ods_code), [file_metadata])
+        failed_file = self.convert_to_sqs_metadata(file_metadata, file_metadata.file_path)
         failed_entry = StagingSqsMetadata(
             nhs_number=nhs_number,
-            files=files,
+            files=[failed_file],
         )
         self.dynamo_repository.write_report_upload_to_dynamo(
             failed_entry, UploadStatus.FAILED, str(error)
