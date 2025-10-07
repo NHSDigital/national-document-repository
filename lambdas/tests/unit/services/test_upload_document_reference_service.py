@@ -477,7 +477,7 @@ def test_handle_upload_pdm_document_reference_request_success(
 ):
     """Test successful handling of the upload document reference request"""
     pdm_snomed = SnomedCodes.PATIENT_DATA.value
-    object_key = f"{pdm_snomed.code}/staging/test-doc-id"
+    object_key = f"fhir_upload/{pdm_snomed.code}/staging/test-doc-id"
     object_size = 1111
     service.document_service.fetch_documents_from_table.return_value = [
         mock_document_reference
@@ -499,7 +499,9 @@ def test_copy_files_from_staging_bucket_to_pdm_success(
     pdm_service, mock_pdm_document_reference
 ):
     """Test successful file copying from staging bucket"""
-    source_file_key = f"{SnomedCodes.PATIENT_DATA.value.code}/staging/test-doc-id"
+    source_file_key = (
+        f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}/staging/test-doc-id"
+    )
     expected_dest_key = (
         f"{mock_pdm_document_reference.nhs_number}/{mock_pdm_document_reference.id}"
     )
