@@ -1,4 +1,4 @@
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from botocore.exceptions import ClientError
@@ -11,7 +11,7 @@ from tests.unit.conftest import (
     MOCK_LG_TABLE_NAME,
     MOCK_STAGING_STORE_BUCKET,
 )
-from utils.common_query_filters import FinalStatusFilter, PreliminaryStatus, not_document_id
+from utils.common_query_filters import FinalStatusAndNotSuperceded, PreliminaryStatus
 from utils.exceptions import DocumentServiceException, FileProcessingException
 
 
@@ -443,7 +443,7 @@ def test_supersede_existing_final_documents_success(service, mock_document_refer
         table=MOCK_LG_TABLE_NAME,
         search_condition=new_doc.nhs_number,
         search_key="NhsNumber",
-        query_filter=FinalStatusFilter & not_document_id(new_doc.id),
+        query_filter=FinalStatusAndNotSuperceded,
     )
     
     # Verify old doc was marked as superseded

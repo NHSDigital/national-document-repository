@@ -9,8 +9,7 @@ from services.base.dynamo_service import DynamoDBService
 from services.base.s3_service import S3Service
 from services.document_service import DocumentService
 from utils.audit_logging_setup import LoggingService
-from utils.common_query_filters import FinalStatusFilter, PreliminaryStatus, not_document_id
-from utils.dynamo_utils import create_expression_attribute_values, create_expressions, create_update_expression
+from utils.common_query_filters import FinalStatusAndNotSuperceded, FinalStatusFilter, NotSuperceded, PreliminaryStatus
 from utils.exceptions import DocumentServiceException, FileProcessingException, TransactionConflictException
 from utils.utilities import get_virus_scan_service
 
@@ -145,8 +144,8 @@ class UploadDocumentReferenceService:
                 table=self.table_name,
                 search_condition=new_document.nhs_number,
                 search_key="NhsNumber",
-                query_filter=FinalStatusFilter & not_document_id(new_document.id),
-            ) 
+                query_filter=FinalStatusAndNotSuperceded,
+            )
             # TODO: Not sure query_filter is right here here
 
             # Build transaction items
