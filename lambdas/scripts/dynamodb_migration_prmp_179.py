@@ -29,7 +29,7 @@ class VersionMigration:
         self.logger.info(f"Dry run mode: {self.dry_run}")
 
         if entries is None:
-            self.logger.info("No entries provided — scanning entire table.")
+            self.logger.error("No entries provided after scanning entire table.")
             raise ValueError("Entries must be provided to main().")
 
         return [
@@ -58,7 +58,7 @@ class VersionMigration:
 
             updated_fields = update_fn(entry)
             if not updated_fields:
-                self.logger.debug(
+                self.logger.info(
                     f"[{label}] Item {item_id} does not require update, skipping."
                 )
                 continue
