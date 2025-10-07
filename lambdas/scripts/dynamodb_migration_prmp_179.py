@@ -105,13 +105,10 @@ class VersionMigration:
             self.logger.warning(f"Missing FileLocation for entry: {entry.get('ID')}")
             return None
 
-        s3_bucket_path_parts = self.parse_s3_path(file_location)
-
-        if not s3_bucket_path_parts:
+        if not (result := self.parse_s3_path(file_location)) or not all(result):
             self.logger.warning(f"Invalid S3 path: {file_location}")
             return None
-
-        s3_bucket, s3_key = s3_bucket_path_parts
+        s3_bucket, s3_key = result
 
         # Get metadata from S3
         try:
