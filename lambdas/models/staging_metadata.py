@@ -23,48 +23,6 @@ class MetadataBase(BaseModel):
     gp_practice_code: str
     scan_date: str
 
-    # @field_validator("gp_practice_code")
-    # @classmethod
-    # def ensure_gp_practice_code_non_empty(
-    #     cls, gp_practice_code: str, info: ValidationInfo
-    # ) -> str:
-    #     if not gp_practice_code:
-    #         patient_nhs_number = info.data.get("nhs_number", "")
-    #         raise PydanticCustomError(
-    #             "MissingGPPracticeCode",
-    #             "missing GP-PRACTICE-CODE for patient {patient_nhs_number}",
-    #             {"patient_nhs_number": patient_nhs_number},
-    #         )
-    #     return gp_practice_code
-
-    # @field_validator("gp_practice_code")
-    # @classmethod
-    # def ensure_gp_practice_code_non_empty(
-    #         cls, gp_practice_code: str, info: ValidationInfo
-    # ) -> str:
-    #     if not gp_practice_code:
-    #         patient_nhs_number = info.data.get("NHS-NO", "<unknown>")
-    #         raise PydanticCustomError(
-    #             "MissingGPPracticeCode",
-    #             "missing GP-PRACTICE-CODE for patient {patient_nhs_number}",
-    #             {"patient_nhs_number": patient_nhs_number},
-    #         )
-    #
-    #     return gp_practice_code
-
-    # @field_validator("gp_practice_code")
-    # @classmethod
-    # def ensure_gp_practice_code_non_empty(cls, gp_practice_code: str, info: ValidationInfo) -> str:
-    #     if not gp_practice_code:
-    #         # Try to get nhs_number from the raw data with alias
-    #         patient_nhs_number = info.data.get("NHS-NO", "<unknown>")
-    #         raise PydanticCustomError(
-    #             "MissingGPPracticeCode",
-    #             "missing GP-PRACTICE-CODE for patient {patient_nhs_number}",
-    #             {"patient_nhs_number": patient_nhs_number},
-    #         )
-    #     return gp_practice_code
-
     @model_validator(mode="after")
     @classmethod
     def ensure_gp_practice_code_non_empty(cls, model):

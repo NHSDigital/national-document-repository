@@ -36,46 +36,6 @@ class BulkUploadMetadataService:
 
         self.temp_download_dir = tempfile.mkdtemp()
 
-    # def process_metadata(self, metadata_filename: str):
-    #     try:
-    #         metadata_file = self.download_metadata_from_s3(metadata_filename)
-    #
-    #         staging_metadata_list = self.csv_to_staging_sqs_metadata(metadata_file)
-    #         logger.info("Finished parsing metadata")
-    #
-    #         self.send_metadata_to_fifo_sqs(staging_metadata_list)
-    #         logger.info("Sent bulk upload metadata to sqs queue")
-    #
-    #         self.copy_metadata_to_dated_folder(metadata_filename)
-    #
-    #         self.clear_temp_storage()
-    #     except pydantic.ValidationError as e:
-    #         errors = e.errors()
-    #
-    #         msg_lines = []
-    #         for err in errors:
-    #             message = err["msg"]
-    #             msg_lines.append(message)
-    #
-    #         failure_msg = (
-    #                 f"Failed to parse {metadata_filename}: {len(errors)} validation error for MetadataFile\n"
-    #                 + "\n".join(msg_lines)
-    #         )
-    #
-    #         logger.error(failure_msg)
-    #         raise BulkUploadMetadataException(failure_msg)
-    #     except KeyError as e:
-    #         failure_msg = f"Failed due to missing key: {str(e)}"
-    #         logger.error(failure_msg, {"Result": unsuccessful})
-    #         raise BulkUploadMetadataException(failure_msg)
-    #     except ClientError as e:
-    #         if "HeadObject" in str(e):
-    #             failure_msg = f'No metadata file could be found with the name "{metadata_filename}"'
-    #         else:
-    #             failure_msg = str(e)
-    #         logger.error(failure_msg, {"Result": unsuccessful})
-    #         raise BulkUploadMetadataException(failure_msg)
-
     def process_metadata(self, metadata_filename: str):
         try:
             metadata_file = self.download_metadata_from_s3(metadata_filename)
