@@ -34,7 +34,7 @@ class VersionMigration:
             raise ValueError("Entries must be provided to main().")
 
         return [
-            ("LGTableValues", self.update_entry)
+            ("LGTableValues", self.get_update_entry)
         ]
 
     def process_entries(
@@ -75,32 +75,28 @@ class VersionMigration:
                 )
         self.logger.info(f"{label} migration completed.")  # Moved outside the loop
 
-    def update_entry(self, entry: dict ) -> dict | None:
+    def get_updated_items(self, entry: dict ) -> dict | None:
         """
         Aggregates updates from all update methods for a single entry.
         Returns a dict of fields to update, or None if no update is needed.
         """
-        updates = {}
+        update_items = {}
 
-        custodian_update = self.update_custodian_entry(entry)
-        if custodian_update:
-            updates.update(custodian_update)
+        if (custodian_update_items := self.get_update_custodian_items(entry)):
+            update_items.update(custodian_update_items)
 
-        status_update = self.update_status_entry(entry)
-        if status_update:
-            updates.update(status_update)
+        if (status_update_items := self.get_update_status_items(entry)):
+            update_items.update(status_update_items)
 
-        snomed_code_update = self.update_document_snomed_code_type_entry(entry)
-        if snomed_code_update:
-            updates.update(snomed_code_update)
+        if (snomed_code_update_items := self.get_update_document_snomed_code_type_items(entry)):
+            update_items.update(snomed_code_update_items)
 
-        doc_status_update = self.update_doc_status_entry(entry)
-        if doc_status_update:
-            updates.update(doc_status_update)
+        if (doc_status_update_items := self.get_update_doc_status_items(entry)):
+            update_items.update(doc_status_update_items)
 
-        return updates if updates else None
+        return update_items if update_items else None
 
-    def update_custodian_entry(self, entry: dict) -> dict | None:
+    def get_update_custodian_items(self, entry: dict) -> dict | None:
         """
         Updates the 'Custodian' field if it does not match 'CurrentGpOds'.
         Returns a dict with the update or None.
@@ -117,7 +113,7 @@ class VersionMigration:
         return None
 
     @staticmethod
-    def update_status_entry(entry: dict) -> dict | None:
+    def get_update_status_items(entry: dict) -> dict | None:
         """
         Ensures the 'Status' field is set to 'current'.
         Returns a dict with the update or None.
@@ -127,7 +123,7 @@ class VersionMigration:
         return None
 
     @staticmethod
-    def update_document_snomed_code_type_entry(entry: dict) -> dict | None:
+    def get_update_document_snomed_code_type_items(entry: dict) -> dict | None:
         """
         Ensures the 'DocumentSnomedCodeType' field matches the expected SNOMED code.
         Returns a dict with the update or None.
@@ -137,7 +133,7 @@ class VersionMigration:
             return {"DocumentSnomedCodeType": expected_code}
         return None
 
-    def update_doc_status_entry(self, entry: dict) -> dict | None:
+    def get_update_doc_status_items(self, entry: dict) -> dict | None:
         """
         Infers and updates the 'DocStatus' field if missing.
         Returns a dict with the update or None.
