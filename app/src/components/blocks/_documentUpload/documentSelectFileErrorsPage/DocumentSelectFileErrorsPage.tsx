@@ -29,11 +29,6 @@ const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
         }
     };
 
-    const handleGoHome = (e: React.MouseEvent<HTMLAnchorElement>): void => {
-        e.preventDefault();
-        navigate(routes.HOME, { replace: true });
-    };
-
     useEffect(() => {
         if (documents.length === 0) {
             navigate(routes.HOME);
@@ -80,7 +75,7 @@ const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
                 pages.
             </p>
 
-            <BackLink asElement="a" href={routes.HOME} onClick={handleGoHome}>
+            <BackLink asElement="a" href={routes.HOME}>
                 Go to home
             </BackLink>
         </>
