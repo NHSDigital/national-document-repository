@@ -4,11 +4,6 @@ from typing import Optional, Sequence
 import boto3
 from boto3.dynamodb.conditions import Attr, ConditionBase, Key
 from botocore.exceptions import ClientError
-from types_boto3_dynamodb import DynamoDBServiceResource
-from types_boto3_dynamodb.type_defs import (
-    TransactWriteItemsOutputTypeDef,
-    TransactWriteItemTypeDef,
-)
 
 from utils.audit_logging_setup import LoggingService
 from utils.dynamo_utils import (
@@ -32,7 +27,7 @@ class DynamoDBService:
 
     def __init__(self):
         if not self.initialised:
-            self.dynamodb: DynamoDBServiceResource = boto3.resource("dynamodb", region_name="eu-west-2")
+            self.dynamodb = boto3.resource("dynamodb", region_name="eu-west-2")
             self.initialised = True
 
     def get_table(self, table_name: str):
@@ -290,8 +285,8 @@ class DynamoDBService:
             raise e
 
     def transact_write_items(
-        self, transact_items: Sequence[TransactWriteItemTypeDef]
-    ) -> TransactWriteItemsOutputTypeDef:
+        self, transact_items: Sequence[dict]
+    ):
         """
         Execute a transactional write operation.
         
