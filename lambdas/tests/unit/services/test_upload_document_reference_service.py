@@ -340,6 +340,19 @@ def test_delete_file_from_staging_bucket_success(service):
     )
 
 
+def test_delete_pdm_file_from_staging_bucket_success(service):
+    """Test successful file deletion from staging bucket"""
+    source_file_key = (
+        f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}/staging/test-doc-id"
+    )
+
+    service.delete_file_from_staging_bucket(source_file_key)
+
+    service.s3_service.delete_object.assert_called_once_with(
+        MOCK_STAGING_STORE_BUCKET, source_file_key
+    )
+
+
 def test_delete_file_from_staging_bucket_client_error(service):
     """Test handling of ClientError during file deletion"""
     source_file_key = "staging/test-doc-id"
@@ -450,7 +463,7 @@ def test_integration_full_workflow_clean_document(service, mock_document_referen
         ),
     ],
 )
-def test_document_key_extraction_from_object_key(
+def test_document_type_extraction_from_object_key(
     service,
     mock_document_reference,
     object_key,
