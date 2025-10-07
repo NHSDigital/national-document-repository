@@ -34,7 +34,7 @@ class VersionMigration:
             raise ValueError("Entries must be provided to main().")
 
         return [
-            ("LGTableValues", self.get_update_entry)
+            ("LGTableValues", self.get_updated_items)
         ]
 
     def process_entries(
