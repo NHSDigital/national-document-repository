@@ -150,6 +150,9 @@ class VersionMigration:
 
         inferred_status = document.infer_doc_status()
 
+        if entry.get("uploaded") == True and entry.get("uploading") == True:
+            self.logger.warning(f"{entry.get('ID')}: Document has a status of uploading and uploaded.")
+
         if entry.get("DocStatus", "") == inferred_status:
             return None
 
