@@ -169,6 +169,13 @@ class PostFhirDocumentReferenceService:
                 if current_gp_ods not in PatientOdsInactiveStatus.list()
                 else PCSE_ODS_CODE
             )
+
+        sub_folder = (
+            "user_upload"
+            if doc_type != SnomedCodes.PATIENT_DATA.value
+            else f"fhir_upload/{doc_type.code}"
+        )
+
         document_reference = DocumentReference(
             id=document_id,
             nhs_number=nhs_number,
@@ -181,7 +188,7 @@ class PostFhirDocumentReferenceService:
             document_snomed_code_type=doc_type.code,
             doc_status="preliminary",
             status="current",
-            sub_folder="user_upload",
+            sub_folder=sub_folder,
             document_scan_creation=fhir_doc.content[0].attachment.creation,
         )
 
@@ -209,11 +216,10 @@ class PostFhirDocumentReferenceService:
         """Store binary content in S3"""
         try:
             binary_file = io.BytesIO(base64.b64decode(binary_content, validate=True))
-            file_key = self._format_file_key(document_reference)
             self.s3_service.upload_file_obj(
                 file_obj=binary_file,
                 s3_bucket_name=document_reference.s3_bucket_name,
-                file_key=file_key,
+                file_key=document_reference.s3_file_key,
             )
             logger.info(
                 f"Successfully stored binary content in S3: {document_reference.s3_file_key}"
@@ -230,14 +236,6 @@ class PostFhirDocumentReferenceService:
         except (OSError, IOError) as e:
             logger.error(f"I/O error when processing binary content: {str(e)}")
             raise CreateDocumentRefException(500, LambdaError.CreateDocNoParse)
-
-    def _format_file_key(self, document_reference: DocumentReference) -> str:
-        if (
-            document_reference.document_snomed_code_type
-            == SnomedCodes.PATIENT_DATA.value.code
-        ):
-            return f"{document_reference.document_snomed_code_type}/{document_reference.s3_file_key}"
-        return document_reference.s3_file_key
 
     def _create_presigned_url(self, document_reference: DocumentReference) -> str:
         """Create a pre-signed URL for uploading a file"""

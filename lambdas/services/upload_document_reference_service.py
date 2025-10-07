@@ -25,7 +25,6 @@ class UploadDocumentReferenceService:
         self.staging_s3_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
         self.table_name = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
         self.destination_bucket_name = os.getenv("LLOYD_GEORGE_BUCKET_NAME")
-        self.pdm_bucket_name = os.getenv("PDM_BUCKET_NAME")
         self.document_service = DocumentService()
         self.dynamo_service = DynamoDBService()
         self.virus_scan_service = get_virus_scan_service()
@@ -42,14 +41,12 @@ class UploadDocumentReferenceService:
             return
 
         try:
-            # document_key = object_key.split("/")[-1]
-            document_start, document_key = (
-                object_key.split("/")[0],
-                object_key.split("/")[-1],
-            )
-            self.table_name = self._get_dynamo_table_for_document_key(document_start)
+            object_parts = object_key.split("/")
+            document_key = object_parts[-1]
+
+            self.table_name = self._get_dynamo_table_for_document_key(object_parts)
             self.destination_bucket_name = self._get_s3_bucket_for_document_key(
-                document_start
+                object_parts
             )
             document_reference = self._fetch_document_reference(document_key)
             if not document_reference:
@@ -64,8 +61,12 @@ class UploadDocumentReferenceService:
             logger.error(f"Failed to process document reference: {object_key}")
             return
 
-    def _get_dynamo_table_for_document_key(self, document_start: str) -> str:
-        doc_type = SnomedCodes.find_by_code(document_start)
+    def _get_dynamo_table_for_document_key(self, object_parts: list[str]) -> str:
+        if object_parts[0] != "fhir_upload":
+            doc_type = SnomedCodes.LLOYD_GEORGE.value
+            return self.table_router.resolve(doc_type)
+
+        doc_type = SnomedCodes.find_by_code(object_parts[1])
         if doc_type:
             try:
                 return self.table_router.resolve(doc_type)
@@ -77,8 +78,12 @@ class UploadDocumentReferenceService:
         doc_type = SnomedCodes.LLOYD_GEORGE.value
         return self.table_router.resolve(doc_type)
 
-    def _get_s3_bucket_for_document_key(self, document_start: str) -> str:
-        doc_type = SnomedCodes.find_by_code(document_start)
+    def _get_s3_bucket_for_document_key(self, object_parts: list[str]) -> str:
+        if object_parts[0] != "fhir_upload":
+            doc_type = SnomedCodes.LLOYD_GEORGE.value
+            return self.bucket_router.resolve(doc_type)
+
+        doc_type = SnomedCodes.find_by_code(object_parts[1])
         if doc_type:
             try:
                 return self.bucket_router.resolve(doc_type)

@@ -42,14 +42,15 @@ def mock_pdm_document_reference():
     doc_ref = Mock(spec=DocumentReference)
     doc_ref.id = "test-doc-id"
     doc_ref.nhs_number = "9000000001"
-    doc_ref.s3_file_key = f"{SnomedCodes.PATIENT_DATA.value.code}/test-key"
-    doc_ref.s3_bucket_name = "original-bucket"
-    doc_ref.file_location = "original-location"
+    doc_ref.s3_file_key = (
+        f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}/9000000001/test-doc-id"
+    )
+    doc_ref.s3_bucket_name = "test-staging-bucket"
     doc_ref.virus_scanner_result = None
     doc_ref.file_size = 1234567890
     doc_ref.doc_status = "uploading"
     doc_ref._build_s3_location = Mock(
-        return_value="s3://test-pdm-bucket/9000000001/test-doc-id"
+        return_value=f"s3://test-staging-bucket/fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}/9000000001/test-doc-id"
     )
     return doc_ref
 
@@ -433,12 +434,17 @@ def test_integration_full_workflow_clean_document(service, mock_document_referen
         ("folder/subfolder/another-doc", "another-doc", MOCK_LG_TABLE_NAME),
         ("simple-doc", "simple-doc", MOCK_LG_TABLE_NAME),
         (
-            f"{SnomedCodes.PATIENT_DATA.value.code}/staging/test-doc-123",
+            f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}/staging/test-doc-123",
             "test-doc-123",
             MOCK_PDM_TABLE_NAME,
         ),
         (
             f"{SnomedCodes.LLOYD_GEORGE.value.code}/staging/test-doc-123",
+            "test-doc-123",
+            MOCK_LG_TABLE_NAME,
+        ),
+        (
+            f"fhir_upload/{SnomedCodes.LLOYD_GEORGE.value.code}/staging/test-doc-123",
             "test-doc-123",
             MOCK_LG_TABLE_NAME,
         ),
