@@ -529,11 +529,7 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
     mocker, test_service, base_metadata_file
 ):
     nhs_number = "1234567890"
-    ods_code = "Y12345"
     error = InvalidFileNameException("Invalid filename format")
-
-    fake_file = mocker.Mock()
-    patients = {(nhs_number, ods_code): [fake_file]}
 
     mock_staging_metadata = mocker.patch(
         "services.bulk_upload_metadata_processor_service.StagingSqsMetadata"
@@ -544,12 +540,16 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
     )
 
     test_service.handle_invalid_filename(
-        base_metadata_file, error, nhs_number, ods_code, patients
+        base_metadata_file, error, nhs_number
+    )
+
+    expected_file = test_service.convert_to_sqs_metadata(
+        base_metadata_file, base_metadata_file.file_path
     )
 
     mock_staging_metadata.assert_called_once_with(
         nhs_number=nhs_number,
-        files=patients[(nhs_number, ods_code)],
+        files=[expected_file],
     )
 
     mock_write.assert_called_once_with(
