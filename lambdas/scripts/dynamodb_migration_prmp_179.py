@@ -97,6 +97,15 @@ class VersionMigration:
 
         return parts[0], parts[1]
 
+    def get_meta_data(self, s3_bucket: str, s3_key: str) -> tuple[str, str] | None:
+        try:
+            s3_head = self.s3_service.get_head_object(s3_bucket, s3_key)
+            if s3_head:
+                return s3_head.get('ContentLength'), s3_head.get('VersionId')
+        except Exception as e:
+            self.logger.error(f"Failed to retrieve S3 metadata for {s3_key}: {str(e)}")
+        return None
+
     def update_s3_metadata_entry(self, entry: dict) -> dict | None:
         """Update entry with S3 metadata (FileSize, S3Key, S3VersionID)"""
 
@@ -105,24 +114,15 @@ class VersionMigration:
             self.logger.warning(f"Missing FileLocation for entry: {entry.get('ID')}")
             return None
 
-        if not (result := self.parse_s3_path(file_location)) or not all(result):
+        if not (pathResult := self.parse_s3_path(file_location)) or not all(pathResult):
             self.logger.warning(f"Invalid S3 path: {file_location}")
             return None
-        s3_bucket, s3_key = result
+        s3_bucket, s3_key = pathResult
 
-        # Get metadata from S3
-        try:
-            s3_head = self.s3_service.get_head_object(s3_bucket, s3_key)
-        except Exception as e:
-            self.logger.error(f"Failed to retrieve S3 metadata for {s3_key}: {str(e)}")
-            return None
-
-        if not s3_head:
+        if not (metadata := self.get_meta_data(s3_bucket, s3_key)) or not all(metadata):
             self.logger.warning(f"Could not retrieve S3 metadata for item {s3_key}")
             return None
-
-        content_length = s3_head.get('ContentLength')
-        version_id = s3_head.get('VersionId')
+        content_length, version_id = metadata
 
         updated_fields = {}
 
