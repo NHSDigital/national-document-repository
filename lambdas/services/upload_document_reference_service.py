@@ -9,7 +9,7 @@ from services.base.dynamo_service import DynamoDBService
 from services.base.s3_service import S3Service
 from services.document_service import DocumentService
 from utils.audit_logging_setup import LoggingService
-from utils.common_query_filters import FinalStatusAndNotSuperceded, FinalStatusFilter, NotSuperceded, PreliminaryStatus
+from utils.common_query_filters import FinalStatusAndNotSuperceded, PreliminaryStatus
 from utils.exceptions import DocumentServiceException, FileProcessingException, TransactionConflictException
 from utils.utilities import get_virus_scan_service
 
@@ -108,13 +108,13 @@ class UploadDocumentReferenceService:
             updated_doc_status = None
             if virus_scan_result != VirusScanResult.CLEAN:
                 updated_doc_status = "cancelled"
-                # Update non-clean documents without transaction
+                
                 preliminary_document_reference.doc_status = updated_doc_status
                 self._update_dynamo_table(preliminary_document_reference)
             else:
                 updated_doc_status = "final"
                 preliminary_document_reference.doc_status = updated_doc_status
-                # Use transaction to update this document to final AND supersede existing finals atomically
+
                 self._finalize_and_supersede_with_transaction(preliminary_document_reference)
 
         except TransactionConflictException as e:
@@ -139,19 +139,16 @@ class UploadDocumentReferenceService:
                 f"Checking for existing final documents to supersede for NHS number {new_document.nhs_number}"
             )
             
-            # Fetch existing final documents for the same patient
             existing_docs: list[DocumentReference] = self.document_service.fetch_documents_from_table(
                 table=self.table_name,
+                index_name="NhsNumberIndex",
                 search_condition=new_document.nhs_number,
                 search_key="NhsNumber",
                 query_filter=FinalStatusAndNotSuperceded,
             )
-            # TODO: Not sure query_filter is right here here
 
-            # Build transaction items
             transact_items = []
             
-            # First: Update the new document from preliminary to final (with condition check)
             update_fields_dict = new_document.model_dump(
                 by_alias=True,
                 exclude_none=True,
@@ -174,7 +171,7 @@ class UploadDocumentReferenceService:
             )
             transact_items.append(new_doc_transaction)
 
-            # Second: Supersede existing final documents
+            # Supersede existing final documents
             if existing_docs:
                 logger.info(
                     f"Superseding {len(existing_docs)} existing final document(s) for NHS number {new_document.nhs_number}"
@@ -187,7 +184,10 @@ class UploadDocumentReferenceService:
                     supersede_transaction = self.dynamo_service.build_update_transaction_item(
                         table_name=self.table_name,
                         document_key=self.document_reference_key(doc.id),
-                        update_fields={"Status": "superseded"},
+                        update_fields={
+                            "Status": "superseded", 
+                            "DocStatus": "deprecated"
+                        },
                         condition_field="DocStatus",
                         condition_value="final"
                     )
@@ -223,9 +223,7 @@ class UploadDocumentReferenceService:
             raise
 
     def document_reference_key(self, document_id):
-        return {
-                    DocumentReferenceMetadataFields.ID.value: {"S": document_id}
-                }
+        return {DocumentReferenceMetadataFields.ID.value: document_id}
 
 
     def _perform_virus_scan(
@@ -233,7 +231,6 @@ class UploadDocumentReferenceService:
     ) -> VirusScanResult:
         """Perform a virus scan on the document"""
         try:
-            # TODO do we need to modify the stub?
             return self.virus_scan_service.scan_file(
                 document_reference.s3_file_key, nhs_number=document_reference.nhs_number
             )

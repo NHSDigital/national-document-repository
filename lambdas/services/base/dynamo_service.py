@@ -354,7 +354,7 @@ class DynamoDBService:
                 },
                 "ExpressionAttributeValues": {
                     **expression_attribute_values,
-                    condition_value_placeholder: {"S": condition_value}
+                    condition_value_placeholder: condition_value
                 }
             }
         }
