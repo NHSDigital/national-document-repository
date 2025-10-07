@@ -1,1 +1,1 @@
-{"NHS-NO":"123456789","files":[{"FILEPATH":"1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt","GP-PRACTICE-CODE":"Y12345","SCAN-DATE":"04/09/2022","STORED-FILE-NAME":"1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt"}],"retries":0}
+{"nhs_number":"123456789","files":[{"FILEPATH":"1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt","gp_practice_code":"Y12345","scan_date":"04/09/2022","stored_file_name":"1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt"}],"retries":0}

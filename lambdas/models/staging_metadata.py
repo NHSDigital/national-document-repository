@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
 METADATA_FILENAME = "metadata.csv"
@@ -15,7 +15,6 @@ def to_upper_case_with_hyphen(field_name: str) -> str:
 
 class MetadataBase(BaseModel):
     model_config = ConfigDict(
-        alias_generator=to_upper_case_with_hyphen,
         validate_by_name=True,
         populate_by_name=True,
     )
@@ -24,19 +23,62 @@ class MetadataBase(BaseModel):
     gp_practice_code: str
     scan_date: str
 
-    @field_validator("gp_practice_code")
+    # @field_validator("gp_practice_code")
+    # @classmethod
+    # def ensure_gp_practice_code_non_empty(
+    #     cls, gp_practice_code: str, info: ValidationInfo
+    # ) -> str:
+    #     if not gp_practice_code:
+    #         patient_nhs_number = info.data.get("nhs_number", "")
+    #         raise PydanticCustomError(
+    #             "MissingGPPracticeCode",
+    #             "missing GP-PRACTICE-CODE for patient {patient_nhs_number}",
+    #             {"patient_nhs_number": patient_nhs_number},
+    #         )
+    #     return gp_practice_code
+
+    # @field_validator("gp_practice_code")
+    # @classmethod
+    # def ensure_gp_practice_code_non_empty(
+    #         cls, gp_practice_code: str, info: ValidationInfo
+    # ) -> str:
+    #     if not gp_practice_code:
+    #         patient_nhs_number = info.data.get("NHS-NO", "<unknown>")
+    #         raise PydanticCustomError(
+    #             "MissingGPPracticeCode",
+    #             "missing GP-PRACTICE-CODE for patient {patient_nhs_number}",
+    #             {"patient_nhs_number": patient_nhs_number},
+    #         )
+    #
+    #     return gp_practice_code
+
+    # @field_validator("gp_practice_code")
+    # @classmethod
+    # def ensure_gp_practice_code_non_empty(cls, gp_practice_code: str, info: ValidationInfo) -> str:
+    #     if not gp_practice_code:
+    #         # Try to get nhs_number from the raw data with alias
+    #         patient_nhs_number = info.data.get("NHS-NO", "<unknown>")
+    #         raise PydanticCustomError(
+    #             "MissingGPPracticeCode",
+    #             "missing GP-PRACTICE-CODE for patient {patient_nhs_number}",
+    #             {"patient_nhs_number": patient_nhs_number},
+    #         )
+    #     return gp_practice_code
+
+    @model_validator(mode="after")
     @classmethod
-    def ensure_gp_practice_code_non_empty(
-        cls, gp_practice_code: str, info: ValidationInfo
-    ) -> str:
-        if not gp_practice_code:
-            patient_nhs_number = info.data.get("nhs_number", "")
+    def ensure_gp_practice_code_non_empty(cls, model):
+        gp_code = model.gp_practice_code
+        nhs_number = getattr(model, "nhs_number", "<unknown>")
+
+        if not gp_code:
             raise PydanticCustomError(
                 "MissingGPPracticeCode",
                 "missing GP-PRACTICE-CODE for patient {patient_nhs_number}",
-                {"patient_nhs_number": patient_nhs_number},
+                {"patient_nhs_number": nhs_number},
             )
-        return gp_practice_code
+
+        return model
 
 
 class BulkUploadQueueMetadata(MetadataBase):
@@ -48,18 +90,16 @@ class MetadataFile(MetadataBase):
         alias_generator=to_upper_case_with_hyphen,
     )
     nhs_number: Optional[str] = Field(alias=NHS_NUMBER_FIELD_NAME, default=None)
-    page_count: str = Field(alias="PAGE COUNT")
-    section: str
-    sub_section: Optional[str]
+    page_count: Optional[str] = Field(default=None, alias="PAGE COUNT")
+    section: str = None
+    sub_section: Optional[str] = None
     scan_id: Optional[str] = None
     user_id: Optional[str] = None
     upload: str
 
 
 class StagingSqsMetadata(BaseModel):
-    model_config = ConfigDict(validate_by_name=True)
-
-    nhs_number: str = Field(default=NHS_NUMBER_PLACEHOLDER, alias=NHS_NUMBER_FIELD_NAME)
+    nhs_number: str
     files: list[BulkUploadQueueMetadata]
     retries: int = 0
 

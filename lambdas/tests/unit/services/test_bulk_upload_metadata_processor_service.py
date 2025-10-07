@@ -459,10 +459,10 @@ def test_process_metadata_row_success(mocker):
     expected_sqs_metadata = BulkUploadQueueMetadata.model_validate(
         {
             "FILEPATH": "/some/path/file.pdf",
-            "NHS-NO": "1234567890",
-            "GP-PRACTICE-CODE": "Y12345",
-            "SCAN-DATE": "01/01/2023",
-            "STORED-FILE-NAME": "corrected.pdf",
+            "nhs_number": "1234567890",
+            "gp_practice_code": "Y12345",
+            "scan_date": "01/01/2023",
+            "stored_file_name": "corrected.pdf",
         }
     )
 
@@ -474,10 +474,10 @@ def test_process_metadata_row_adds_to_existing_entry(mocker):
     mock_metadata_existing = BulkUploadQueueMetadata.model_validate(
         {
             "FILEPATH": "/some/path/file1.pdf",
-            "NHS-NO": "1234567890",
-            "GP-PRACTICE-CODE": "Y12345",
-            "SCAN-DATE": "01/01/2023",
-            "STORED-FILE-NAME": "/some/path/file1.pdf",
+            "nhs_number": "1234567890",
+            "gp_practice_code": "Y12345",
+            "scan_date": "01/01/2023",
+            "stored_file_name": "/some/path/file1.pdf",
         }
     )
     patients = {key: [mock_metadata_existing]}
@@ -495,7 +495,6 @@ def test_process_metadata_row_adds_to_existing_entry(mocker):
         "UPLOAD": "02/01/2023",
     }
 
-    # Return a real MetadataFile
     metadata = MetadataFile.model_validate(row)
 
     mocker.patch(

@@ -134,7 +134,7 @@ def test_process_metadata_raise_validation_error_when_gp_practice_code_is_missin
 
     expected_error_log = (
         "Failed to parse metadata.csv: 1 validation error for MetadataFile\n"
-        + "GP-PRACTICE-CODE\n  missing GP-PRACTICE-CODE for patient 1234567890"
+        + "missing GP-PRACTICE-CODE for patient 1234567890"
     )
 
     with pytest.raises(BulkUploadMetadataException) as e:
@@ -224,9 +224,11 @@ def test_duplicates_csv_to_staging_metadata(set_env, metadata_service):
 def test_csv_to_staging_metadata_raise_error_when_metadata_invalid(
     set_env, metadata_service
 ):
+    metadata_service.download_metadata_from_s3 = lambda filename: filename
+
     for invalid_csv_file in MOCK_INVALID_METADATA_CSV_FILES:
         with pytest.raises(BulkUploadMetadataException):
-            metadata_service.csv_to_staging_sqs_metadata(invalid_csv_file)
+            metadata_service.process_metadata(invalid_csv_file)
 
 
 def test_send_metadata_to_sqs(set_env, mocker, mock_sqs_service, metadata_service):

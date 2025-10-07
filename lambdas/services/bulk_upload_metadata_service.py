@@ -36,6 +36,46 @@ class BulkUploadMetadataService:
 
         self.temp_download_dir = tempfile.mkdtemp()
 
+    # def process_metadata(self, metadata_filename: str):
+    #     try:
+    #         metadata_file = self.download_metadata_from_s3(metadata_filename)
+    #
+    #         staging_metadata_list = self.csv_to_staging_sqs_metadata(metadata_file)
+    #         logger.info("Finished parsing metadata")
+    #
+    #         self.send_metadata_to_fifo_sqs(staging_metadata_list)
+    #         logger.info("Sent bulk upload metadata to sqs queue")
+    #
+    #         self.copy_metadata_to_dated_folder(metadata_filename)
+    #
+    #         self.clear_temp_storage()
+    #     except pydantic.ValidationError as e:
+    #         errors = e.errors()
+    #
+    #         msg_lines = []
+    #         for err in errors:
+    #             message = err["msg"]
+    #             msg_lines.append(message)
+    #
+    #         failure_msg = (
+    #                 f"Failed to parse {metadata_filename}: {len(errors)} validation error for MetadataFile\n"
+    #                 + "\n".join(msg_lines)
+    #         )
+    #
+    #         logger.error(failure_msg)
+    #         raise BulkUploadMetadataException(failure_msg)
+    #     except KeyError as e:
+    #         failure_msg = f"Failed due to missing key: {str(e)}"
+    #         logger.error(failure_msg, {"Result": unsuccessful})
+    #         raise BulkUploadMetadataException(failure_msg)
+    #     except ClientError as e:
+    #         if "HeadObject" in str(e):
+    #             failure_msg = f'No metadata file could be found with the name "{metadata_filename}"'
+    #         else:
+    #             failure_msg = str(e)
+    #         logger.error(failure_msg, {"Result": unsuccessful})
+    #         raise BulkUploadMetadataException(failure_msg)
+
     def process_metadata(self, metadata_filename: str):
         try:
             metadata_file = self.download_metadata_from_s3(metadata_filename)
@@ -47,13 +87,34 @@ class BulkUploadMetadataService:
             logger.info("Sent bulk upload metadata to sqs queue")
 
             self.copy_metadata_to_dated_folder(metadata_filename)
-
             self.clear_temp_storage()
+
+        except pydantic.ValidationError as e:
+            errors = e.errors()
+
+            msg_lines = []
+            for err in errors:
+                # prefer showing the actual location if available
+                if err.get("loc"):
+                    field_name = err["loc"][0]
+                    msg_lines.append(f"{field_name}\n  {err['msg']}")
+                else:
+                    msg_lines.append(err["msg"])
+
+            failure_msg = (
+                f"Failed to parse {metadata_filename}: "
+                f"{len(errors)} validation error for MetadataFile\n"
+                + "\n".join(msg_lines)
+            )
+
+            logger.error(failure_msg)
+            raise BulkUploadMetadataException(failure_msg)
 
         except KeyError as e:
             failure_msg = f"Failed due to missing key: {str(e)}"
             logger.error(failure_msg, {"Result": unsuccessful})
             raise BulkUploadMetadataException(failure_msg)
+
         except ClientError as e:
             if "HeadObject" in str(e):
                 failure_msg = f'No metadata file could be found with the name "{metadata_filename}"'
@@ -84,24 +145,11 @@ class BulkUploadMetadataService:
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
 
             for row in csv_reader:
-                try:
-                    file_metadata = MetadataFile.model_validate(row)
-                except pydantic.ValidationError:
-                    nhs_number = row.get("NHS-NO", "")
-                    msg = (
-                        f"Failed to parse metadata.csv: 1 validation error for MetadataFile\n"
-                        f"GP-PRACTICE-CODE\n"
-                        f"  missing GP-PRACTICE-CODE for patient {nhs_number}"
-                    )
-
-                    logger.error(msg)
-                    raise BulkUploadMetadataException(msg)
-
+                file_metadata = MetadataFile.model_validate(row)
                 nhs_number = row.get(NHS_NUMBER_FIELD_NAME)
-                ods_code = row[ODS_CODE]
+                ods_code = row.get(ODS_CODE)
 
-                key = (nhs_number, ods_code)
-                patients.setdefault(key, []).append(file_metadata)
+                patients.setdefault((nhs_number, ods_code), []).append(file_metadata)
 
         return [
             StagingSqsMetadata(

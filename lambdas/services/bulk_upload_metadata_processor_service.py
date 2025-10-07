@@ -95,24 +95,6 @@ class BulkUploadMetadataProcessorService:
         )
         return local_file_path
 
-    # def csv_to_sqs_metadata(self, csv_file_path: str) -> list[StagingSqsMetadata]:
-    #     logger.info("Parsing bulk upload metadata")
-    #     patients = defaultdict(list)
-    #
-    #     with open(
-    #         csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
-    #     ) as csv_file_handler:
-    #         csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
-    #         for row in csv_reader:
-    #             self.process_metadata_row(row, patients)
-    #     return [
-    #         StagingSqsMetadata(
-    #             nhs_number=key[0],
-    #             files=value,
-    #         )
-    #         for (key, value) in patients.items()
-    #     ]
-
     def csv_to_sqs_metadata(self, csv_file_path: str) -> list[StagingSqsMetadata]:
         logger.info("Parsing bulk upload metadata")
         patients: defaultdict[tuple[str, str], list[BulkUploadQueueMetadata]] = (
