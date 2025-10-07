@@ -23,6 +23,7 @@ MOCKED_LG_BUCKET_ENV = "test"
 MOCKED_LG_BUCKET_URL = f"{MOCKED_LG_BUCKET_ENV}-lloyd-test-test.com"
 MOCK_ARF_TABLE_NAME_ENV_NAME = "DOCUMENT_STORE_DYNAMODB_NAME"
 MOCK_ARF_BUCKET_ENV_NAME = "DOCUMENT_STORE_BUCKET_NAME"
+MOCK_PDM_TABLE_NAME_ENV_NAME = "PDM_DYNAMODB_NAME"
 
 MOCK_LG_TABLE_NAME_ENV_NAME = "LLOYD_GEORGE_DYNAMODB_NAME"
 MOCK_UNSTITCHED_LG_TABLE_ENV_NAME = "UNSTITCHED_LLOYD_GEORGE_DYNAMODB_NAME"
@@ -61,6 +62,7 @@ MOCK_STATISTICS_TABLE_NAME = "STATISTICS_TABLE"
 MOCK_STATISTICAL_REPORTS_BUCKET_ENV_NAME = "STATISTICAL_REPORTS_BUCKET"
 
 MOCK_ARF_TABLE_NAME = "test_arf_dynamoDB_table"
+MOCK_PDM_TABLE_NAME = "test_pdm_dynamoDB_table"
 MOCK_LG_TABLE_NAME = "test_lg_dynamoDB_table"
 MOCK_UNSTITCHED_LG_TABLE_NAME = "test_unstitched_lg_table"
 MOCK_BULK_REPORT_TABLE_NAME = "test_report_dynamoDB_table"
@@ -142,6 +144,7 @@ def set_env(monkeypatch):
     monkeypatch.setenv(MOCK_LG_TABLE_NAME_ENV_NAME, MOCK_LG_TABLE_NAME)
     monkeypatch.setenv(MOCK_UNSTITCHED_LG_TABLE_ENV_NAME, MOCK_UNSTITCHED_LG_TABLE_NAME)
     monkeypatch.setenv(MOCK_LG_BUCKET_ENV_NAME, MOCK_LG_BUCKET)
+    monkeypatch.setenv(MOCK_PDM_TABLE_NAME_ENV_NAME, MOCK_PDM_TABLE_NAME)
     monkeypatch.setenv(
         "DYNAMODB_TABLE_LIST", json.dumps([MOCK_ARF_TABLE_NAME, MOCK_LG_TABLE_NAME])
     )
@@ -384,3 +387,4 @@ def attach_caplog_handler(caplog):
             instance.logger.removeHandler(caplog.handler)
         except Exception:
             pass
+
