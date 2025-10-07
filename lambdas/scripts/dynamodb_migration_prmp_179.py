@@ -89,7 +89,7 @@ class VersionMigration:
         if not s3_path or not s3_path.startswith("s3://"):
             return None
 
-        path = s3_path[5:]
+        path = s3_path.removeprefix("s3://")
         parts = path.split("/", 1)
 
         if len(parts) != 2 or not parts[0] or not parts[1]:
