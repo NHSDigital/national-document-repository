@@ -44,9 +44,7 @@ class GetFhirDocumentReferenceService:
             logger.error(
                 f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
             )
-            raise GetFhirDocumentReferenceException(
-                400, LambdaError.CreateDocInvalidType
-            )
+            raise GetFhirDocumentReferenceException(400, LambdaError.DocTypeInvalid)
 
     def get_document_references(self, document_id: str, table) -> DocumentReference:
         documents = self.document_service.fetch_documents_from_table(
