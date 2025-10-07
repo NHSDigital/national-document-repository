@@ -1,9 +1,15 @@
 import time
-from typing import Optional
+from typing import Optional, Sequence
 
 import boto3
 from boto3.dynamodb.conditions import Attr, ConditionBase, Key
 from botocore.exceptions import ClientError
+from types_boto3_dynamodb import DynamoDBServiceResource
+from types_boto3_dynamodb.type_defs import (
+    TransactWriteItemsOutputTypeDef,
+    TransactWriteItemTypeDef,
+)
+
 from utils.audit_logging_setup import LoggingService
 from utils.dynamo_utils import (
     create_expression_attribute_values,
@@ -26,10 +32,10 @@ class DynamoDBService:
 
     def __init__(self):
         if not self.initialised:
-            self.dynamodb = boto3.resource("dynamodb", region_name="eu-west-2")
+            self.dynamodb: DynamoDBServiceResource = boto3.resource("dynamodb", region_name="eu-west-2")
             self.initialised = True
 
-    def get_table(self, table_name):
+    def get_table(self, table_name: str):
         try:
             return self.dynamodb.Table(table_name)
         except ClientError as e:
@@ -38,28 +44,26 @@ class DynamoDBService:
 
     def query_table_by_index(
         self,
-        table_name,
-        index_name,
+        table_name: str,
+        index_name: str,
         search_key,
         search_condition: str,
-        requested_fields: list[str] = None,
-        query_filter: Attr | ConditionBase = None,
-        exclusive_start_key: dict = None,
+        requested_fields: Optional[list[str]] = None,
+        query_filter: Attr | ConditionBase | None = None,
+        exclusive_start_key: dict | None = None,
     ):
         try:
             table = self.get_table(table_name)
 
-            query_params = {
+            query_params: dict = {
                 "KeyConditionExpression": Key(search_key).eq(search_condition),
             }
 
             if index_name:
                 query_params["IndexName"] = index_name
-
             if requested_fields:
                 projection_expression = ",".join(requested_fields)
                 query_params["ProjectionExpression"] = projection_expression
-
             if query_filter:
                 query_params["FilterExpression"] = query_filter
             if exclusive_start_key:
@@ -137,8 +141,8 @@ class DynamoDBService:
         table_name: str,
         key_pair: dict[str, str],
         updated_fields: dict,
-        condition_expression: str = None,
-        expression_attribute_values: dict = None,
+        condition_expression: str | None = None,
+        expression_attribute_values: dict | None = None,
     ):
         table = self.get_table(table_name)
         updated_field_names = list(updated_fields.keys())
@@ -162,7 +166,7 @@ class DynamoDBService:
 
         if condition_expression:
             update_item_args["ConditionExpression"] = condition_expression
-
+            
         return table.update_item(**update_item_args)
 
     def delete_item(self, table_name: str, key: dict):
@@ -179,8 +183,8 @@ class DynamoDBService:
     def scan_table(
         self,
         table_name: str,
-        exclusive_start_key: dict = None,
-        filter_expression: str = None,
+        exclusive_start_key: dict | None = None,
+        filter_expression: str | None = None,
     ):
         try:
             table = self.get_table(table_name)
@@ -284,3 +288,78 @@ class DynamoDBService:
                 str(e), {"Result": f"Unable to retrieve item from table: {table_name}"}
             )
             raise e
+
+    def transact_write_items(
+        self, transact_items: Sequence[TransactWriteItemTypeDef]
+    ) -> TransactWriteItemsOutputTypeDef:
+        """
+        Execute a transactional write operation.
+        
+        Args:
+            transact_items: List of transaction items (Put, Update, Delete, ConditionCheck)
+            
+        Raises:
+            ClientError: If the transaction fails (e.g., TransactionCanceledException)
+        """
+        try:
+            logger.info(f"Executing transaction with {len(transact_items)} items")
+            response = self.dynamodb.meta.client.transact_write_items(
+                TransactItems=transact_items
+            )
+            logger.info("Transaction completed successfully")
+            return response
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', '')
+            if error_code == 'TransactionCanceledException':
+                logger.error(f"Transaction cancelled: {str(e)}")
+                cancellation_reasons = e.response.get('CancellationReasons', [])
+                logger.error(f"Cancellation reasons: {cancellation_reasons}")
+            else:
+                logger.error(f"Transaction failed with error: {str(e)}")
+            raise e
+
+    def build_update_transaction_item(
+        self, 
+        table_name: str,
+        document_key: dict, 
+        update_fields: dict, 
+        condition_field: str, 
+        condition_value: str
+    ) -> dict:
+        """
+        Build a DynamoDB transaction update item with a conditional expression.
+        
+        Args:
+            document_key: The key of the table to update
+            update_fields: Dictionary of fields to update (already in DynamoDB format/aliases)
+            condition_field: The field name to check in the condition expression
+            condition_value: The expected value for the condition to pass
+            
+        Returns:
+            A transaction item dict ready for transact_write_items
+        """
+        field_names = list(update_fields.keys())
+        update_expression = create_update_expression(field_names)
+        _, expression_attribute_names = create_expressions(field_names)
+        expression_attribute_values = create_expression_attribute_values(update_fields)
+        
+        # Build condition expression
+        condition_placeholder = f"#{condition_field}_attr"
+        condition_value_placeholder = f":{condition_field}_condition_val"
+        
+        return {
+            "Update": {
+                "TableName": table_name,
+                "Key": document_key,
+                "UpdateExpression": update_expression,
+                "ConditionExpression": f"{condition_placeholder} = {condition_value_placeholder}",
+                "ExpressionAttributeNames": {
+                    **expression_attribute_names,
+                    condition_placeholder: condition_field
+                },
+                "ExpressionAttributeValues": {
+                    **expression_attribute_values,
+                    condition_value_placeholder: {"S": condition_value}
+                }
+            }
+        }

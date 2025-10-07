@@ -2,8 +2,7 @@ import os
 from typing import Optional
 
 from botocore.exceptions import ClientError
-from enums.lambda_error import LambdaError
-from enums.snomed_codes import SnomedCodes
+from enums.metadata_field_names import DocumentReferenceMetadataFields
 from enums.virus_scan_result import VirusScanResult
 from models.document_reference import DocumentReference
 from services.base.dynamo_service import DynamoDBService
@@ -11,10 +10,8 @@ from services.base.s3_service import S3Service
 from services.document_service import DocumentService
 from utils.audit_logging_setup import LoggingService
 from utils.common_query_filters import FinalStatusFilter, PreliminaryStatus, not_document_id
-from utils.dynamo_utils import DocTypeTableRouter
-from utils.exceptions import DocumentServiceException, FileProcessingException
-from utils.lambda_exceptions import InvalidDocTypeException
-from utils.s3_utils import DocTypeS3BucketRouter
+from utils.dynamo_utils import create_expression_attribute_values, create_expressions, create_update_expression
+from utils.exceptions import DocumentServiceException, FileProcessingException, TransactionConflictException
 from utils.utilities import get_virus_scan_service
 
 logger = LoggingService(__name__)
@@ -22,15 +19,13 @@ logger = LoggingService(__name__)
 
 class UploadDocumentReferenceService:
     def __init__(self):
-        self.staging_s3_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
-        self.table_name = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
-        self.destination_bucket_name = os.getenv("LLOYD_GEORGE_BUCKET_NAME")
+        self.staging_s3_bucket_name = os.environ["STAGING_STORE_BUCKET_NAME"]
+        self.table_name = os.environ["LLOYD_GEORGE_DYNAMODB_NAME"]
+        self.lg_bucket_name = os.environ["LLOYD_GEORGE_BUCKET_NAME"]
         self.document_service = DocumentService()
         self.dynamo_service = DynamoDBService()
         self.virus_scan_service = get_virus_scan_service()
         self.s3_service = S3Service()
-        self.table_router = DocTypeTableRouter()
-        self.bucket_router = DocTypeS3BucketRouter()
 
     def handle_upload_document_reference_request(
         self, object_key: str, object_size: int = 0
@@ -41,16 +36,14 @@ class UploadDocumentReferenceService:
             return
 
         try:
-            object_parts = object_key.split("/")
-            document_key = object_parts[-1]
-            self._get_infrastructure_for_document_key(object_parts)
+            document_key = object_key.split("/")[-1]
 
-            document_reference = self._fetch_document_reference(document_key)
-            if not document_reference:
+            preliminary_document_reference = self._fetch_preliminary_document_reference(document_key)
+            if not preliminary_document_reference:
                 return
 
-            self._process_document_reference(
-                document_reference, object_key, object_size
+            self._process_preliminary_document_reference(
+                preliminary_document_reference, object_key, object_size
             )
 
         except Exception as e:
@@ -58,23 +51,7 @@ class UploadDocumentReferenceService:
             logger.error(f"Failed to process document reference: {object_key}")
             return
 
-    def _get_infrastructure_for_document_key(self, object_parts: list[str]) -> None:
-        doc_type = None
-        if object_parts[0] != "fhir_upload" or not (
-            doc_type := SnomedCodes.find_by_code(object_parts[1])
-        ):
-            return
-
-        try:
-            self.table_name = self.table_router.resolve(doc_type)
-            self.destination_bucket_name = self.bucket_router.resolve(doc_type)
-        except KeyError:
-            logger.error(
-                f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
-            )
-            raise InvalidDocTypeException(400, LambdaError.DocTypeDB)
-
-    def _fetch_document_reference(
+    def _fetch_preliminary_document_reference(
         self, document_key: str
     ) -> Optional[DocumentReference]:
         """Fetch document reference from the database"""
@@ -86,6 +63,7 @@ class UploadDocumentReferenceService:
                 search_key="ID",
                 query_filter=PreliminaryStatus,
             )
+
             if not documents:
                 logger.error(
                     f"No document with the following key found in {self.table_name} table: {document_key}"
@@ -108,38 +86,155 @@ class UploadDocumentReferenceService:
                 f"Failed to fetch document reference: {str(e)}"
             )
 
-    def _process_document_reference(
-        self, document_reference: DocumentReference, object_key: str, object_size: int
+    def _process_preliminary_document_reference(
+        self, preliminary_document_reference: DocumentReference, object_key: str, object_size: int
     ):
-        """Process the document reference with virus scanning and file operations"""
+        """Process the preliminary (uploading) document reference with virus scanning and file operations"""
         try:
-            virus_scan_result = self._perform_virus_scan(document_reference)
-            document_reference.virus_scanner_result = virus_scan_result
+            virus_scan_result = self._perform_virus_scan(preliminary_document_reference)
+            preliminary_document_reference.virus_scanner_result = virus_scan_result
 
             if virus_scan_result == VirusScanResult.CLEAN:
                 self._process_clean_document(
-                    document_reference,
+                    preliminary_document_reference,
                     object_key,
                 )
-                self._supersede_existing_final_documents(document_reference)
             else:
-                logger.warning(f"Document {document_reference.id} failed virus scan")
-            document_reference.file_size = object_size
-            document_reference.uploaded = True
-            document_reference.uploading = False
-            self.update_dynamo_table(document_reference, virus_scan_result)
+                logger.warning(f"Document {preliminary_document_reference.id} failed virus scan")
+            
+            preliminary_document_reference.file_size = object_size
+            preliminary_document_reference.uploaded = True
+            preliminary_document_reference.uploading = False
 
-        except Exception as e:
+            updated_doc_status = None
+            if virus_scan_result != VirusScanResult.CLEAN:
+                updated_doc_status = "cancelled"
+                # Update non-clean documents without transaction
+                preliminary_document_reference.doc_status = updated_doc_status
+                self._update_dynamo_table(preliminary_document_reference)
+            else:
+                updated_doc_status = "final"
+                preliminary_document_reference.doc_status = updated_doc_status
+                # Use transaction to update this document to final AND supersede existing finals atomically
+                self._finalize_and_supersede_with_transaction(preliminary_document_reference)
+
+        except TransactionConflictException as e:
             logger.error(
-                f"Error processing document reference {document_reference.id}: {str(e)}"
+                f"Transaction conflict while processing document {preliminary_document_reference.id}: {str(e)}"
             )
             raise
+        except Exception as e:
+            logger.error(
+                f"Error processing document reference {preliminary_document_reference.id}: {str(e)}"
+            )
+            raise
+
+    def _finalize_and_supersede_with_transaction(self, new_document: DocumentReference):
+        """
+        Atomically update the new document to 'final' status AND supersede existing final documents.
+        Uses DynamoDB transactions to ensure all operations happen together or none at all.
+        This prevents race conditions where two concurrent uploads could both become 'final'.
+        """
+        try:
+            logger.info(
+                f"Checking for existing final documents to supersede for NHS number {new_document.nhs_number}"
+            )
+            
+            # Fetch existing final documents for the same patient
+            existing_docs: list[DocumentReference] = self.document_service.fetch_documents_from_table(
+                table=self.table_name,
+                search_condition=new_document.nhs_number,
+                search_key="NhsNumber",
+                query_filter=FinalStatusFilter & not_document_id(new_document.id),
+            ) 
+            # TODO: Not sure query_filter is right here here
+
+            # Build transaction items
+            transact_items = []
+            
+            # First: Update the new document from preliminary to final (with condition check)
+            update_fields_dict = new_document.model_dump(
+                by_alias=True,
+                exclude_none=True,
+                include={
+                    "virus_scanner_result",
+                    "doc_status",
+                    "file_location",
+                    "file_size",
+                    "uploaded",
+                    "uploading",
+                },
+            )
+            
+            new_doc_transaction = self.dynamo_service.build_update_transaction_item(
+                table_name=self.table_name,
+                document_key=self.document_reference_key(new_document.id),
+                update_fields=update_fields_dict,
+                condition_field="DocStatus",
+                condition_value="preliminary"
+            )
+            transact_items.append(new_doc_transaction)
+
+            # Second: Supersede existing final documents
+            if existing_docs:
+                logger.info(
+                    f"Superseding {len(existing_docs)} existing final document(s) for NHS number {new_document.nhs_number}"
+                )
+                
+                for doc in existing_docs:
+                    if doc.id == new_document.id:
+                        continue
+                    
+                    supersede_transaction = self.dynamo_service.build_update_transaction_item(
+                        table_name=self.table_name,
+                        document_key=self.document_reference_key(doc.id),
+                        update_fields={"Status": "superseded"},
+                        condition_field="DocStatus",
+                        condition_value="final"
+                    )
+                    transact_items.append(supersede_transaction)
+            else:
+                logger.info("No existing final documents to supersede")
+
+            # Execute the transaction
+            try:
+                self.dynamo_service.transact_write_items(transact_items)
+                logger.info(
+                    f"Successfully updated document {new_document.id} to final status"
+                    + (f" and superseded {len(existing_docs)} document(s)" if existing_docs else "")
+                )
+            except ClientError as e:
+                error_code = e.response.get('Error', {}).get('Code', '')
+                if error_code == 'TransactionCanceledException':
+                    logger.error(
+                        f"Transaction cancelled - concurrent update detected for NHS number {new_document.nhs_number}"
+                    )
+                    raise TransactionConflictException(
+                        f"Concurrent update detected while finalizing document for NHS number {new_document.nhs_number}. "
+                        f"Another process may have already finalized a document for this patient."
+                    )
+                raise
+
+        except TransactionConflictException:
+            raise
+        except Exception as e:
+            logger.error(
+                f"Unexpected error while finalizing document for {new_document.nhs_number}: {e}"
+            )
+            raise
+
+    def document_reference_key(self, document_id):
+        return {
+                    DocumentReferenceMetadataFields.ID.value: {"S": document_id}
+                }
+
 
     def _perform_virus_scan(
         self, document_reference: DocumentReference
     ) -> VirusScanResult:
         """Perform a virus scan on the document"""
         try:
+            # TODO do we need to modify the stub?
             return self.virus_scan_service.scan_file(
                 document_reference.s3_file_key, nhs_number=document_reference.nhs_number
             )
@@ -180,14 +275,14 @@ class UploadDocumentReferenceService:
             self.s3_service.copy_across_bucket(
                 source_bucket=self.staging_s3_bucket_name,
                 source_file_key=source_file_key,
-                dest_bucket=self.destination_bucket_name,
+                dest_bucket=self.lg_bucket_name,
                 dest_file_key=dest_file_key,
             )
 
             document_reference.s3_file_key = dest_file_key
-            document_reference.s3_bucket_name = self.destination_bucket_name
+            document_reference.s3_bucket_name = self.lg_bucket_name
             document_reference.file_location = document_reference._build_s3_location(
-                self.destination_bucket_name, dest_file_key
+                self.lg_bucket_name, dest_file_key
             )
 
         except ClientError as e:
@@ -205,62 +300,14 @@ class UploadDocumentReferenceService:
         except ClientError as e:
             logger.error(f"Error deleting file from staging bucket: {str(e)}")
 
-    def _supersede_existing_final_documents(self, new_document: DocumentReference):
-        """
-        Find existing FINAL documents for the same patient and mark them SUPERSEDED.
-        This should run only after the new clean document has been safely copied.
-        """
-        try:
-            logger.info(
-                f"Checking for existing final documents to supersede for NHS number {new_document.nhs_number}"
-            )
-            # Should only be one final document to supersede, but handle multiples just in case
-            existing_docs: list[DocumentReference] = self.document_service.fetch_documents_from_table(
-                table=self.table_name,
-                search_condition=new_document.nhs_number,
-                search_key="NhsNumber",
-                query_filter=FinalStatusFilter & not_document_id(new_document.id),
-            )
-
-            if not existing_docs:
-                return
-
-            logger.info(
-                f"Superseding {len(existing_docs)} existing final document(s) for NHS number {new_document.nhs_number}"
-            )
-
-            for doc in existing_docs:
-                if doc.id == new_document.id:
-                    continue
-                doc.doc_status = "superseded"
-                try:
-                    self.document_service.update_document(
-                        table_name=self.table_name,
-                        document_reference=doc,
-                        update_fields_name={"doc_status"},
-                    )
-                except Exception as inner_e:
-                    logger.error(
-                        f"Failed to mark document {doc.id} as superseded: {inner_e}"
-                    )
-
-        except Exception as e:
-            logger.error(
-                f"Error checking for documents to supersede: {str(e)}"
-            )
-
-    def update_dynamo_table(
+    def _update_dynamo_table(
         self,
         document: DocumentReference,
-        scan_result: VirusScanResult,
     ):
         """Update the DynamoDB table with document status and virus scan results"""
         try:
             logger.info("Updating dynamo db table")
 
-            document.doc_status = (
-                "cancelled" if scan_result != VirusScanResult.CLEAN else "final"
-            )
             update_fields = {
                 "virus_scanner_result",
                 "doc_status",
