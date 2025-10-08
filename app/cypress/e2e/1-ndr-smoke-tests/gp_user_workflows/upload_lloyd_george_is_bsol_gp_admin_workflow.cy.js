@@ -119,6 +119,7 @@ describe('GP Workflow: Upload Lloyd George record', () => {
 
                 cy.url().should('contain', lloydGeorgeRecordUrl);
                 cy.getByTestId('pdf-card').should('exist');
+                cy.getByTestId('pdf-viewer').should('exist');
             },
         );
     });
