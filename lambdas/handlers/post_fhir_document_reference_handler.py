@@ -31,7 +31,7 @@ def lambda_handler(event, context):
         fhir_doc_ref_service = PostFhirDocumentReferenceService()
 
         fhir_response = fhir_doc_ref_service.process_fhir_document_reference(
-            event.get("body")
+            event.get("body"), event.get("headers")
         )
 
         return ApiGatewayResponse(

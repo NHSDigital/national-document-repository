@@ -19,7 +19,37 @@ def valid_event():
                     }
                 },
             }
-        )
+        ),
+        "headers": json.dumps(
+            {
+                "Accept": "text/json",
+                "Host": "example.com",
+            }
+        ),
+    }
+
+
+@pytest.fixture
+def valid_mtls_event():
+    return {
+        "body": json.dumps(
+            {
+                "resourceType": "DocumentReference",
+                "subject": {
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/nhs-number",
+                        "value": "9000000009",
+                    }
+                },
+            }
+        ),
+        "headers": json.dumps(
+            {
+                "Accept": "text/json",
+                "Host": "example.com",
+                "x-amzn-mtls-clientcert-subject": "CN=pdm",
+            }
+        ),
     }
 
 
@@ -46,7 +76,7 @@ def test_lambda_handler_success(valid_event, context, mock_service):
     assert json.loads(result["body"]) == mock_response
 
     mock_service.process_fhir_document_reference.assert_called_once_with(
-        valid_event["body"]
+        valid_event["body"], valid_event["headers"]
     )
 
 
@@ -62,5 +92,23 @@ def test_lambda_handler_exception_handling(valid_event, context, mock_service):
     assert "resourceType" in json.loads(result["body"])
 
     mock_service.process_fhir_document_reference.assert_called_once_with(
-        valid_event["body"]
+        valid_event["body"], valid_event["headers"]
+    )
+
+
+def test_mtls_lambda_handler_success(valid_mtls_event, context, mock_service):
+    """Test successful lambda execution."""
+    mock_response = {"resourceType": "DocumentReference", "id": "test-id"}
+
+    mock_service.process_fhir_document_reference.return_value = json.dumps(
+        mock_response
+    )
+
+    result = lambda_handler(valid_mtls_event, context)
+
+    assert result["statusCode"] == 200
+    assert json.loads(result["body"]) == mock_response
+
+    mock_service.process_fhir_document_reference.assert_called_once_with(
+        valid_mtls_event["body"], valid_mtls_event["headers"]
     )

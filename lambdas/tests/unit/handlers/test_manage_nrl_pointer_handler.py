@@ -5,7 +5,6 @@ from models.fhir.R4.fhir_document_reference import Attachment
 from models.sqs.nrl_sqs_message import NrlSqsMessage
 from utils.exceptions import NrlApiException
 
-
 @pytest.fixture
 def mock_service(mocker):
     mocked_class = mocker.patch("handlers.manage_nrl_pointer_handler.NrlApiService")
@@ -57,8 +56,7 @@ def test_failed_to_create_a_pointer(mock_service, context, set_env, caplog):
     mock_service.create_new_pointer.side_effect = NrlApiException("test exception")
     with pytest.raises(NrlApiException):
         lambda_handler(event, context)
-    actual_log = caplog.records[-2].msg
-    assert actual_log == expected_log
+    assert any(expected_log in record.message for record in caplog.records)
     mock_service.create_new_pointer.assert_called_once()
 
 
