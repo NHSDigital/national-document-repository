@@ -30,14 +30,6 @@ from utils.exceptions import (
 from utils.ods_utils import PCSE_ODS_CODE
 from utils.utilities import create_reference_id, get_pds_service, validate_nhs_number
 
-#Questions for Danielle
-#Does the NHS Number check need to be in scope for this base service?
-#   the two apis handle checking that differently
-
-#How do we handle swapping the current document version?
-#   do we prevent access to it until it has been processed?
-#   do we allow access to the previous version until the new one has been processed
-
 logger = LoggingService(__name__)
 
 class PutFhirDocumentReferenceService:
@@ -52,10 +44,6 @@ class PutFhirDocumentReferenceService:
         self.document_service = DocumentService()
 
     def process_fhir_document_reference(self, fhir_document: str) -> str:
-        #get document reference from database
-        #create new document reference entry in dynamodb set to preliminary
-        #store document in bucket or return pre-signed url
-
         validated_fhir_doc = self._validate_update_document_reference_request(fhir_document)
         return self._update_document_references(validated_fhir_doc)
 
@@ -107,10 +95,6 @@ class PutFhirDocumentReferenceService:
             raise UpdateFhirDocumentReferenceException(500, LambdaError.InternalServerError)
 
     def _validate_update_document_reference_request(self, updated_doc: str) -> FhirDocumentReference:
-        #check document with passed ID exists
-        #check it is the latest version (DocStatus = final)
-        #check referenced NHS number matches NHS number on stored reference
-        
         try:
             validated_fhir_doc = FhirDocumentReference.model_validate_json(updated_doc)
         except ValidationError as e:
