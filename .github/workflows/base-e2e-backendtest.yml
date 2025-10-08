@@ -74,17 +74,7 @@ jobs:
           echo "::add-mask::$MOCK_CIS2_KEY"
           echo "MOCK_CIS2_KEY=$MOCK_CIS2_KEY" >> $GITHUB_ENV
 
-      - name: Get E2e Test Variables
-        run: |
-          DYNAMO_DB_TABLE="${SANDBOX}_LloydGeorgeReferenceMetadata"
-          S3_BUCKET_NAME="${SANDBOX}-lloyd-george-store"
-          API_URL="api-${SANDBOX}.access-request-fulfilment.patient-deductions.nhs.uk"
-          echo "NDR_DYNAMO_STORE=$DYNAMO_DB_TABLE" >> $GITHUB_ENV
-          echo "NDR_S3_BUCKET=$S3_BUCKET_NAME" >> $GITHUB_ENV
-          echo "NDR_API_ENDPOINT=$API_URL" >> $GITHUB_ENV
-        env:
-          SANDBOX: ${{ inputs.sandbox }}
 
       - name: Run E2e Tests
         run: |
-          make test-api-e2e
+          make test-api-e2e env=${{ inputs.sandbox }}

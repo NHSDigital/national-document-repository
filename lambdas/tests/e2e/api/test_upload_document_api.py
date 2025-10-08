@@ -6,14 +6,16 @@ import os
 import requests
 from syrupy.filters import paths
 from tests.e2e.conftest import (
-    API_ENDPOINT,
-    API_KEY,
     APIM_ENDPOINT,
     LLOYD_GEORGE_S3_BUCKET,
     LLOYD_GEORGE_SNOMED,
-    fetch_with_retry,
+    MTLS_API_KEY,
+    MTLS_ENDPOINT,
+    fetch_with_retry_mtls,
 )
 from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
+
+from lambdas.tests.e2e.conftest import create_mtls_session
 
 data_helper = LloydGeorgeDataHelper()
 
@@ -76,23 +78,26 @@ def test_create_document_base64(test_data, snapshot_json):
         lloyd_george_record["data"] = base64.b64encode(f.read()).decode("utf-8")
 
     payload = create_upload_payload(lloyd_george_record)
-    url = f"https://{API_ENDPOINT}/FhirDocumentReference"
-    headers = {"Authorization": "Bearer 123", "X-Api-Key": API_KEY}
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference"
+    headers = {"Authorization": "Bearer 123", "X-Api-Key": MTLS_API_KEY}
 
-    retrieve_response = requests.post(url, headers=headers, data=payload)
+    # Use mTLS
+    session = create_mtls_session()
+    retrieve_response = session.post(url, headers=headers, data=payload)
+
     upload_response = retrieve_response.json()
     lloyd_george_record["id"] = upload_response["id"].split("~")[1]
     test_data.append(lloyd_george_record)
 
-    retrieve_url = (
-        f"https://{API_ENDPOINT}/FhirDocumentReference/{upload_response['id']}"
-    )
+    retrieve_url = f"https://{MTLS_ENDPOINT}/DocumentReference/{upload_response['id']}"
 
     def condition(response_json):
         logging.info(response_json)
         return response_json["content"][0]["attachment"].get("data", False)
 
-    raw_retrieve_response = fetch_with_retry(retrieve_url, condition)
+    raw_retrieve_response = fetch_with_retry_mtls(
+        session, retrieve_url, condition, headers
+    )
     retrieve_response = raw_retrieve_response.json()
 
     attachment_url = upload_response["content"][0]["attachment"]["url"]
@@ -118,10 +123,13 @@ def test_create_document_presign(test_data, snapshot_json):
     lloyd_george_record["nhs_number"] = "9449303304"
 
     payload = create_upload_payload(lloyd_george_record)
-    url = f"https://{API_ENDPOINT}/FhirDocumentReference"
-    headers = {"Authorization": "Bearer 123", "X-Api-Key": API_KEY}
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference"
+    headers = {"Authorization": "Bearer 123", "X-Api-Key": MTLS_API_KEY}
 
-    retrieve_response = requests.post(url, headers=headers, data=payload)
+    # Use mTLS
+    session = create_mtls_session()
+    retrieve_response = session.post(url, headers=headers, data=payload)
+
     upload_response = retrieve_response.json()
     lloyd_george_record["id"] = upload_response["id"].split("~")[1]
     test_data.append(lloyd_george_record)
@@ -134,15 +142,15 @@ def test_create_document_presign(test_data, snapshot_json):
         presign_response = requests.put(presign_uri, files=files)
         assert presign_response.status_code == 200
 
-    retrieve_url = (
-        f"https://{API_ENDPOINT}/FhirDocumentReference/{upload_response['id']}"
-    )
+    retrieve_url = f"https://{MTLS_ENDPOINT}/DocumentReference/{upload_response['id']}"
 
     def condition(response_json):
         logging.info(response_json)
         return response_json["content"][0]["attachment"].get("url", False)
 
-    raw_retrieve_response = fetch_with_retry(retrieve_url, condition)
+    raw_retrieve_response = fetch_with_retry_mtls(
+        session, retrieve_url, condition, headers
+    )
     retrieve_response = raw_retrieve_response.json()
 
     expected_presign_uri = f"https://{LLOYD_GEORGE_S3_BUCKET}.s3.eu-west-2.amazonaws.com/{lloyd_george_record['nhs_number']}/{lloyd_george_record['id']}"
@@ -165,10 +173,12 @@ def test_create_document_virus(test_data, snapshot_json):
     lloyd_george_record["nhs_number"] = "9730154260"
 
     payload = create_upload_payload(lloyd_george_record)
-    url = f"https://{API_ENDPOINT}/FhirDocumentReference"
-    headers = {"Authorization": "Bearer 123", "X-Api-Key": API_KEY}
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference"
+    headers = {"Authorization": "Bearer 123", "X-Api-Key": MTLS_API_KEY}
 
-    retrieve_response = requests.post(url, headers=headers, data=payload)
+    # Use mTLS
+    session = create_mtls_session()
+    retrieve_response = session.post(url, headers=headers, data=payload)
     upload_response = retrieve_response.json()
     lloyd_george_record["id"] = upload_response["id"].split("~")[1]
     test_data.append(lloyd_george_record)
@@ -181,15 +191,15 @@ def test_create_document_virus(test_data, snapshot_json):
         presign_response = requests.put(presign_uri, files=files)
         assert presign_response.status_code == 200
 
-    retrieve_url = (
-        f"https://{API_ENDPOINT}/FhirDocumentReference/{upload_response['id']}"
-    )
+    retrieve_url = f"https://{MTLS_ENDPOINT}/DocumentReference/{upload_response['id']}"
 
     def condition(response_json):
         logging.info(response_json)
         return response_json.get("docStatus", False) == "cancelled"
 
-    raw_retrieve_response = fetch_with_retry(retrieve_url, condition)
+    raw_retrieve_response = fetch_with_retry_mtls(
+        session, retrieve_url, condition, headers
+    )
     retrieve_response = raw_retrieve_response.json()
 
     assert upload_response == snapshot_json(exclude=paths("id", "date"))

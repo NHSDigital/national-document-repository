@@ -2,10 +2,16 @@ import io
 import logging
 import uuid
 
-import requests
 from syrupy.filters import paths
-from tests.e2e.conftest import API_ENDPOINT, API_KEY, APIM_ENDPOINT, LLOYD_GEORGE_SNOMED
+from tests.e2e.conftest import (
+    APIM_ENDPOINT,
+    LLOYD_GEORGE_SNOMED,
+    MTLS_API_KEY,
+    MTLS_ENDPOINT,
+)
 from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
+
+from lambdas.tests.e2e.conftest import create_mtls_session
 
 data_helper = LloydGeorgeDataHelper()
 
@@ -21,13 +27,16 @@ def test_search_patient_details(test_data, snapshot_json):
     data_helper.create_metadata(lloyd_george_record)
     data_helper.create_resource(lloyd_george_record)
 
-    url = f"https://{API_ENDPOINT}/FhirDocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": API_KEY,
+        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
-    response = requests.request("GET", url, headers=headers)
+
+    # Use mTLS
+    session = create_mtls_session()
+    response = session.get(url, headers=headers)
     bundle = response.json()
     logging.info(bundle)
 
@@ -70,13 +79,15 @@ def test_multiple_cancelled_search_patient_details(test_data, snapshot_json):
     data_helper.create_metadata(second_lloyd_george_record)
     data_helper.create_resource(second_lloyd_george_record)
 
-    url = f"https://{API_ENDPOINT}/FhirDocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": API_KEY,
+        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
-    response = requests.request("GET", url, headers=headers)
+    # Use mTLS
+    session = create_mtls_session()
+    response = session.get(url, headers=headers)
     bundle = response.json()
 
     assert bundle["entry"][0] == snapshot_json(
@@ -95,13 +106,15 @@ def test_no_records(snapshot_json):
     lloyd_george_record = {}
     lloyd_george_record["nhs_number"] = "9449305943"
 
-    url = f"https://{API_ENDPOINT}/FhirDocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": API_KEY,
+        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
-    response = requests.request("GET", url, headers=headers)
+    # Use mTLS
+    session = create_mtls_session()
+    response = session.get(url, headers=headers, timeout=10)
     bundle = response.json()
 
     assert bundle == snapshot_json
@@ -111,13 +124,16 @@ def test_invalid_patient(snapshot_json):
     lloyd_george_record = {}
     lloyd_george_record["nhs_number"] = "9999999993"
 
-    url = f"https://{API_ENDPOINT}/FhirDocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": API_KEY,
+        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
-    response = requests.request("GET", url, headers=headers)
+
+    # Use mTLS
+    session = create_mtls_session()
+    response = session.get(url, headers=headers, timeout=10)
     bundle = response.json()
 
     assert bundle == snapshot_json
