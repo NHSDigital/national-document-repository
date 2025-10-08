@@ -9,3 +9,4 @@ class FeatureFlags(StrEnum):
     LLOYD_GEORGE_VALIDATION_STRICT_MODE_ENABLED = (
         "lloydGeorgeValidationStrictModeEnabled"
     )
+    ADD_DOCUMENT_ENABLED = "addDocumentEnabled"

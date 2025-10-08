@@ -167,6 +167,7 @@ class DocumentReferenceSearchService(DocumentService):
             },
         )
         return document_formatted
+    
 
     def _build_filter_expression(self, filter_values: dict[str, str]):
         filter_builder = DynamoQueryFilterBuilder()
