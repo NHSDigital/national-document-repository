@@ -1,13 +1,17 @@
 import json
 
 import pytest
+from enums.lambda_error import LambdaError
 from enums.metadata_field_names import DocumentReferenceMetadataFields
+from lambdas.enums.snomed_codes import SnomedCodes
 from tests.unit.conftest import (
     TEST_CURRENT_GP_ODS,
     TEST_DOCUMENT_LOCATION,
     TEST_FILE_KEY,
     TEST_NHS_NUMBER,
     TEST_UUID,
+    MOCK_PDM_TABLE_NAME,
+    MOCK_LG_TABLE_NAME,
 )
 from tests.unit.helpers.data.dynamo.dynamo_stream import (
     MOCK_OLD_IMAGE_EVENT,
@@ -20,7 +24,9 @@ from utils.dynamo_utils import (
     create_expressions,
     create_update_expression,
     parse_dynamo_record,
+    DocTypeTableRouter,
 )
+from utils.lambda_exceptions import CreateDocumentRefException
 
 
 def test_create_expressions_correctly_creates_an_expression_of_one_field():
@@ -158,3 +164,31 @@ def test_parse_dynamo_record_raises_value_error(test_json_string):
 
     with pytest.raises(ValueError):
         parse_dynamo_record(test_object)
+
+
+@pytest.mark.parametrize(
+    "doc_type, expected_table",
+    [
+        (SnomedCodes.LLOYD_GEORGE.value, MOCK_LG_TABLE_NAME),
+        (SnomedCodes.PATIENT_DATA.value, MOCK_PDM_TABLE_NAME),
+    ],
+)
+def test_dynamo_table_mapping(set_env, doc_type, expected_table):
+    table_router = DocTypeTableRouter()
+    table = table_router.resolve(doc_type)
+    assert table == expected_table
+
+
+@pytest.mark.parametrize(
+    "doc_type",
+    [
+        SnomedCodes.GENERAL_MEDICAL_PRACTICE.value,
+    ],
+)
+def test_dynamo_table_mapping_fails(set_env, doc_type):
+    table_router = DocTypeTableRouter()
+    with pytest.raises(CreateDocumentRefException) as excinfo:
+        table_router.resolve(doc_type)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.error == LambdaError.CreateDocInvalidType
