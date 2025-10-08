@@ -1,47 +1,42 @@
-import { Button, Details, Fieldset, Radios, Table } from 'nhsuk-react-components';
+import { Details, Table } from 'nhsuk-react-components';
 import useTitle from '../../../../helpers/hooks/useTitle';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router';
-import { routeChildren } from '../../../../types/generic/routes';
-import { InputRef } from '../../../../types/generic/inputRef';
-import { useEffect } from 'react';
 
-enum Fields {
-    analyticsConsent = 'analyticsConsent',
-}
+// enum Fields {
+//     analyticsConsent = 'analyticsConsent',
+// }
 
-enum ConsentOptions {
-    YES = 'yes',
-    NO = 'no',
-}
+// enum ConsentOptions {
+//     YES = 'yes',
+//     NO = 'no',
+// }
 
-type FormData = {
-    [Fields.analyticsConsent]: string;
-};
+// type FormData = {
+//     [Fields.analyticsConsent]: string;
+// };
 
 const CookiePolicy = () => {
-    const { register, handleSubmit, setValue } = useForm<FormData>();
-    const { ref: consentRef, ...radioProps } = register(Fields.analyticsConsent);
+    // const { register, setValue } = useForm<FormData>();
+    // const { ref: consentRef, ...radioProps } = register(Fields.analyticsConsent);
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
-    const updatePreferences: SubmitHandler<FormData> = async (formData) => {
-        window.NHSCookieConsent.setStatistics(formData.analyticsConsent === ConsentOptions.YES);
+    // const updatePreferences: SubmitHandler<FormData> = async (formData) => {
+    //     window.NHSCookieConsent.setStatistics(formData.analyticsConsent === ConsentOptions.YES);
 
-        // this hides the banner so it won't appear on next visit
-        window.NHSCookieConsent.setConsented(true);
-        navigate(routeChildren.COOKIES_POLICY_UPDATED);
-    };
+    //     // this hides the banner so it won't appear on next visit
+    //     window.NHSCookieConsent.setConsented(true);
+    //     navigate(routeChildren.COOKIES_POLICY_UPDATED);
+    // };
 
     const pageTitle = 'Cookies policy';
     useTitle({ pageTitle });
 
-    useEffect(() => {
-        const consent = window.NHSCookieConsent.getStatistics()
-            ? ConsentOptions.YES
-            : ConsentOptions.NO;
-        setValue(Fields.analyticsConsent, consent);
-    });
+    // useEffect(() => {
+    //     const consent = window.NHSCookieConsent.getStatistics()
+    //         ? ConsentOptions.YES
+    //         : ConsentOptions.NO;
+    //     setValue(Fields.analyticsConsent, consent);
+    // });
 
     return (
         <>
@@ -63,14 +58,15 @@ const CookiePolicy = () => {
             <p>We only use cookies to:</p>
             <ul>
                 <li>make our website work</li>
-                <li>
+                {/* <li>
                     measure how you use our website, such as which links you click on &#40;analytics
                     cookies&#41;, if you give us permission
-                </li>
+                </li> */}
             </ul>
             <p>
-                We do not use any other cookies, for example, cookies that remember your settings or
-                cookies that help with health campaigns.
+                We do not use any other cookies, for example, cookies that remember your settings,
+                cookies that help with health campaigns or cookies that measure how you
+                use our website.
             </p>
             <p>
                 We sometimes use tools on other organisations' websites to collect data or to ask
@@ -92,13 +88,12 @@ const CookiePolicy = () => {
                         </Table.Head>
                         <Table.Body>
                             <Table.Row>
-                                <Table.Cell>nhsuk-cookie-consent</Table.Cell>
+                                <Table.Cell>X-Auth-Token</Table.Cell>
                                 <Table.Cell>
-                                    Remembers if you used our cookies consent banner
+                                    Stores your login session.
                                 </Table.Cell>
                                 <Table.Cell>
-                                    When you close the browser &#40;if you do not use the
-                                    banner&#41; or 1 year &#40;if you use the banner&#41;
+                                    When you sign out or after 30 minutes of inactivity.
                                 </Table.Cell>
                             </Table.Row>
                         </Table.Body>
@@ -106,7 +101,7 @@ const CookiePolicy = () => {
                 </Details.Text>
             </Details>
 
-            <h3>Cookies that measure website use</h3>
+            {/* <h3>Cookies that measure website use</h3>
             <p>
                 We also like to use analytics cookies. These cookies store anonymous information
                 about how you use our website, such as which pages you visit or what you click on.
@@ -156,7 +151,7 @@ const CookiePolicy = () => {
                     </Radios>
                 </Fieldset>
                 <Button type="submit">Save my cookie settings</Button>
-            </form>
+            </form> */}
         </>
     );
 };

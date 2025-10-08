@@ -7,7 +7,7 @@ import { SkipLink } from 'nhsuk-react-components';
 import { useLocation } from 'react-router-dom';
 import { focusElement } from '../../helpers/utils/manageFocus';
 import { useSessionContext } from '../../providers/sessionProvider/SessionProvider';
-import { startAnalytics } from '../../run-analytics';
+//import { startAnalytics } from '../../run-analytics';
 
 type Props = {
     children: ReactNode;
@@ -30,9 +30,9 @@ function Layout({ children }: Props) {
 
     useLayoutEffect(() => {
         document.documentElement.scrollTo(0, 0);
-        if (window && window.NHSCookieConsent.getStatistics()) {
-            startAnalytics();
-        }
+        // if (window && window.NHSCookieConsent.getStatistics()) {
+        //     startAnalytics();
+        // }
     }, [location.pathname]);
 
     const focusMainContent = (e: MouseEvent<HTMLAnchorElement>) => {
