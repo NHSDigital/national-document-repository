@@ -4,15 +4,6 @@ set -euo pipefail
 # Usage: ./download-api-certs.sh <env>
 ENVIRONMENT="$1"
 
-# Map environment to AWS account ID
-case "$ENVIRONMENT" in
-  ndr-dev) ACCOUNT_ID="533825906475" ;;
-  test) ACCOUNT_ID="" ;;
-  pre-prod) ACCOUNT_ID="" ;;
-  prod) ACCOUNT_ID="" ;;
-  *) echo "Unknown environment: $ENVIRONMENT"; exit 1 ;;
-esac
-
 REGION="eu-west-2"
 TRUSTSTOREBUCKETNAME="${ENVIRONMENT}-ndr-truststore"
 CA_PATH="ndr-truststore.pem"
