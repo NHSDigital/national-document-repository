@@ -43,10 +43,8 @@ class UploadDocumentReferenceService:
         try:
             object_parts = object_key.split("/")
             document_key = object_parts[-1]
-            if object_parts[0] == "fhir_upload":
-                self.table_name, self.destination_bucket_name = (
-                    self._get_infrastructure_for_document_key(object_parts)
-                )
+            self._get_infrastructure_for_document_key(object_parts)
+
             document_reference = self._fetch_document_reference(document_key)
             if not document_reference:
                 return
@@ -60,21 +58,18 @@ class UploadDocumentReferenceService:
             logger.error(f"Failed to process document reference: {object_key}")
             return
 
-    def _get_infrastructure_for_document_key(
-        self, object_parts: list[str]
-    ) -> tuple[str, str]:
-        doc_type = SnomedCodes.find_by_code(object_parts[1])
-        if doc_type:
-            try:
-                return self.table_router.resolve(doc_type), self.bucket_router.resolve(
-                    doc_type
-                )
-            except KeyError:
-                logger.error(
-                    f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
-                )
-                raise InvalidDocTypeException(400, LambdaError.DocTypeDB)
-        return self.table_name, self.destination_bucket_name
+    def _get_infrastructure_for_document_key(self, object_parts: list[str]):
+        if object_parts[0] == "fhir_upload":
+            doc_type = SnomedCodes.find_by_code(object_parts[1])
+            if doc_type:
+                try:
+                    self.table_name = self.table_router.resolve(doc_type)
+                    self.destination_bucket_name = self.bucket_router.resolve(doc_type)
+                except KeyError:
+                    logger.error(
+                        f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
+                    )
+                    raise InvalidDocTypeException(400, LambdaError.DocTypeDB)
 
     def _fetch_document_reference(
         self, document_key: str
