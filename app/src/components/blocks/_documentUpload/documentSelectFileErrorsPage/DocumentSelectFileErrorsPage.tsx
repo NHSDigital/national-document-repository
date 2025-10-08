@@ -1,4 +1,4 @@
-import { BackLink, ErrorMessage } from 'nhsuk-react-components';
+import { ErrorMessage } from 'nhsuk-react-components';
 import { useNavigate } from 'react-router-dom';
 import { UploadDocument } from '../../../../types/pages/UploadDocumentsPage/types';
 import {
@@ -54,8 +54,8 @@ const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
             <h2 className="nhsuk-heading-m">What you need to do</h2>
             <p>
                 You'll need to resolve the problems with these files then upload all the files
-                again. To make sure patient records are complete, you must upload all files patient
-                at the same time.
+                again. To make sure patient records are complete, you must upload all files for a
+                patient at the same time.
             </p>
 
             <h2 className="nhsuk-heading-m">Get help</h2>
@@ -75,9 +75,9 @@ const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
                 pages.
             </p>
 
-            <BackLink asElement="a" href={routes.HOME}>
-                Go to home
-            </BackLink>
+            <p>
+                <a href={routes.HOME}>Go to home</a>
+            </p>
         </>
     );
 };

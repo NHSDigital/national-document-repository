@@ -30,7 +30,6 @@ const renderDocs = (documents: UploadDocument[] = []): void => {
 };
 
 describe('DocumentSelectFileErrorsPage', () => {
-
     it('renders all static page content', () => {
         renderDocs([]);
 
@@ -48,7 +47,7 @@ describe('DocumentSelectFileErrorsPage', () => {
 
         expect(
             screen.getByText(
-                "You'll need to resolve the problems with these files then upload all the files again. To make sure patient records are complete, you must upload all files patient at the same time.",
+                "You'll need to resolve the problems with these files then upload all the files again. To make sure patient records are complete, you must upload all files for a patient at the same time.",
             ),
         ).toBeInTheDocument();
 
@@ -71,22 +70,24 @@ describe('DocumentSelectFileErrorsPage', () => {
         expect(helpLink).toHaveAttribute('target', '_blank');
         expect(helpLink).toHaveAttribute('rel', 'noreferrer');
 
-        const backLink = screen.getByRole('link', { name: 'Go to home' });
-        expect(backLink).toHaveAttribute('href', routes.HOME);
+        expect(screen.getByRole('link', { name: 'Go to home' })).toHaveAttribute(
+            'href',
+            routes.HOME,
+        );
     });
 
     it.each([
         {
             error: UPLOAD_FILE_ERROR_TYPE.invalidPdf,
-            expectedMessage: 'This file is damaged or unreadable.',
+            expectedMessage: 'This file is damaged or unreadable',
         },
         {
             error: UPLOAD_FILE_ERROR_TYPE.emptyPdf,
-            expectedMessage: 'This file is empty.',
+            expectedMessage: 'This file is empty',
         },
         {
             error: UPLOAD_FILE_ERROR_TYPE.passwordProtected,
-            expectedMessage: 'This file is password protected.',
+            expectedMessage: 'This file is password protected',
         },
     ])('displays correct error message for "$error" file', ({ error, expectedMessage }) => {
         const fileName = `file-${error}.pdf`;
@@ -105,9 +106,9 @@ describe('DocumentSelectFileErrorsPage', () => {
         renderDocs(docs);
 
         expect(screen.getByText('bad1.pdf')).toBeInTheDocument();
-        expect(screen.getByText('This file is damaged or unreadable.')).toBeInTheDocument();
+        expect(screen.getByText('This file is damaged or unreadable')).toBeInTheDocument();
 
         expect(screen.getByText('bad2.pdf')).toBeInTheDocument();
-        expect(screen.getByText('This file is password protected.')).toBeInTheDocument();
+        expect(screen.getByText('This file is password protected')).toBeInTheDocument();
     });
 });
