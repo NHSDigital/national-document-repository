@@ -59,11 +59,10 @@ class UploadDocumentReferenceService:
             return
 
     def _get_infrastructure_for_document_key(self, object_parts: list[str]) -> None:
-        if object_parts[0] != "fhir_upload":
-            return
-
-        doc_type = SnomedCodes.find_by_code(object_parts[1])
-        if not doc_type:
+        doc_type = None
+        if object_parts[0] != "fhir_upload" or not (
+            doc_type := SnomedCodes.find_by_code(object_parts[1])
+        ):
             return
 
         try:
