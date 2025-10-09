@@ -41,8 +41,8 @@ then
 fi
 
 # Set certificate paths in regards to where e2e tests are run from
-export TESTING_CLIENT_CERT_PATH=./dev_env_certs/"${ENVIRONMENT}"/client.crt
-export TESTING_CLIENT_KEY_PATH=./dev_env_certs/"${ENVIRONMENT}"/client.key
+export TESTING_CLIENT_CERT_PATH=./mtls_env_certs/"${ENVIRONMENT}"/client.crt
+export TESTING_CLIENT_KEY_PATH=./mtls_env_certs/"${ENVIRONMENT}"/client.key
 
 echo "working dir: $(pwd)"
 

@@ -60,11 +60,11 @@ check-packages:
 	./lambdas/venv/bin/pip-audit -r $(ALERTING_REQUIREMENTS)
 
 download-api-certs: # Use with poc and dev envs only
-	rm -rf ./lambdas/dev_env_certs/$(env)
+	rm -rf ./lambdas/mtls_env_certs/$(env)
 	./src/aws/download-api-certs.sh $(env)
 
 test-api-e2e:
-	./src/test/run-e2e-tests.sh --env $(env)
+	./src/test/run-e2e-tests.sh $(env)
 
 test-api-e2e-snapshots:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --snapshot-update

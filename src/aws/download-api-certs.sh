@@ -2,13 +2,20 @@
 set -euo pipefail
 
 # Usage: ./download-api-certs.sh <env>
-ENVIRONMENT="$1"
+RAW_ENVIRONMENT="$1"
+
+# All sandbox envs map to ndr-dev for certs
+if [[ "$RAW_ENVIRONMENT" == ndr* ]]; then
+    ENVIRONMENT="ndr-dev"
+else    
+    ENVIRONMENT="$RAW_ENVIRONMENT"
+fi
 
 REGION="eu-west-2"
 TRUSTSTOREBUCKETNAME="${ENVIRONMENT}-ndr-truststore"
 CA_PATH="ndr-truststore.pem"
 
-CERT_DIR="lambdas/dev_env_certs/${ENVIRONMENT}" # todo change name dev?
+CERT_DIR="lambdas/mtls_env_certs/${ENVIRONMENT}" # todo change name dev?
 mkdir -p "$CERT_DIR"
 
 # Download CA cert from S3
