@@ -64,7 +64,7 @@ download-api-certs: # Use with poc and dev envs only
 	./src/aws/download-api-certs.sh $(env)
 
 test-api-e2e:
-	./src/test/run-e2e-tests.sh $(env)
+	./src/test/run-e2e-tests.sh --env $(env)
 
 test-api-e2e-snapshots:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --snapshot-update

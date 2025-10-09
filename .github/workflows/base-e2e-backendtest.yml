@@ -76,4 +76,4 @@ jobs:
 
 
       - name: Run E2e Tests
-        run: ./src/test/run-e2e-tests.sh --env=${{ inputs.sandbox }}
+        run: ./src/test/run-e2e-tests.sh --env ${{ inputs.sandbox }}
