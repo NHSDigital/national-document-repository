@@ -15,7 +15,7 @@ done
 
 echo "Selected environment: $ENVIRONMENT"
 # Set environment variables
-source ./src/test/set-e2e-env-vars.sh $ENVIRONMENT
+source ./scripts/test/set-e2e-env-vars.sh $ENVIRONMENT
 
 echo "Running E2E tests with:" #todo output all vars here?
 echo "LG_METADATA_TABLE=$LG_METADATA_TABLE"
