@@ -33,6 +33,8 @@ fi
 # Export the API key
 export MTLS_NDR_API_KEY="$API_KEY"
 
+echo "selected environment2: $ENVIRONMENT"
+
 # Ensure Client certificates in place
 if ! make download-api-certs env="${ENVIRONMENT}"
 then
@@ -40,6 +42,7 @@ then
   exit 1
 fi
 
+echo env="${ENVIRONMENT}"
 # Set certificate paths in regards to where e2e tests are run from
 export TESTING_CLIENT_CERT_PATH=./mtls_env_certs/"${ENVIRONMENT}"/client.crt
 export TESTING_CLIENT_KEY_PATH=./mtls_env_certs/"${ENVIRONMENT}"/client.key
