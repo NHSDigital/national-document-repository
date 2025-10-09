@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timezone
+from typing import Optional
 
 from boto3.dynamodb.conditions import Attr, ConditionBase
 from enums.metadata_field_names import DocumentReferenceMetadataFields
@@ -57,9 +58,10 @@ class DocumentService:
         search_key: str,
         index_name: str = None,
         query_filter: Attr | ConditionBase = None,
+        exclusive_start_key: Optional[dict] = None,
+        limit: Optional[int] = None,
     ) -> list[DocumentReference]:
         documents = []
-        exclusive_start_key = None
 
         while True:
             response = self.dynamo_service.query_table_by_index(
@@ -69,6 +71,7 @@ class DocumentService:
                 search_condition=search_condition,
                 query_filter=query_filter,
                 exclusive_start_key=exclusive_start_key,
+                limit=limit,
             )
 
             for item in response["Items"]:

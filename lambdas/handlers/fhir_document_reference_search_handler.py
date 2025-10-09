@@ -27,6 +27,7 @@ PARAM_TYPE_IDENTIFIER = "type:identifier"
 PARAM_CUSTODIAN_IDENTIFIER = "custodian:identifier"
 PARAM_SUBJECT_IDENTIFIER = "subject:identifier"
 PARAM_NEXT_PAGE_TOKEN = "next-page-token"
+PARAM_COUNT = "_count"
 
 
 @ensure_environment_variables(
@@ -49,7 +50,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     bearer_token = extract_bearer_token(event)
     selected_role_id = event.get("headers", {}).get(HEADER_CIS2_USER_ID, "")
 
-    nhs_number, search_filters = parse_query_parameters(
+    nhs_number, search_filters, count = parse_query_parameters(
         event.get("queryStringParameters", {})
     )
     request_context.patient_nhs_no = nhs_number
@@ -81,7 +82,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def parse_query_parameters(
     query_string: Dict[str, str]
-) -> Tuple[Optional[str], Dict[str, str]]:
+) -> Tuple[Optional[str], Dict[str, str], int]:
     """
     Parse and extract NHS number and search filters from query parameters.
 
@@ -93,6 +94,7 @@ def parse_query_parameters(
     """
     search_filters = {}
     nhs_number = None
+    count = 5
 
     for key, value in query_string.items():
         if key == PARAM_TYPE_IDENTIFIER:
@@ -101,12 +103,14 @@ def parse_query_parameters(
             search_filters["custodian"] = value.split("|")[-1]
         elif key == PARAM_SUBJECT_IDENTIFIER:
             nhs_number = value.split("|")[-1]
+        elif key == PARAM_COUNT:
+            count = value.split("|")[-1]
         elif key == PARAM_NEXT_PAGE_TOKEN:
             pass  # Handled elsewhere
         else:
             logger.warning(f"Unknown query parameter: {key}")
 
-    return nhs_number, search_filters
+    return nhs_number, search_filters, count
 
 
 def validate_user_access(
