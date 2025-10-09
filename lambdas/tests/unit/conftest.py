@@ -6,13 +6,13 @@ from dataclasses import dataclass
 from enum import Enum
 
 import pytest
-from utils.audit_logging_setup import LoggingService
 from botocore.exceptions import ClientError
 from models.document_reference import DocumentReference
 from models.pds_models import Patient, PatientDetails
 from pydantic import ValidationError
 from requests import Response
 from tests.unit.helpers.data.pds.pds_patient_response import PDS_PATIENT
+from utils.audit_logging_setup import LoggingService
 
 REGION_NAME = "eu-west-2"
 
@@ -387,4 +387,3 @@ def attach_caplog_handler(caplog):
             instance.logger.removeHandler(caplog.handler)
         except Exception:
             pass
-

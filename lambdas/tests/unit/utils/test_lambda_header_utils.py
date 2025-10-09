@@ -1,9 +1,8 @@
 import pytest
-
 from enums.lambda_error import LambdaError
 from enums.mtls import MtlsCommonNames
-from utils.lambda_header_utils import validate_common_name_in_mtls
 from utils.lambda_exceptions import CreateDocumentRefException
+from utils.lambda_header_utils import validate_common_name_in_mtls
 
 
 @pytest.fixture

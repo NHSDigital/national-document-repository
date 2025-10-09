@@ -3,12 +3,11 @@ import binascii
 import io
 import os
 
-from typing import Optional
 from botocore.exceptions import ClientError
 from enums.lambda_error import LambdaError
+from enums.mtls import MtlsCommonNames
 from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCode, SnomedCodes
-from enums.mtls import MtlsCommonNames
 from models.document_reference import DocumentReference
 from models.fhir.R4.fhir_document_reference import SNOMED_URL, Attachment
 from models.fhir.R4.fhir_document_reference import (
