@@ -1,4 +1,6 @@
 import json
+import os
+
 from json import JSONDecodeError
 from unittest.mock import MagicMock, call
 
@@ -8,6 +10,7 @@ from botocore.exceptions import ClientError
 from enums.dynamo_filter import AttributeOperator
 from enums.lambda_error import LambdaError
 from enums.metadata_field_names import DocumentReferenceMetadataFields
+from enums.mtls import MtlsCommonNames
 from enums.snomed_codes import SnomedCodes
 from freezegun import freeze_time
 from models.document_reference import DocumentReference
@@ -18,6 +21,7 @@ from tests.unit.helpers.data.dynamo.dynamo_responses import MOCK_SEARCH_RESPONSE
 from utils.common_query_filters import NotDeleted, UploadCompleted
 from utils.exceptions import DynamoServiceException
 from utils.lambda_exceptions import DocumentRefSearchException
+from utils.lambda_header_utils import validate_common_name_in_mtls
 
 MOCK_DOCUMENT_REFERENCE = [
     DocumentReference.model_validate(MOCK_SEARCH_RESPONSE["Items"][0])
@@ -60,7 +64,7 @@ def test_get_document_references_raise_json_error_when_no_table_list(
 ):
     monkeypatch.setenv("DYNAMODB_TABLE_LIST", "")
     with pytest.raises(JSONDecodeError):
-        mock_document_service._get_table_names()
+        mock_document_service._get_table_names(None)
 
 
 def test_search_tables_for_documents_raise_validation_error(
@@ -131,6 +135,24 @@ def test_get_document_references_dynamo_return_successful_response_single_table(
     )
 
     assert actual == expected_results
+
+
+@pytest.mark.parametrize(
+    "common_name, expected",
+    [
+        (
+            {
+                "x-amzn-mtls-clientcert-subject": "CN=ndrclient.main.dev.pdm.national.nhs.uk"
+            },
+            ["test_pdm_dynamoDB_table"],
+        ),
+        ({}, ["test_pdm_dynamoDB_table", "test_lg_dynamoDB_table"]),
+    ],
+)
+def test_get_pdm_table(set_env, mock_document_service, common_name, expected):
+    cn = validate_common_name_in_mtls(common_name)
+    tables = mock_document_service._get_table_names(cn)
+    assert tables == expected
 
 
 def test_build_document_model_response(mock_document_service, monkeypatch):

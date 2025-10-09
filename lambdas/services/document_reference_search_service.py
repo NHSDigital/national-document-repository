@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 from enums.dynamo_filter import AttributeOperator
 from enums.lambda_error import LambdaError
 from enums.metadata_field_names import DocumentReferenceMetadataFields
+from enums.mtls import MtlsCommonNames
 from enums.snomed_codes import SnomedCodes
 from models.document_reference import DocumentReference
 from models.fhir.R4.bundle import Bundle, BundleEntry
@@ -16,7 +17,8 @@ from utils.audit_logging_setup import LoggingService
 from utils.common_query_filters import NotDeleted, UploadCompleted
 from utils.dynamo_query_filter_builder import DynamoQueryFilterBuilder
 from utils.exceptions import DynamoServiceException
-from utils.lambda_exceptions import DocumentRefSearchException
+from utils.lambda_exceptions import DocumentRefSearchException, InvalidDocTypeException
+from utils.lambda_header_utils import validate_common_name_in_mtls
 
 logger = LoggingService(__name__)
 
@@ -28,6 +30,7 @@ class DocumentReferenceSearchService(DocumentService):
         return_fhir: bool = False,
         additional_filters=None,
         check_upload_completed=True,
+        request_headers: dict = {},
     ):
         """
         Fetch document references for a given NHS number.
@@ -38,8 +41,10 @@ class DocumentReferenceSearchService(DocumentService):
         :param check_upload_completed: If True, check if the upload is completed before returning the results.
         :return: List of document references or FHIR DocumentReferences.
         """
+        headers = {k.lower(): v for k, v in request_headers.items()}
+        common_name = validate_common_name_in_mtls(headers)
         try:
-            list_of_table_names = self._get_table_names()
+            list_of_table_names = self._get_table_names(common_name)
             results = self._search_tables_for_documents(
                 nhs_number,
                 list_of_table_names,
@@ -60,12 +65,18 @@ class DocumentReferenceSearchService(DocumentService):
             )
             raise DocumentRefSearchException(500, LambdaError.DocRefClient)
 
-    def _get_table_names(self) -> list[str]:
+    def _get_table_names(self, common_name: MtlsCommonNames | None) -> list[str]:
+        table_list = []
         try:
-            return json.loads(os.environ["DYNAMODB_TABLE_LIST"])
+            table_list = json.loads(os.environ["DYNAMODB_TABLE_LIST"])
         except JSONDecodeError as e:
             logger.error(f"Failed to decode table list: {str(e)}")
             raise
+
+        if not common_name or common_name not in MtlsCommonNames:
+            return table_list
+        else:
+            return [t for t in table_list if common_name.value.lower() in t.lower()]
 
     def _search_tables_for_documents(
         self,
