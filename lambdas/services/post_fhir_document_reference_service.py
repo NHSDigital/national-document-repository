@@ -169,6 +169,13 @@ class PostFhirDocumentReferenceService:
                 if current_gp_ods not in PatientOdsInactiveStatus.list()
                 else PCSE_ODS_CODE
             )
+
+        sub_folder = (
+            "user_upload"
+            if doc_type != SnomedCodes.PATIENT_DATA.value
+            else f"fhir_upload/{doc_type.code}"
+        )
+
         document_reference = DocumentReference(
             id=document_id,
             nhs_number=nhs_number,
@@ -181,7 +188,7 @@ class PostFhirDocumentReferenceService:
             document_snomed_code_type=doc_type.code,
             doc_status="preliminary",
             status="current",
-            sub_folder="user_upload",
+            sub_folder=sub_folder,
             document_scan_creation=fhir_doc.content[0].attachment.creation,
         )
 
