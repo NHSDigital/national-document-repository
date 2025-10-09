@@ -18,9 +18,8 @@ from services.post_fhir_document_reference_service import (
 from tests.unit.conftest import APIM_API_URL
 from tests.unit.conftest import (
     EXPECTED_PARSED_PATIENT_BASE_CASE as mock_pds_patient_details,
-    MOCK_PDM_TABLE_NAME,
-    MOCK_LG_TABLE_NAME,
 )
+from tests.unit.conftest import MOCK_LG_TABLE_NAME, MOCK_PDM_TABLE_NAME
 from tests.unit.helpers.data.bulk_upload.test_data import TEST_DOCUMENT_REFERENCE
 from utils.exceptions import PatientNotFoundException
 from utils.lambda_exceptions import CreateDocumentRefException

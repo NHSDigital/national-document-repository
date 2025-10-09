@@ -1,6 +1,7 @@
 from typing import Optional
+
 from enums.lambda_error import LambdaError
-from enums.mtls import MtlsCommonNames, CN_PATTERN
+from enums.mtls import CN_PATTERN, MtlsCommonNames
 from utils.audit_logging_setup import LoggingService
 from utils.lambda_exceptions import CreateDocumentRefException
 

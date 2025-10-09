@@ -1,5 +1,4 @@
 import re
-
 from enum import StrEnum, auto
 
 CN_PATTERN = re.compile(

@@ -387,4 +387,3 @@ def attach_caplog_handler(caplog):
             instance.logger.removeHandler(caplog.handler)
         except Exception:
             pass
-
