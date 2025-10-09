@@ -1,4 +1,3 @@
-# Move to test folder
 #!/bin/bash
 set -euo pipefail
 
