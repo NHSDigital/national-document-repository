@@ -58,16 +58,6 @@ jobs:
           source ./lambdas/venv/bin/activate
           echo PATH=$PATH >> $GITHUB_ENV
 
-      - name: Get APIM API Gateway Key
-        run: |
-          API_KEY_ID=$(aws apigateway get-api-keys --name-query "${SANDBOX}_apim" --query "items[0].id" --output text)
-          echo "::add-mask::$API_KEY_ID"
-          API_KEY=$(aws apigateway get-api-key --api-key $API_KEY_ID --include-value --query 'value' --output text)
-          echo "::add-mask::$API_KEY"
-          echo "NDR_API_KEY=$API_KEY" >> $GITHUB_ENV
-        env:
-          SANDBOX: ${{ inputs.sandbox }}
-
       - name: Get MockCIS2 Token
         run: |
           MOCK_CIS2_KEY=$(aws ssm get-parameter --name "/auth/password/MOCK_KEY" --with-decryption --query "Parameter.Value" --output text)
