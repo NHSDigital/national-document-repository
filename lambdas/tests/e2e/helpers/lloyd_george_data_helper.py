@@ -7,7 +7,7 @@ from services.base.s3_service import S3Service
 
 class LloydGeorgeDataHelper:
     def __init__(self):
-        self.lloydgeorge_dynamo_table = os.environ.get("NDR_DYNAMO_STORE") or ""
+        self.lloydgeorge_dynamo_table = os.environ.get("LG_METADATA_TABLE") or ""
         self.s3_bucket = os.environ.get("NDR_S3_BUCKET") or ""
         self.dynamo_service = DynamoDBService()
         self.s3_service = S3Service()
