@@ -17,9 +17,6 @@ done
 source ./src/test/set-e2e-env-vars.sh $ENVIRONMENT
 
 echo "Running E2E tests with:" #todo output all vars here?
-echo "  NDR_DYNAMO_STORE=$NDR_DYNAMO_STORE"
-echo "  NDR_S3_BUCKET=$NDR_S3_BUCKET"
-echo "  NDR_API_ENDPOINT=$NDR_API_ENDPOINT"
 
 # Run the tests
 cd ./lambdas
