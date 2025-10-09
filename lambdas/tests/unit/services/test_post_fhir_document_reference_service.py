@@ -1,6 +1,5 @@
 import json
 
-from boto3.dynamodb.conditions import In
 import pytest
 from botocore.exceptions import ClientError
 from enums.lambda_error import LambdaError
