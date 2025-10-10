@@ -3,7 +3,7 @@ import os
 
 from enums.file_size import FileSize
 from enums.lambda_error import LambdaError
-from enums.snomed_codes import SnomedCodes
+from enums.snomed_codes import SnomedCode, SnomedCodes
 from models.document_reference import DocumentReference
 from models.fhir.R4.fhir_document_reference import Attachment, DocumentReferenceInfo
 from services.base.s3_service import S3Service
@@ -11,6 +11,7 @@ from services.base.ssm_service import SSMService
 from services.document_service import DocumentService
 from utils.audit_logging_setup import LoggingService
 from utils.common_query_filters import CurrentStatusFile
+from utils.dynamo_utils import DocTypeTableRouter
 from utils.lambda_exceptions import GetFhirDocumentReferenceException
 from utils.request_context import request_context
 
@@ -19,9 +20,6 @@ logger = LoggingService(__name__)
 
 class GetFhirDocumentReferenceService:
     def __init__(self):
-        self.tables = {
-            SnomedCodes.LLOYD_GEORGE.value.code: os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
-        }
         self.ssm_prefix = getattr(request_context, "auth_ssm_prefix", "")
         get_document_presign_url_aws_role_arn = os.getenv("PRESIGNED_ASSUME_ROLE")
         self.cloudfront_url = os.environ.get("CLOUDFRONT_URL")
@@ -30,17 +28,23 @@ class GetFhirDocumentReferenceService:
         )
         self.ssm_service = SSMService()
         self.document_service = DocumentService()
+        self.doc_router = DocTypeTableRouter()
 
     def handle_get_document_reference_request(self, snomed_code, document_id):
-        table = self.tables.get(snomed_code, None)
-        if not table:
-            logger.error("No table found for the given SNOMED code.")
-            raise GetFhirDocumentReferenceException(
-                404, LambdaError.DocumentReferenceNotFound
-            )
-        document_reference = self.get_document_references(document_id, table)
+        doc_type = SnomedCodes.find_by_code(snomed_code)
+        dynamo_table = self._get_dynamo_table_for_doc_type(doc_type)
+        document_reference = self.get_document_references(document_id, dynamo_table)
 
         return document_reference
+
+    def _get_dynamo_table_for_doc_type(self, doc_type: SnomedCode) -> str:
+        try:
+            return self.doc_router.resolve(doc_type)
+        except KeyError:
+            logger.error(
+                f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
+            )
+            raise GetFhirDocumentReferenceException(400, LambdaError.DocTypeInvalid)
 
     def get_document_references(self, document_id: str, table) -> DocumentReference:
         documents = self.document_service.fetch_documents_from_table(
