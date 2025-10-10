@@ -164,6 +164,7 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
     };
 
     const continueClicked = (): void => {
+        document.getElementsByTagName('div')[0].style.background = "red";
         if (!validateDocuments()) {
             scrollToRef.current?.scrollIntoView();
             return;
@@ -393,7 +394,7 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
                     type="button"
                     id="continue-button"
                     data-testid="continue-button"
-                    onClick={continueClicked}
+                    onClick={() => continueClicked()}
                 >
                     Continue
                 </Button>
