@@ -566,7 +566,7 @@ jobs:
       build_branch: ${{ inputs.build_branch}}
       sandbox: ${{ inputs.sandbox }}
       lambda_handler_name: migration_dynamodb_segment_lambda_handler
-      lambda_aws_name: BulkUploadMetadataPreprocessor
+      lambda_aws_name: MigrationDynamodbSegment
       lambda_layer_names: 'core_lambda_layer'
     secrets:
       AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
