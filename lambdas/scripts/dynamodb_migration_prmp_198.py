@@ -27,18 +27,7 @@ class VersionMigration:
             )
             total_count = len(all_entries)
 
-            # self.run_version_migration(all_entries=all_entries, total_count=total_count)
             self.run_author_migration(all_entries=all_entries, total_count=total_count)
-            # self.run_deleted_cleanup_migration(
-            #     all_entries=all_entries, total_count=total_count
-            # )
-            # self.run_custodian_migration(
-            #     all_entries=all_entries, total_count=total_count
-            # )
-            # self.run_document_snomed_code_type_migration(
-            #     all_entries=all_entries, total_count=total_count
-            # )
-            # self.run_status_migration(all_entries=all_entries, total_count=total_count)
         except Exception as e:
             self.logger.error("Migration failed", exc_info=e)
             raise
@@ -97,9 +86,14 @@ class VersionMigration:
 
         def author_update(entry: dict) -> dict | None:
             current_author = entry.get("Author")
+            deleted_value = entry.get("Deleted")
             nhs_number = entry.get("NhsNumber")
 
             if current_author:
+                return None
+
+            if deleted_value not in (None, ""):
+                self.logger.debug(f"[Author] Skipping {nhs_number}: Deleted field not empty ({deleted_value}).")
                 return None
 
             bulk_upload_row = bulk_upload_report_lookup.get(nhs_number)
