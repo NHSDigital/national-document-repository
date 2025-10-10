@@ -142,7 +142,7 @@ def test_get_document_references_dynamo_return_successful_response_single_table(
     [
         (
             {
-                "x-amzn-mtls-clientcert-subject": "CN=ndrclient.main.dev.pdm.national.nhs.uk"
+                "x-amzn-mtls-clientcert-subject": "CN=ndrclient.main.int.pdm.national.nhs.uk"
             },
             ["test_pdm_dynamoDB_table"],
         ),
