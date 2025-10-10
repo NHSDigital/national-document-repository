@@ -75,8 +75,7 @@ class DocumentReferenceSearchService(DocumentService):
 
         if not common_name or common_name not in MtlsCommonNames:
             return table_list
-        else:
-            return [t for t in table_list if common_name.value.lower() in t.lower()]
+        return [t for t in table_list if common_name.value.lower() in t.lower()]
 
     def _search_tables_for_documents(
         self,
