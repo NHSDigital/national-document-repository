@@ -63,12 +63,12 @@ download-api-certs: # Use with poc and dev envs only
 	rm -rf ./lambdas/mtls_env_certs/$(env)
 	./scripts/aws/download-api-certs.sh $(env)
 
-test-api-e2e: # Defaults to env=ndr-dev
+test-api-e2e:
 	./scripts/test/run-e2e-tests.sh --env $(env)
 	rm -rf ./lambdas/mtls_env_certs/$(env)
 
 test-api-e2e-snapshots:
-	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --snapshot-update
+	./scripts/test/run-e2e-tests-snapshot-update.sh
 
 test-bulk-upload-e2e:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/bulk_upload -vv

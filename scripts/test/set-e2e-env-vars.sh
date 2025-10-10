@@ -47,9 +47,4 @@ echo env="${ENVIRONMENT}"
 export TESTING_CLIENT_CERT_PATH=./mtls_env_certs/"${ENVIRONMENT}"/client.crt
 export TESTING_CLIENT_KEY_PATH=./mtls_env_certs/"${ENVIRONMENT}"/client.key
 
-# if [[ ! -f "$TESTING_CLIENT_CERT_PATH" ]]; then
-#     echo "ERROR: Certificate file not found at $TESTING_CLIENT_CERT_PATH"
-#     exit 1
-# fi
-
 echo "Environment variables set for ENVIRONMENT=${ENVIRONMENT}"
