@@ -163,13 +163,12 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
         );
     };
 
-    const continueClicked = (): void => {
-        document.getElementsByTagName('div')[0].style.background = "red";
+    const continueClicked = (): void => {      
         if (!validateDocuments()) {
             scrollToRef.current?.scrollIntoView();
             return;
         }
-
+        document.getElementsByTagName('div')[0].style.background = "red";
         navigate(routeChildren.DOCUMENT_UPLOAD_SELECT_ORDER);
     };
 
