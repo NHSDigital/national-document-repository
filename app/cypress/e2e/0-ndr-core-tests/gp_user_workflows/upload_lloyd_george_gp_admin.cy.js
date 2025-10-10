@@ -9,8 +9,10 @@ const lloydGeorgeInfectedUrl = '/patient/document-upload/infected';
 
 const clickContinueButton = () => {
     cy.wait(1000);
-    cy.getByTestId('continue-button').scrollIntoView().should('be.visible');
-    cy.getByTestId('continue-button').click({force: true});
+
+
+    cy.getByTestId('continue-button').scrollIntoView().should('be.visible').trigger('mouseclick');
+    //cy.getByTestId('continue-button').click({force: true});
 };
 
 const testSearchPatientButton = () => {
