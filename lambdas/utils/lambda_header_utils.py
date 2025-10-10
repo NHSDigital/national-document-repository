@@ -1,11 +1,6 @@
 from typing import Optional
 
-from enums.lambda_error import LambdaError
-from enums.mtls import CN_PATTERN, MtlsCommonNames
-from utils.audit_logging_setup import LoggingService
-from utils.lambda_exceptions import CreateDocumentRefException
-
-logger = LoggingService(__name__)
+from enums.mtls import MtlsCommonNames
 
 
 def validate_common_name_in_mtls(headers: dict) -> Optional[MtlsCommonNames]:
@@ -16,16 +11,4 @@ def validate_common_name_in_mtls(headers: dict) -> Optional[MtlsCommonNames]:
     for part in subject.split(","):
         if part.strip().startswith("CN="):
             cn_value = part.strip().split("=", 1)[1].lower()
-            match = CN_PATTERN.match(cn_value)
-            if not match:
-                logger.error(f"Invalid CN format: '{cn_value}'")
-                raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
-
-            cn_identifier = match.group("identifier")
-            try:
-                return MtlsCommonNames(cn_identifier)
-            except ValueError:
-                # Not a valid enum member
-                logger.error(f"mTLS common name {cn_value} - is not supported")
-                raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
-    return None
+            return MtlsCommonNames.from_common_name(cn_value)

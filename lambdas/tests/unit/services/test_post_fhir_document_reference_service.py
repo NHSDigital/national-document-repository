@@ -103,7 +103,7 @@ def valid_mtls_header():
     return {
         "Accept": "text/json",
         "Host": "example.com",
-        "x-amzn-mtls-clientcert-subject": "CN=ndrclient.main.dev.pdm.national.nhs.uk",
+        "x-amzn-mtls-clientcert-subject": "CN=client.dev.ndr.national.nhs.uk",
     }
 
 
