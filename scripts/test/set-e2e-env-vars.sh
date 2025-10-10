@@ -17,22 +17,6 @@ export NDR_S3_BUCKET="${ENVIRONMENT}-lloyd-george-store"
 export NDR_API_ENDPOINT="api-${ENVIRONMENT}.access-request-fulfilment.patient-deductions.nhs.uk"
 export MTLS_ENDPOINT="mtls.${ENVIRONMENT}.access-request-fulfilment.patient-deductions.nhs.uk"
 
-# Fetch API key from AWS API Gateway
-API_KEY_ID=$(aws apigateway get-api-keys --name-query "${ENVIRONMENT}_pdm" --query "items[0].id" --output text)
-if [[ -z "$API_KEY_ID" || "$API_KEY_ID" == "None" ]]; then
-    echo "ERROR: API key ID not found for ${ENVIRONMENT}_pdm"
-    exit 1
-fi
-
-API_KEY=$(aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --query 'value' --output text)
-if [[ -z "$API_KEY" || "$API_KEY" == "None" ]]; then
-    echo "ERROR: API key value not found for ID $API_KEY_ID"
-    exit 1
-fi
-
-# Export the API key
-export MTLS_NDR_API_KEY="$API_KEY"
-
 echo "selected environment2: $ENVIRONMENT"
 
 # Ensure Client certificates in place

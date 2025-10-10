@@ -5,7 +5,6 @@ from syrupy.filters import paths
 from tests.e2e.conftest import (
     LLOYD_GEORGE_S3_BUCKET,
     LLOYD_GEORGE_SNOMED,
-    MTLS_API_KEY,
     MTLS_ENDPOINT,
 )
 from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
@@ -29,7 +28,6 @@ def test_small_file(test_data, snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
 
@@ -56,7 +54,6 @@ def test_large_file(test_data, snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
 
@@ -80,7 +77,6 @@ def test_no_file_found(snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
     # Use mTLS
@@ -106,7 +102,6 @@ def test_preliminary_file(test_data, snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
 

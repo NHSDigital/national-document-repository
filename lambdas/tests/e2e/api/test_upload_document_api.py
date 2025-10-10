@@ -9,7 +9,6 @@ from tests.e2e.conftest import (
     APIM_ENDPOINT,
     LLOYD_GEORGE_S3_BUCKET,
     LLOYD_GEORGE_SNOMED,
-    MTLS_API_KEY,
     MTLS_ENDPOINT,
     fetch_with_retry_mtls,
 )
@@ -79,7 +78,7 @@ def test_create_document_base64(test_data, snapshot_json):
 
     payload = create_upload_payload(lloyd_george_record)
     url = f"https://{MTLS_ENDPOINT}/DocumentReference"
-    headers = {"Authorization": "Bearer 123", "X-Api-Key": MTLS_API_KEY}
+    headers = {"Authorization": "Bearer 123"}
 
     # Use mTLS
     session = create_mtls_session()
@@ -124,7 +123,7 @@ def test_create_document_presign(test_data, snapshot_json):
 
     payload = create_upload_payload(lloyd_george_record)
     url = f"https://{MTLS_ENDPOINT}/DocumentReference"
-    headers = {"Authorization": "Bearer 123", "X-Api-Key": MTLS_API_KEY}
+    headers = {"Authorization": "Bearer 123"}
 
     # Use mTLS
     session = create_mtls_session()
@@ -174,7 +173,7 @@ def test_create_document_virus(test_data, snapshot_json):
 
     payload = create_upload_payload(lloyd_george_record)
     url = f"https://{MTLS_ENDPOINT}/DocumentReference"
-    headers = {"Authorization": "Bearer 123", "X-Api-Key": MTLS_API_KEY}
+    headers = {"Authorization": "Bearer 123"}
 
     # Use mTLS
     session = create_mtls_session()

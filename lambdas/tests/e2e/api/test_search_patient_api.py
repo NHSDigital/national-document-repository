@@ -3,12 +3,7 @@ import logging
 import uuid
 
 from syrupy.filters import paths
-from tests.e2e.conftest import (
-    APIM_ENDPOINT,
-    LLOYD_GEORGE_SNOMED,
-    MTLS_API_KEY,
-    MTLS_ENDPOINT,
-)
+from tests.e2e.conftest import APIM_ENDPOINT, LLOYD_GEORGE_SNOMED, MTLS_ENDPOINT
 from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
 
 from lambdas.tests.e2e.conftest import create_mtls_session
@@ -30,7 +25,6 @@ def test_search_patient_details(test_data, snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
 
@@ -82,7 +76,6 @@ def test_multiple_cancelled_search_patient_details(test_data, snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
     # Use mTLS
@@ -109,7 +102,6 @@ def test_no_records(snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
     # Use mTLS
@@ -127,7 +119,6 @@ def test_invalid_patient(snapshot_json):
     url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
         "Authorization": "Bearer 123",
-        "X-Api-Key": MTLS_API_KEY,
         "X-Correlation-Id": "1234",
     }
 
