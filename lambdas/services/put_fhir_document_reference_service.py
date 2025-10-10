@@ -126,8 +126,16 @@ class PutFhirDocumentReferenceService:
         if current_doc.nhs_number != put_nhs_number:
             logger.error("NHS numbers do not match.")
             raise UpdateFhirDocumentReferenceException(
-                400, LambdaError
+                400, LambdaError.DocumentReferenceGeneralError
             )
+        
+        if validated_fhir_doc.meta == None:
+            logger.error("Missing version number")
+            raise UpdateFhirDocumentReferenceException(400, LambdaError.DocumentReferenceMissingParameters)
+        
+        if current_doc.version != validated_fhir_doc.meta.versionId:
+            logger.error("Version does not match current version.")
+            raise UpdateFhirDocumentReferenceException(400, LambdaError.DocumentReferenceGeneralError)
         
         return validated_fhir_doc
 

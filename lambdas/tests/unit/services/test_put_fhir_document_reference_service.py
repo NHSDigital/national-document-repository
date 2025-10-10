@@ -95,6 +95,9 @@ def valid_fhir_doc_json():
                     }
                 }
             ],
+            "meta": {
+                "versionId": "1"
+            }
         }
     )
 
@@ -128,6 +131,9 @@ def test_process_fhir_document_reference_with_presigned_url(
 
     documents = create_test_doc_store_refs()
     documents[0].version = str(version_number)
+    doc = json.loads(valid_fhir_doc_json)
+    doc["meta"]["versionId"] = str(version_number)
+    valid_fhir_doc_json = json.dumps(doc)
 
     mock_service.document_service.fetch_documents_from_table.return_value = documents
 
@@ -158,6 +164,9 @@ def test_process_fhir_document_reference_with_binary(
 
     documents = create_test_doc_store_refs()
     documents[0].version = str(version_number)
+    doc = json.loads(valid_fhir_doc_with_binary)
+    doc["meta"]["versionId"] = str(version_number)
+    valid_fhir_doc_with_binary = json.dumps(doc)
 
     mock_service.document_service.fetch_documents_from_table.return_value = documents
 
@@ -238,7 +247,7 @@ def test_dynamo_error(mock_service, valid_fhir_doc_json):
     )
 
     documents = create_test_doc_store_refs()
-    documents[0].version = 1
+    documents[0].version = "1"
     mock_service.document_service.fetch_documents_from_table.return_value = documents
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
