@@ -11,7 +11,9 @@ const clickContinueButton = () => {
     cy.wait(1000);
 
 
-    cy.getByTestId('continue-button').scrollIntoView().should('be.visible').trigger('mouseclick');
+    cy.getByTestId('continue-button').scrollIntoView().should('be.visible');
+    cy.getByTestId('continue-button').trigger('focus');
+    cy.getByTestId('continue-button').trigger('click');
     //cy.getByTestId('continue-button').click({force: true});
 };
 
