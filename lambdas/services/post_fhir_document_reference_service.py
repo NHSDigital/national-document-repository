@@ -3,12 +3,11 @@ import binascii
 import io
 import os
 
-from typing import Optional
 from botocore.exceptions import ClientError
 from enums.lambda_error import LambdaError
+from enums.mtls import MtlsCommonNames
 from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCode, SnomedCodes
-from enums.mtls import MtlsCommonNames
 from models.document_reference import DocumentReference
 from models.fhir.R4.fhir_document_reference import SNOMED_URL, Attachment
 from models.fhir.R4.fhir_document_reference import (
@@ -170,6 +169,13 @@ class PostFhirDocumentReferenceService:
                 if current_gp_ods not in PatientOdsInactiveStatus.list()
                 else PCSE_ODS_CODE
             )
+
+        sub_folder = (
+            "user_upload"
+            if doc_type != SnomedCodes.PATIENT_DATA.value
+            else f"fhir_upload/{doc_type.code}"
+        )
+
         document_reference = DocumentReference(
             id=document_id,
             nhs_number=nhs_number,
@@ -182,7 +188,7 @@ class PostFhirDocumentReferenceService:
             document_snomed_code_type=doc_type.code,
             doc_status="preliminary",
             status="current",
-            sub_folder="user_upload",
+            sub_folder=sub_folder,
             document_scan_creation=fhir_doc.content[0].attachment.creation,
         )
 

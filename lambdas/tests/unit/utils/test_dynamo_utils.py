@@ -3,30 +3,31 @@ import json
 import pytest
 from enums.lambda_error import LambdaError
 from enums.metadata_field_names import DocumentReferenceMetadataFields
-from lambdas.enums.snomed_codes import SnomedCodes
 from tests.unit.conftest import (
+    MOCK_LG_TABLE_NAME,
+    MOCK_PDM_TABLE_NAME,
     TEST_CURRENT_GP_ODS,
     TEST_DOCUMENT_LOCATION,
     TEST_FILE_KEY,
     TEST_NHS_NUMBER,
     TEST_UUID,
-    MOCK_PDM_TABLE_NAME,
-    MOCK_LG_TABLE_NAME,
 )
 from tests.unit.helpers.data.dynamo.dynamo_stream import (
     MOCK_OLD_IMAGE_EVENT,
     MOCK_OLD_IMAGE_MODEL,
 )
 from utils.dynamo_utils import (
+    DocTypeTableRouter,
     create_expression_attribute_placeholder,
     create_expression_attribute_values,
     create_expression_value_placeholder,
     create_expressions,
     create_update_expression,
     parse_dynamo_record,
-    DocTypeTableRouter,
 )
 from utils.lambda_exceptions import CreateDocumentRefException
+
+from lambdas.enums.snomed_codes import SnomedCodes
 
 
 def test_create_expressions_correctly_creates_an_expression_of_one_field():

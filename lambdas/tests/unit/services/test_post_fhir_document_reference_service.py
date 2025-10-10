@@ -18,9 +18,8 @@ from services.post_fhir_document_reference_service import (
 from tests.unit.conftest import APIM_API_URL
 from tests.unit.conftest import (
     EXPECTED_PARSED_PATIENT_BASE_CASE as mock_pds_patient_details,
-    MOCK_PDM_TABLE_NAME,
-    MOCK_LG_TABLE_NAME,
 )
+from tests.unit.conftest import MOCK_LG_TABLE_NAME, MOCK_PDM_TABLE_NAME
 from tests.unit.helpers.data.bulk_upload.test_data import TEST_DOCUMENT_REFERENCE
 from utils.exceptions import PatientNotFoundException
 from utils.lambda_exceptions import CreateDocumentRefException
@@ -761,3 +760,78 @@ def test_determine_document_type_with_correct_common_name(mock_service, mocker):
 
     result = mock_service._determine_document_type(fhir_doc, MtlsCommonNames.PDM)
     assert result == SnomedCodes.PATIENT_DATA.value
+
+
+def test_s3_file_key_for_pdm(mock_service, mocker):
+    """Test _create_document_reference method without custodian information."""
+
+    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
+    fhir_doc.content = [
+        DocumentReferenceContent(
+            attachment=Attachment(
+                contentType="application/pdf",
+                title="test-file.pdf",
+                creation="2023-01-01T12:00:00Z",
+            )
+        )
+    ]
+    fhir_doc.author = [
+        Reference(
+            identifier=Identifier(
+                system="https://fhir.nhs.uk/Id/ods-organization-code", value="B67890"
+            )
+        )
+    ]
+    fhir_doc.custodian = None
+
+    doc_type = SnomedCodes.PATIENT_DATA.value
+    current_gp_ods = "C13579"
+
+    result = mock_service._create_document_reference(
+        nhs_number="9000000009",
+        doc_type=doc_type,
+        fhir_doc=fhir_doc,
+        current_gp_ods=current_gp_ods,
+    )
+
+    assert (
+        f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}/9000000009"
+        in result.s3_file_key
+    )
+    assert result.sub_folder == f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}"
+
+
+def test_s3_file_key_for_lg(mock_service, mocker):
+    """Test _create_document_reference method without custodian information."""
+
+    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
+    fhir_doc.content = [
+        DocumentReferenceContent(
+            attachment=Attachment(
+                contentType="application/pdf",
+                title="test-file.pdf",
+                creation="2023-01-01T12:00:00Z",
+            )
+        )
+    ]
+    fhir_doc.author = [
+        Reference(
+            identifier=Identifier(
+                system="https://fhir.nhs.uk/Id/ods-organization-code", value="B67890"
+            )
+        )
+    ]
+    fhir_doc.custodian = None
+
+    doc_type = SnomedCodes.LLOYD_GEORGE.value
+    current_gp_ods = "C13579"
+
+    result = mock_service._create_document_reference(
+        nhs_number="9000000009",
+        doc_type=doc_type,
+        fhir_doc=fhir_doc,
+        current_gp_ods=current_gp_ods,
+    )
+
+    assert "user_upload/9000000009" in result.s3_file_key
+    assert result.sub_folder == "user_upload"
