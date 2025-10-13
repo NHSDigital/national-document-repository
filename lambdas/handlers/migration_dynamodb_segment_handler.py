@@ -25,7 +25,3 @@ def lambda_handler(event, context):
     except Exception as e:
         logger.error(f"Exception in migration_dynamodb_segment_handler: {e}")
         raise
-
-
-
-
