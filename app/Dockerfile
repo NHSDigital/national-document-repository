@@ -1,6 +1,6 @@
 # Build the App
 FROM node:24-alpine AS builder
-RUN apk add unzip wget
+RUN apk upgrade --no-cache && apk add unzip wget --no-cache && rm -rf /var/cache/apk/*
 WORKDIR /app
 
 COPY package.json ./
