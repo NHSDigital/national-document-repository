@@ -26,6 +26,17 @@ def valid_event():
                 "Host": "example.com",
             }
         ),
+        "requestContext": json.dumps(
+            {
+                "accountId": "123456789012",
+                "apiId": "abc123",
+                "domainName": "api.example.com",
+                "identity": {
+                    "sourceIp": "1.2.3.4",
+                    "userAgent": "curl/7.64.1",
+                },
+            }
+        ),
     }
 
 
@@ -47,7 +58,27 @@ def valid_mtls_event():
             {
                 "Accept": "text/json",
                 "Host": "example.com",
-                "x-amzn-mtls-clientcert-subject": "CN=pdm",
+            }
+        ),
+        "requestContext": json.dumps(
+            {
+                "accountId": "123456789012",
+                "apiId": "abc123",
+                "domainName": "api.example.com",
+                "identity": {
+                    "sourceIp": "1.2.3.4",
+                    "userAgent": "curl/7.64.1",
+                    "clientCert": {
+                        "clientCertPem": "-----BEGIN CERTIFICATE-----...",
+                        "subjectDN": "CN=ndrclient.main.int.pdm.national.nhs.uk,O=NHS,C=UK",
+                        "issuerDN": "CN=NHS Root CA,O=NHS,C=UK",
+                        "serialNumber": "12:34:56",
+                        "validity": {
+                            "notBefore": "May 10 00:00:00 2024 GMT",
+                            "notAfter": "May 10 00:00:00 2025 GMT",
+                        },
+                    },
+                },
             }
         ),
     }
@@ -76,7 +107,7 @@ def test_lambda_handler_success(valid_event, context, mock_service):
     assert json.loads(result["body"]) == mock_response
 
     mock_service.process_fhir_document_reference.assert_called_once_with(
-        valid_event["body"], valid_event["headers"]
+        valid_event["body"], valid_event["requestContext"]
     )
 
 
@@ -110,5 +141,5 @@ def test_mtls_lambda_handler_success(valid_mtls_event, context, mock_service):
     assert json.loads(result["body"]) == mock_response
 
     mock_service.process_fhir_document_reference.assert_called_once_with(
-        valid_mtls_event["body"], valid_mtls_event["headers"]
+        valid_mtls_event["body"], valid_mtls_event["requestContext"]
     )
