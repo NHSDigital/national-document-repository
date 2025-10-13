@@ -54,11 +54,12 @@ class MetadataUsbPreprocessorService(MetadataPreprocessorService):
     def validate_record_filename(
         self, file_path, metadata_nhs_number=None, *args, **kwargs
     ) -> str:
-        # self._count_files_for_patient(metadata_nhs_number)
-        # self._validate_single_file_for_patient(metadata_nhs_number)
+        self._validate_single_file_for_patient(metadata_nhs_number)
         directory_path, file_name = extract_document_path(file_path)
-        self._validate_file_extension(file_name)
+
         self._validate_document_parts(file_path, file_name)
+
+        self._validate_file_extension(file_name)
 
         (
             nhs_number,

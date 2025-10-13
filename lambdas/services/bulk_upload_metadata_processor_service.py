@@ -105,7 +105,6 @@ class BulkUploadMetadataProcessorService:
                 files=value,
             )
             for (key, value) in patients.items()
-            # If there are multiple files for a patient AND it's USB mode: do not return those.
         ]
 
     def process_metadata_row(self, row: dict, patients: dict) -> None:
