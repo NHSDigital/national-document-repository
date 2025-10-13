@@ -7,7 +7,9 @@ from botocore.exceptions import ClientError
 from enums.upload_status import UploadStatus
 from freezegun import freeze_time
 from models.staging_metadata import METADATA_FILENAME, MetadataFile
-from services.bulk_upload_metadata_preprocessor_service import MetadataPreprocessorService
+from services.bulk_upload_metadata_preprocessor_service import (
+    MetadataPreprocessorService,
+)
 from services.bulk_upload_metadata_processor_service import (
     BulkUploadMetadataProcessorService,
 )
@@ -35,6 +37,7 @@ MOCK_TEMP_FOLDER = "tests/unit/helpers/data/bulk_upload"
 
 SERVICE_PATH = "services.bulk_upload_metadata_processor_service"
 
+
 class MockMetadataPreprocessorService(MetadataPreprocessorService):
     def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
         return "corrected.pdf"
@@ -45,7 +48,9 @@ class MockMetadataPreprocessorService(MetadataPreprocessorService):
 def test_service(mocker, set_env, mock_tempfile):
     mocker.patch("services.bulk_upload_metadata_processor_service.S3Service")
     mocker.patch("services.bulk_upload_metadata_processor_service.SQSService")
-    mocker.patch("services.bulk_upload_metadata_processor_service.BulkUploadDynamoRepository")
+    mocker.patch(
+        "services.bulk_upload_metadata_processor_service.BulkUploadDynamoRepository"
+    )
     service = BulkUploadMetadataProcessorService(
         MockMetadataPreprocessorService(practice_directory="test_practice_directory")
     )
@@ -123,9 +128,7 @@ def test_process_metadata_send_metadata_to_sqs_queue(
     mocker.patch.object(
         test_service.s3_service, "copy_across_bucket", return_value=None
     )
-    mocker.patch.object(
-        test_service.s3_service, "delete_object", return_value=None
-    )
+    mocker.patch.object(test_service.s3_service, "delete_object", return_value=None)
 
     mocker.patch("uuid.uuid4", return_value=fake_uuid)
 
@@ -273,9 +276,7 @@ def test_download_metadata_from_s3(mock_s3_service, test_service):
     expected_download_path = os.path.join(
         test_service.temp_download_dir, METADATA_FILENAME
     )
-    expected_file_key = (
-        f"{test_service.practice_directory}/{METADATA_FILENAME}"
-    )
+    expected_file_key = f"{test_service.practice_directory}/{METADATA_FILENAME}"
 
     mock_s3_service.download_file.assert_called_once_with(
         s3_bucket_name=test_service.staging_bucket_name,
@@ -347,9 +348,7 @@ def test_duplicates_csv_to_staging_metadata(mocker, test_service):
     assert actual == expected
 
 
-def test_send_metadata_to_sqs(
-    set_env, mocker, mock_sqs_service, test_service
-):
+def test_send_metadata_to_sqs(set_env, mocker, mock_sqs_service, test_service):
     mocker.patch("uuid.uuid4", return_value="123412342")
     expected_calls = [
         call(
@@ -429,14 +428,10 @@ def test_process_metadata_row_success(mocker, test_service):
     key = ("1234567890", "Y12345")
     assert key in patients
     assert patients[key] == [mock_metadata]
-    assert test_service.corrections == {
-        "/some/path/file.pdf": "corrected.pdf"
-    }
+    assert test_service.corrections == {"/some/path/file.pdf": "corrected.pdf"}
 
 
-def test_process_metadata_row_adds_to_existing_entry(
-    mocker, test_service
-):
+def test_process_metadata_row_adds_to_existing_entry(mocker, test_service):
     key = ("1234567890", "Y12345")
     mock_metadata_existing = mocker.Mock()
     patients = {key: [mock_metadata_existing]}
@@ -469,16 +464,11 @@ def test_process_metadata_row_adds_to_existing_entry(
 
     assert len(patients[key]) == 2
     assert patients[key][1] == mock_metadata
-    assert (
-            test_service.corrections["/some/path/file2.pdf"]
-            == "corrected.pdf"
-    )
+    assert test_service.corrections["/some/path/file2.pdf"] == "corrected.pdf"
 
 
 def test_extract_patient_info(test_service, base_metadata_file):
-    nhs_number, ods_code = test_service.extract_patient_info(
-        base_metadata_file
-    )
+    nhs_number, ods_code = test_service.extract_patient_info(base_metadata_file)
 
     assert nhs_number == "1234567890"
     assert ods_code == "Y12345"
@@ -499,9 +489,7 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
         test_service.dynamo_repository, "write_report_upload_to_dynamo"
     )
 
-    test_service.handle_invalid_filename(
-        base_metadata_file, error, key, patients
-    )
+    test_service.handle_invalid_filename(base_metadata_file, error, key, patients)
 
     mock_staging_metadata.assert_called_once_with(
         nhs_number=key[0],

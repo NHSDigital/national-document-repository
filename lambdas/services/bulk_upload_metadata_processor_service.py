@@ -9,11 +9,7 @@ from typing import Iterable
 import pydantic
 from botocore.exceptions import ClientError
 from enums.upload_status import UploadStatus
-from models.staging_metadata import (
-    METADATA_FILENAME,
-    MetadataFile,
-    StagingMetadata,
-)
+from models.staging_metadata import METADATA_FILENAME, MetadataFile, StagingMetadata
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
 )
@@ -23,7 +19,11 @@ from services.bulk_upload_metadata_preprocessor_service import (
     MetadataPreprocessorService,
 )
 from utils.audit_logging_setup import LoggingService
-from utils.exceptions import BulkUploadMetadataException, InvalidFileNameException, LGInvalidFilesException
+from utils.exceptions import (
+    BulkUploadMetadataException,
+    InvalidFileNameException,
+    LGInvalidFilesException,
+)
 from utils.lloyd_george_validator import validate_file_name
 
 logger = LoggingService(__name__)
@@ -105,6 +105,7 @@ class BulkUploadMetadataProcessorService:
                 files=value,
             )
             for (key, value) in patients.items()
+            # If there are multiple files for a patient AND it's USB mode: do not return those.
         ]
 
     def process_metadata_row(self, row: dict, patients: dict) -> None:
@@ -137,8 +138,10 @@ class BulkUploadMetadataProcessorService:
         try:
             validate_file_name(file_metadata.file_path.split("/")[-1])
             valid_filepath = file_metadata.file_path
-        except LGInvalidFilesException as error:
-            valid_filepath = self.metadata_formatter_service.validate_record_filename(file_metadata.file_path)
+        except LGInvalidFilesException:
+            valid_filepath = self.metadata_formatter_service.validate_record_filename(
+                file_metadata.file_path
+            )
 
         if valid_filepath:
             self.corrections[file_metadata.file_path] = valid_filepath
