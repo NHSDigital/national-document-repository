@@ -47,8 +47,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     logger.info("Received request to search for document references")
 
     bearer_token = extract_bearer_token(event)
-    headers = event.get("headers", {})
-    selected_role_id = headers.get(HEADER_CIS2_USER_ID, "")
+    selected_role_id = event.get("headers", {}).get(HEADER_CIS2_USER_ID, "")
 
     nhs_number, search_filters = parse_query_parameters(
         event.get("queryStringParameters", {})
@@ -64,7 +63,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return_fhir=True,
         additional_filters=search_filters,
         check_upload_completed=False,
-        request_headers=headers,
+        api_request_context=event.get("request_context", {}),
     )
 
     if not document_references:

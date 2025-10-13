@@ -142,7 +142,23 @@ def test_get_document_references_dynamo_return_successful_response_single_table(
     [
         (
             {
-                "x-amzn-mtls-clientcert-subject": "CN=ndrclient.main.int.pdm.national.nhs.uk"
+                "accountId": "123456789012",
+                "apiId": "abc123",
+                "domainName": "api.example.com",
+                "identity": {
+                    "sourceIp": "1.2.3.4",
+                    "userAgent": "curl/7.64.1",
+                    "clientCert": {
+                        "clientCertPem": "-----BEGIN CERTIFICATE-----...",
+                        "subjectDN": "CN=ndrclient.main.int.pdm.national.nhs.uk,O=NHS,C=UK",
+                        "issuerDN": "CN=NHS Root CA,O=NHS,C=UK",
+                        "serialNumber": "12:34:56",
+                        "validity": {
+                            "notBefore": "May 10 00:00:00 2024 GMT",
+                            "notAfter": "May 10 00:00:00 2025 GMT",
+                        },
+                    },
+                },
             },
             ["test_pdm_dynamoDB_table"],
         ),

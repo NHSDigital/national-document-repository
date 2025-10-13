@@ -147,7 +147,7 @@ def test_lambda_handler_returns_200_with_documents(
         return_fhir=True,
         additional_filters={},
         check_upload_completed=False,
-        request_headers={"Authorization": "Bearer valid-token"},
+        api_request_context={},
     )
 
 
@@ -164,7 +164,7 @@ def test_lambda_handler_returns_404_when_no_documents(
         return_fhir=True,
         additional_filters={},
         check_upload_completed=False,
-        request_headers={"Authorization": "Bearer valid-token"},
+        api_request_context={},
     )
 
 
@@ -210,7 +210,7 @@ def test_lambda_handler_with_additional_filters(
         return_fhir=True,
         additional_filters=expected_filters,
         check_upload_completed=False,
-        request_headers={"Authorization": "Bearer valid-token"},
+        api_request_context={},
     )
 
 

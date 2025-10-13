@@ -30,7 +30,7 @@ class DocumentReferenceSearchService(DocumentService):
         return_fhir: bool = False,
         additional_filters=None,
         check_upload_completed=True,
-        request_headers: dict = {},
+        api_request_context: dict = {},
     ):
         """
         Fetch document references for a given NHS number.
@@ -41,8 +41,9 @@ class DocumentReferenceSearchService(DocumentService):
         :param check_upload_completed: If True, check if the upload is completed before returning the results.
         :return: List of document references or FHIR DocumentReferences.
         """
-        headers = {k.lower(): v for k, v in request_headers.items()}
-        common_name = validate_common_name_in_mtls(headers)
+        common_name = validate_common_name_in_mtls(
+            api_request_context=api_request_context
+        )
         try:
             list_of_table_names = self._get_table_names(common_name)
             results = self._search_tables_for_documents(
