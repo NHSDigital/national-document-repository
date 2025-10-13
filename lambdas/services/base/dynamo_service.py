@@ -318,17 +318,17 @@ class DynamoDBService:
         table_name: str,
         document_key: dict, 
         update_fields: dict, 
-        condition_field: str, 
-        condition_value: str
+        condition_fields: dict
     ) -> dict:
         """
         Build a DynamoDB transaction update item with a conditional expression.
         
         Args:
+            table_name: The name of the DynamoDB table
             document_key: The key of the table to update
             update_fields: Dictionary of fields to update (already in DynamoDB format/aliases)
-            condition_field: The field name to check in the condition expression
-            condition_value: The expected value for the condition to pass
+            condition_fields: Dictionary of field names and their expected values for the condition to pass
+                             e.g., {"DocStatus": "final", "Version": 1}
             
         Returns:
             A transaction item dict ready for transact_write_items
@@ -338,23 +338,34 @@ class DynamoDBService:
         _, expression_attribute_names = create_expressions(field_names)
         expression_attribute_values = create_expression_attribute_values(update_fields)
         
-        # Build condition expression
-        condition_placeholder = f"#{condition_field}_attr"
-        condition_value_placeholder = f":{condition_field}_condition_val"
+        # Build condition expression for multiple fields
+        condition_expressions = []
+        condition_attribute_names = {}
+        condition_attribute_values = {}
+        
+        for field_name, field_value in condition_fields.items():
+            condition_placeholder = f"#{field_name}_attr"
+            condition_value_placeholder = f":{field_name}_condition_val"
+            condition_expressions.append(f"{condition_placeholder} = {condition_value_placeholder}")
+            condition_attribute_names[condition_placeholder] = field_name
+            condition_attribute_values[condition_value_placeholder] = field_value
+        
+        # Join multiple conditions with AND
+        condition_expression = " AND ".join(condition_expressions)
         
         return {
             "Update": {
                 "TableName": table_name,
                 "Key": document_key,
                 "UpdateExpression": update_expression,
-                "ConditionExpression": f"{condition_placeholder} = {condition_value_placeholder}",
+                "ConditionExpression": condition_expression,
                 "ExpressionAttributeNames": {
                     **expression_attribute_names,
-                    condition_placeholder: condition_field
+                    **condition_attribute_names
                 },
                 "ExpressionAttributeValues": {
                     **expression_attribute_values,
-                    condition_value_placeholder: condition_value
+                    **condition_attribute_values
                 }
             }
         }

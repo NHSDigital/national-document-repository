@@ -1,3 +1,4 @@
+from hmac import new
 import os
 from typing import Optional
 
@@ -117,6 +118,9 @@ class UploadDocumentReferenceService:
 
                 self._finalize_and_supersede_with_transaction(preliminary_document_reference)
 
+                # Update NRL Pointer
+                # TODO: PRMP-390
+
         except TransactionConflictException as e:
             logger.error(
                 f"Transaction conflict while processing document {preliminary_document_reference.id}: {str(e)}"
@@ -166,8 +170,7 @@ class UploadDocumentReferenceService:
                 table_name=self.table_name,
                 document_key=self.document_reference_key(new_document.id),
                 update_fields=update_fields_dict,
-                condition_field="DocStatus",
-                condition_value="preliminary"
+                condition_fields={"DocStatus": "preliminary"}
             )
             transact_items.append(new_doc_transaction)
 
@@ -188,8 +191,10 @@ class UploadDocumentReferenceService:
                             "Status": "superseded", 
                             "DocStatus": "deprecated"
                         },
-                        condition_field="DocStatus",
-                        condition_value="final"
+                        condition_fields={
+                            "DocStatus": "final",
+                            "Version": str(int(new_document.version) - 1)
+                        }
                     )
                     transact_items.append(supersede_transaction)
             else:
@@ -215,6 +220,11 @@ class UploadDocumentReferenceService:
                 raise
 
         except TransactionConflictException:
+            logger.info(
+                f"Cancelling preliminary document {new_document.id} due to transaction conflict"
+            )
+            new_document.doc_status = "cancelled"
+            self._update_dynamo_table(new_document)
             raise
         except Exception as e:
             logger.error(

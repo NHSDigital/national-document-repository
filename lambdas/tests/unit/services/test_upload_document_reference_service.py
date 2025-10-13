@@ -72,34 +72,32 @@ def test_handle_upload_document_reference_request_with_none_object_key(service):
 
     service.document_service.fetch_documents_from_table.assert_not_called()
 
-#TODO: Fix
-
-# def test_handle_upload_document_reference_request_success(
-#     service, mock_document_reference, mocker
-# ):
-#     """Test successful handling of the upload document reference request"""
-#     object_key = "staging/test-doc-id"
-#     object_size = 1111
-#     mock_document_reference2 = Mock(spec=DocumentReference)
-#     mock_document_reference2.id = "another-doc-id"
-#     mock_document_reference2.doc_status = "final"
+def test_handle_upload_document_reference_request_success(
+    service, mock_document_reference, mocker
+):
+    """Test successful handling of the upload document reference request"""
+    object_key = "staging/test-doc-id"
+    object_size = 1111
+    mock_document_reference2 = Mock(spec=DocumentReference)
+    mock_document_reference2.id = "another-doc-id"
+    mock_document_reference2.doc_status = "final"
     
-#     # First call fetches preliminary doc, second call fetches existing final docs to supersede
-#     service.document_service.fetch_documents_from_table.side_effect = [
-#         [mock_document_reference],
-#         [mock_document_reference2]
-#     ]
-#     service.virus_scan_service.scan_file = mocker.MagicMock(
-#         return_value=VirusScanResult.CLEAN
-#     )
+    # First call fetches preliminary doc, second call fetches existing final docs to supersede
+    service.document_service.fetch_documents_from_table.side_effect = [
+        [mock_document_reference],
+        [mock_document_reference2]
+    ]
+    service.virus_scan_service.scan_file = mocker.MagicMock(
+        return_value=VirusScanResult.CLEAN
+    )
 
-#     service.handle_upload_document_reference_request(object_key, object_size)
+    service.handle_upload_document_reference_request(object_key, object_size)
 
-#     assert service.document_service.fetch_documents_from_table.call_count == 2
-#     assert service.document_service.update_document.call_count == 2
-#     service.s3_service.copy_across_bucket.assert_called_once()
-#     service.s3_service.delete_object.assert_called_once()
-#     service.virus_scan_service.scan_file.assert_called_once()
+    assert service.document_service.fetch_documents_from_table.call_count == 2
+    service.dynamo_service.transact_write_items.assert_called_once()
+    service.s3_service.copy_across_bucket.assert_called_once()
+    service.s3_service.delete_object.assert_called_once()
+    service.virus_scan_service.scan_file.assert_called_once()
 
 
 def test_handle_upload_document_reference_request_with_exception(service):
@@ -168,27 +166,25 @@ def test_fetch_preliminary_document_reference_exception(service):
         service._fetch_preliminary_document_reference(document_key)
 
 
-#TODO: Fix
-# def test__process_preliminary_document_reference_clean_virus_scan(
-#     service, mock_document_reference, mocker
-# ):
-#     """Test processing document reference with a clean virus scan"""
-#     object_key = "staging/test-doc-id"
+def test__process_preliminary_document_reference_clean_virus_scan(
+    service, mock_document_reference, mocker
+):
+    """Test processing document reference with a clean virus scan"""
+    object_key = "staging/test-doc-id"
 
-#     mocker.patch.object(
-#         service, "_perform_virus_scan", return_value=VirusScanResult.CLEAN
-#     )
-#     mock_process_clean = mocker.patch.object(service, "_process_clean_document")
-#     mock_supersede = mocker.patch.object(service, "_supersede_existing_final_documents")
-#     mock_update_dynamo = mocker.patch.object(service, "_update_dynamo_table")
-#     service._process_preliminary_document_reference(mock_document_reference, object_key, 1222)
+    mocker.patch.object(
+        service, "_perform_virus_scan", return_value=VirusScanResult.CLEAN
+    )
+    mock_process_clean = mocker.patch.object(service, "_process_clean_document")
+    mock_finalize_transaction = mocker.patch.object(service, "_finalize_and_supersede_with_transaction")
+    
+    service._process_preliminary_document_reference(mock_document_reference, object_key, 1222)
 
-#     mock_process_clean.assert_called_once()
-#     mock_supersede.assert_called_once_with(mock_document_reference)
-#     mock_update_dynamo.assert_called_once()
-#     assert mock_document_reference.doc_status == "final"
-#     assert mock_document_reference.uploaded is True
-#     assert mock_document_reference.uploading is False
+    mock_process_clean.assert_called_once()
+    mock_finalize_transaction.assert_called_once_with(mock_document_reference)
+    assert mock_document_reference.doc_status == "final"
+    assert mock_document_reference.uploaded is True
+    assert mock_document_reference.uploading is False
 
 
 def test__process_preliminary_document_reference_infected_virus_scan(
@@ -369,27 +365,6 @@ def test_update_dynamo_table_client_error(service, mock_document_reference):
     with pytest.raises(DocumentServiceException):
         service._update_dynamo_table(mock_document_reference)
 
-# TODO: Fix
-# def test_integration_full_workflow_clean_document(service, mock_document_reference):
-#     """Test full workflow integration for a clean document"""
-#     object_key = "staging/test-doc-id"
-
-#     # First call returns preliminary doc, second call returns empty list (no existing finals)
-#     service.document_service.fetch_documents_from_table.side_effect = [
-#         [mock_document_reference],
-#         []
-#     ]
-
-#     service.handle_upload_document_reference_request(object_key)
-
-#     service.s3_service.copy_across_bucket.assert_called_once()
-#     service.s3_service.delete_object.assert_called_once()
-#     service.document_service.update_document.assert_called_once()
-
-#     assert mock_document_reference.virus_scanner_result == VirusScanResult.CLEAN
-#     assert mock_document_reference.doc_status == "final"
-
-
 @pytest.mark.parametrize(
     "object_key,expected_document_key,expected_nhs_number",
     [
@@ -425,135 +400,186 @@ def test_document_key_extraction_from_object_key(
     assert second_call[1]['search_condition'] == expected_nhs_number
     assert second_call[1]['search_key'] == "NhsNumber"
 
-#TODO: Fix
-# def test_supersede_existing_final_documents_success(service, mock_document_reference):
-#     """Test successfully superseding existing final documents"""
-#     new_doc = mock_document_reference
-#     new_doc.id = "new-doc-id"
-#     new_doc.nhs_number = "9000000001"
+
+def test_finalize_and_supersede_with_transaction_with_existing_finals(service, mock_document_reference, mocker):
+    """Test transaction-based finalization with existing final documents to supersede"""
+    new_doc = mock_document_reference
+    new_doc.id = "new-doc-id"
+    new_doc.nhs_number = "9000000001"
+    new_doc.doc_status = "final"
     
-#     existing_final_doc = Mock(spec=DocumentReference)
-#     existing_final_doc.id = "old-doc-id"
-#     existing_final_doc.doc_status = "final"
+    existing_final_doc = Mock(spec=DocumentReference)
+    existing_final_doc.id = "old-doc-id"
+    existing_final_doc.doc_status = "final"
     
-#     service.document_service.fetch_documents_from_table.return_value = [existing_final_doc]
+    service.document_service.fetch_documents_from_table.return_value = [existing_final_doc]
     
-#     service._supersede_existing_final_documents(new_doc)
+    new_doc.model_dump = Mock(return_value={
+        "VirusScannerResult": "Clean",
+        "DocStatus": "final",
+        "FileLocation": "s3://bucket/key",
+        "FileSize": 1234,
+        "Uploaded": True,
+        "Uploading": False,
+    })
     
-#     # Verify query for existing finals
-#     service.document_service.fetch_documents_from_table.assert_called_once_with(
-#         table=MOCK_LG_TABLE_NAME,
-#         search_condition=new_doc.nhs_number,
-#         search_key="NhsNumber",
-#         query_filter=FinalStatusAndNotSuperceded,
-#     )
+    mock_build_update = Mock(return_value={"Update": "transaction1"})
+    service.dynamo_service.build_update_transaction_item = mock_build_update
     
-#     # Verify old doc was marked as superseded
-#     assert existing_final_doc.doc_status == "superseded"
-#     service.document_service.update_document.assert_called_once_with(
-#         table_name=MOCK_LG_TABLE_NAME,
-#         document_reference=existing_final_doc,
-#         update_fields_name={"doc_status"},
-#     )
+    service._finalize_and_supersede_with_transaction(new_doc)
+    
+    service.document_service.fetch_documents_from_table.assert_called_once_with(
+        table=MOCK_LG_TABLE_NAME,
+        index_name="NhsNumberIndex",
+        search_condition=new_doc.nhs_number,
+        search_key="NhsNumber",
+        query_filter=FinalStatusAndNotSuperceded,
+    )
+    
+    assert service.dynamo_service.build_update_transaction_item.call_count == 2
+    service.dynamo_service.transact_write_items.assert_called_once()
+    call_args = service.dynamo_service.transact_write_items.call_args[0][0]
+    assert len(call_args) == 2  # Two transaction items
 
 
-# def test_supersede_existing_final_documents_no_existing_docs(service, mock_document_reference):
-#     """Test supersede when no existing final documents found"""
-#     new_doc = mock_document_reference
-#     new_doc.id = "new-doc-id"
-#     new_doc.nhs_number = "9000000001"
+def test_finalize_and_supersede_with_transaction_no_existing_docs(service, mock_document_reference, mocker):
+    """Test transaction-based finalization when no existing final documents found"""
+    new_doc = mock_document_reference
+    new_doc.id = "new-doc-id"
+    new_doc.nhs_number = "9000000001"
+    new_doc.doc_status = "final"
     
-#     service.document_service.fetch_documents_from_table.return_value = []
+    service.document_service.fetch_documents_from_table.return_value = []
     
-#     service._supersede_existing_final_documents(new_doc)
+    new_doc.model_dump = Mock(return_value={
+        "VirusScannerResult": "Clean",
+        "DocStatus": "final",
+        "FileLocation": "s3://bucket/key",
+        "FileSize": 1234,
+        "Uploaded": True,
+        "Uploading": False,
+    })
     
-#     # Should query but not update anything
-#     service.document_service.fetch_documents_from_table.assert_called_once()
-#     service.document_service.update_document.assert_not_called()
+    mock_build_update = Mock(return_value={"Update": "transaction1"})
+    service.dynamo_service.build_update_transaction_item = mock_build_update
+    
+    service._finalize_and_supersede_with_transaction(new_doc)
+    
+    service.document_service.fetch_documents_from_table.assert_called_once()
+    assert service.dynamo_service.build_update_transaction_item.call_count == 1
+    
+    service.dynamo_service.transact_write_items.assert_called_once()
+    call_args = service.dynamo_service.transact_write_items.call_args[0][0]
+    assert len(call_args) == 1
 
 
-# def test_supersede_existing_final_documents_multiple_existing(service, mock_document_reference):
-#     """Test superseding multiple existing final documents (edge case)"""
-#     new_doc = mock_document_reference
-#     new_doc.id = "new-doc-id"
-#     new_doc.nhs_number = "9000000001"
+def test_finalize_and_supersede_with_transaction_multiple_existing(service, mock_document_reference, mocker):
+    """Test transaction-based finalization superseding multiple existing final documents"""
+    new_doc = mock_document_reference
+    new_doc.id = "new-doc-id"
+    new_doc.nhs_number = "9000000001"
+    new_doc.doc_status = "final"
     
-#     existing_doc1 = Mock(spec=DocumentReference)
-#     existing_doc1.id = "old-doc-1"
-#     existing_doc1.doc_status = "final"
+    existing_doc1 = Mock(spec=DocumentReference)
+    existing_doc1.id = "old-doc-1"
+    existing_doc1.doc_status = "final"
     
-#     existing_doc2 = Mock(spec=DocumentReference)
-#     existing_doc2.id = "old-doc-2"
-#     existing_doc2.doc_status = "final"
+    existing_doc2 = Mock(spec=DocumentReference)
+    existing_doc2.id = "old-doc-2"
+    existing_doc2.doc_status = "final"
     
-#     service.document_service.fetch_documents_from_table.return_value = [existing_doc1, existing_doc2]
+    service.document_service.fetch_documents_from_table.return_value = [existing_doc1, existing_doc2]
     
-#     service._supersede_existing_final_documents(new_doc)
+    new_doc.model_dump = Mock(return_value={
+        "VirusScannerResult": "Clean",
+        "DocStatus": "final",
+        "FileLocation": "s3://bucket/key",
+        "FileSize": 1234,
+        "Uploaded": True,
+        "Uploading": False,
+    })
     
-#     # Both should be marked as superseded
-#     assert existing_doc1.doc_status == "superseded"
-#     assert existing_doc2.doc_status == "superseded"
-#     assert service.document_service.update_document.call_count == 2
+    mock_build_update = Mock(return_value={"Update": "transaction"})
+    service.dynamo_service.build_update_transaction_item = mock_build_update
+    
+    service._finalize_and_supersede_with_transaction(new_doc)
+    
+    assert service.dynamo_service.build_update_transaction_item.call_count == 3
+    
+    service.dynamo_service.transact_write_items.assert_called_once()
+    call_args = service.dynamo_service.transact_write_items.call_args[0][0]
+    assert len(call_args) == 3
 
 
-# def test_supersede_existing_final_documents_skips_same_id(service, mock_document_reference):
-#     """Test that supersede skips documents with the same ID"""
-#     new_doc = mock_document_reference
-#     new_doc.id = "same-doc-id"
-#     new_doc.nhs_number = "9000000001"
+def test_finalize_and_supersede_with_transaction_skips_same_id(service, mock_document_reference, mocker):
+    """Test that transaction skips documents with the same ID"""
+    new_doc = mock_document_reference
+    new_doc.id = "same-doc-id"
+    new_doc.nhs_number = "9000000001"
+    new_doc.doc_status = "final"
     
-#     # Return a document with the same ID (shouldn't happen in practice due to query filter)
-#     existing_doc = Mock(spec=DocumentReference)
-#     existing_doc.id = "same-doc-id"
-#     existing_doc.doc_status = "final"
+    existing_doc = Mock(spec=DocumentReference)
+    existing_doc.id = "same-doc-id"
+    existing_doc.doc_status = "final"
     
-#     service.document_service.fetch_documents_from_table.return_value = [existing_doc]
+    service.document_service.fetch_documents_from_table.return_value = [existing_doc]
     
-#     service._supersede_existing_final_documents(new_doc)
+    new_doc.model_dump = Mock(return_value={
+        "VirusScannerResult": "Clean",
+        "DocStatus": "final",
+        "FileLocation": "s3://bucket/key",
+        "FileSize": 1234,
+        "Uploaded": True,
+        "Uploading": False,
+    })
     
-#     # Should not update the document with same ID
-#     service.document_service.update_document.assert_not_called()
+    mock_build_update = Mock(return_value={"Update": "transaction"})
+    service.dynamo_service.build_update_transaction_item = mock_build_update
+    
+    service._finalize_and_supersede_with_transaction(new_doc)
+    
+    # Should only build 1 transaction (for new doc, skipping same ID)
+    assert service.dynamo_service.build_update_transaction_item.call_count == 1
+    
+    # Verify transaction was executed with only 1 item
+    call_args = service.dynamo_service.transact_write_items.call_args[0][0]
+    assert len(call_args) == 1
 
 
-# def test_supersede_existing_final_documents_handles_update_error(service, mock_document_reference):
-#     """Test that supersede handles errors gracefully when updating individual docs"""
-#     new_doc = mock_document_reference
-#     new_doc.id = "new-doc-id"
-#     new_doc.nhs_number = "9000000001"
+def test_finalize_and_supersede_with_transaction_handles_transaction_cancelled(service, mock_document_reference, mocker):
+    """Test handling of TransactionCanceledException (concurrent update detected)"""
+    from utils.exceptions import TransactionConflictException
     
-#     existing_doc = Mock(spec=DocumentReference)
-#     existing_doc.id = "old-doc-id"
-#     existing_doc.doc_status = "final"
+    new_doc = mock_document_reference
+    new_doc.id = "new-doc-id"
+    new_doc.nhs_number = "9000000001"
+    new_doc.doc_status = "final"
     
-#     service.document_service.fetch_documents_from_table.return_value = [existing_doc]
-#     service.document_service.update_document.side_effect = Exception("Update failed")
+    service.document_service.fetch_documents_from_table.return_value = []
     
-#     # Should not raise exception, just log the error
-#     try:
-#         service._supersede_existing_final_documents(new_doc)
-#     except Exception as e:
-#         pytest.fail(f"Supersede should handle update errors gracefully, but raised: {e}")
+    # Mock model_dump
+    new_doc.model_dump = Mock(return_value={
+        "VirusScannerResult": "Clean",
+        "DocStatus": "final",
+        "FileLocation": "s3://bucket/key",
+        "FileSize": 1234,
+        "Uploaded": True,
+        "Uploading": False,
+    })
     
-#     # Document should still be marked as superseded even if update fails
-#     assert existing_doc.doc_status == "superseded"
-
-
-# def test_supersede_existing_final_documents_handles_fetch_error(service, mock_document_reference):
-#     """Test that supersede handles errors when fetching existing documents"""
-#     new_doc = mock_document_reference
-#     new_doc.id = "new-doc-id"
-#     new_doc.nhs_number = "9000000001"
+    mock_build_update = Mock(return_value={"Update": "transaction"})
+    service.dynamo_service.build_update_transaction_item = mock_build_update
     
-#     service.document_service.fetch_documents_from_table.side_effect = Exception("Fetch failed")
+    # Simulate TransactionCanceledException
+    transaction_error = ClientError(
+        error_response={'Error': {'Code': 'TransactionCanceledException'}},
+        operation_name='TransactWriteItems'
+    )
+    service.dynamo_service.transact_write_items.side_effect = transaction_error
     
-#     # Should not raise exception, just log the error
-#     try:
-#         service._supersede_existing_final_documents(new_doc)
-#     except Exception as e:
-#         pytest.fail(f"Supersede should handle fetch errors gracefully, but raised: {e}")
-    
-#     # Update should not be called if fetch fails
-#     service.document_service.update_document.assert_not_called()
+    # Should raise TransactionConflictException
+    with pytest.raises(TransactionConflictException):
+        service._finalize_and_supersede_with_transaction(new_doc)
 
 
 def test_handle_upload_document_reference_request_no_document_found(service):
