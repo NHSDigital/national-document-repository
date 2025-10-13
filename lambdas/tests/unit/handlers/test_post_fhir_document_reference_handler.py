@@ -123,7 +123,7 @@ def test_lambda_handler_exception_handling(valid_event, context, mock_service):
     assert "resourceType" in json.loads(result["body"])
 
     mock_service.process_fhir_document_reference.assert_called_once_with(
-        valid_event["body"], valid_event["headers"]
+        valid_event["body"], valid_event["requestContext"]
     )
 
 
