@@ -9,7 +9,7 @@ def lambda_handler(event, context):
         if 'executionId' not in event or not isinstance(event['executionId'], str) or event['executionId'].strip() == '':
             raise ValueError("Invalid or missing 'executionId' in event")
         if 'totalSegments' not in event:
-            raise ValueError("Missing 'totalSegments' in event'")
+            raise ValueError("Missing 'totalSegments' in event")
         try:
             total_segments = int(event['totalSegments'])
             if total_segments <= 0:
