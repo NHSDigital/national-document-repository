@@ -85,6 +85,9 @@ class AccessAuditReason(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def check_custom_reason(cls, data: Any) -> Any:
-        if DeceasedAccessReason.OTHER.value in data["reason_codes"] and not data["custom_reason"]:
+        if (
+            DeceasedAccessReason.OTHER.value in data["reason_codes"]
+            and not data["custom_reason"]
+        ):
             raise ValueError("Missing custom reason")
         return data

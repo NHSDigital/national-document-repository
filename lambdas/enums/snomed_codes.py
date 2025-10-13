@@ -17,6 +17,10 @@ class SnomedCodes(Enum):
     GENERAL_MEDICAL_PRACTICE = SnomedCode(
         code="1060971000000108", display_name="General practice service"
     )
+    # Temporary snomed code used.
+    PATIENT_DATA = SnomedCode(
+        code="717391000000106", display_name="Confidential patient data"
+    )
 
     @classmethod
     def find_by_code(cls, code: str) -> Optional["SnomedCode"]:

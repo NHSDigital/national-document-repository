@@ -38,9 +38,7 @@ def lambda_handler(event, context):
         login_service = LoginService(oidc_service=MockOidcService())
 
         response = login_service.generate_session(state, auth_code)
-        logger.info(
-            "User logged in successfully", {"Result": "Successful login"}
-        )
+        logger.info("User logged in successfully", {"Result": "Successful login"})
         return ApiGatewayResponse(
             200, json.dumps(response), "GET"
         ).create_api_gateway_response()
