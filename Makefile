@@ -59,8 +59,16 @@ check-packages:
 	./lambdas/venv/bin/pip-audit -r $(REPORTS_REQUIREMENTS)
 	./lambdas/venv/bin/pip-audit -r $(ALERTING_REQUIREMENTS)
 
+download-api-certs: # Use with poc and dev envs only
+	rm -rf ./lambdas/mtls_env_certs/$(env)
+	./scripts/aws/download-api-certs.sh $(env)
+
 test-api-e2e:
-	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api -vv
+	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api -vv -vv --ignore=tests/e2e/api/fhir
+
+test-fhir-api-e2e:
+	./scripts/test/run-e2e-fhir-api-tests.sh --env $(env)
+	rm -rf ./lambdas/mtls_env_certs/$(env)
 
 test-api-e2e-snapshots:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --snapshot-update
