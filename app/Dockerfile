@@ -17,8 +17,7 @@ RUN npm run build
 
 # Host the App
 FROM nginx:latest
-RUN apt update
-RUN apt install -y libtiff6
+RUN apt update && apt list --upgradable && apt upgrade -y && rm -rf /var/lib/apt/lists/*
 ARG CONTAINER_PORT
 ARG CLOUDFRONT_DOMAIN_NAME
 WORKDIR /usr/share/nginx/html
