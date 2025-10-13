@@ -9,6 +9,7 @@ from typing import Iterable
 
 import pydantic
 from botocore.exceptions import ClientError
+
 from enums.upload_status import UploadStatus
 from models.staging_metadata import (
     METADATA_FILENAME,
@@ -135,10 +136,10 @@ class BulkUploadMetadataProcessorService:
 
     @staticmethod
     def convert_to_sqs_metadata(
-            file: MetadataFile, corrected_file_name: str
+            file: MetadataFile, stored_file_name: str
     ) -> BulkUploadQueueMetadata:
         return BulkUploadQueueMetadata(
-            **file.model_dump(), stored_file_name=corrected_file_name
+            **file.model_dump(), stored_file_name=stored_file_name
         )
 
     def extract_patient_info(self, file_metadata: MetadataFile) -> tuple[str, str]:

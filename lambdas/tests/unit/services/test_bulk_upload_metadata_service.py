@@ -5,6 +5,7 @@ from unittest.mock import call
 import pytest
 from botocore.exceptions import ClientError
 from freezegun import freeze_time
+
 from models.staging_metadata import METADATA_FILENAME
 from services.bulk_upload_metadata_service import BulkUploadMetadataService
 from tests.unit.conftest import MOCK_LG_METADATA_SQS_QUEUE, MOCK_STAGING_STORE_BUCKET
@@ -133,8 +134,8 @@ def test_process_metadata_raise_validation_error_when_gp_practice_code_is_missin
     )
 
     expected_error_log = (
-        "Failed to parse metadata.csv: 1 validation error for MetadataFile\n"
-        + "missing GP-PRACTICE-CODE for patient 1234567890"
+        "Failed to parse metadata.csv: 1 validation error for MetadataFile\nGP-PRACTICE-CODE\n"
+        "  String should have at least 1 character"
     )
 
     with pytest.raises(BulkUploadMetadataException) as e:

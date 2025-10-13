@@ -5,8 +5,9 @@ from unittest.mock import call
 
 import pytest
 from botocore.exceptions import ClientError
-from enums.upload_status import UploadStatus
 from freezegun import freeze_time
+
+from enums.upload_status import UploadStatus
 from models.staging_metadata import (
     METADATA_FILENAME,
     BulkUploadQueueMetadata,
@@ -419,7 +420,7 @@ def test_clear_temp_storage(set_env, mocker, mock_tempfile, test_service):
     mocked_rm.assert_called_once_with(test_service.temp_download_dir)
 
 
-def test_process_metadata_row_success(mocker):
+def test_process_metadata_row_success(mocker, test_service):
     patients = defaultdict(list)
     row = {
         "FILEPATH": "/some/path/file.pdf",
@@ -440,25 +441,19 @@ def test_process_metadata_row_success(mocker):
         "services.bulk_upload_metadata_processor_service.MetadataFile.model_validate",
         return_value=metadata,
     )
-
-    class TestPreprocessor(MetadataPreprocessorService):
-        def validate_record_filename(
-            self, original_filename: str, *args, **kwargs
-        ) -> str:
-            return "corrected.pdf"
-
-    service = BulkUploadMetadataProcessorService(
-        TestPreprocessor(practice_directory="test_practice_directory")
+    mocker.patch.object(
+        test_service.metadata_formatter_service,
+        "validate_record_filename",
+        return_value="corrected.pdf",
     )
-
-    service.process_metadata_row(row, patients)
+    test_service.process_metadata_row(row, patients)
 
     key = ("1234567890", "Y12345")
     assert key in patients
 
     expected_sqs_metadata = BulkUploadQueueMetadata.model_validate(
         {
-            "FILEPATH": "/some/path/file.pdf",
+            "file_path": "/some/path/file.pdf",
             "nhs_number": "1234567890",
             "gp_practice_code": "Y12345",
             "scan_date": "01/01/2023",
@@ -473,7 +468,7 @@ def test_process_metadata_row_adds_to_existing_entry(mocker):
     key = ("1234567890", "Y12345")
     mock_metadata_existing = BulkUploadQueueMetadata.model_validate(
         {
-            "FILEPATH": "/some/path/file1.pdf",
+            "file_path": "/some/path/file1.pdf",
             "nhs_number": "1234567890",
             "gp_practice_code": "Y12345",
             "scan_date": "01/01/2023",
@@ -560,18 +555,18 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
 
 
 def test_convert_to_sqs_metadata(test_service, base_metadata_file):
-    corrected_file_name = "corrected_file.pdf"
+    stored_file_name = "corrected_file.pdf"
 
     result = BulkUploadMetadataProcessorService.convert_to_sqs_metadata(
         file=base_metadata_file,
-        corrected_file_name=corrected_file_name,
+        stored_file_name=stored_file_name,
     )
 
     assert isinstance(result, BulkUploadQueueMetadata)
     assert result.file_path == base_metadata_file.file_path
     assert result.gp_practice_code == base_metadata_file.gp_practice_code
     assert result.scan_date == base_metadata_file.scan_date
-    assert result.stored_file_name == corrected_file_name
+    assert result.stored_file_name == stored_file_name
 
 
 def test_validate_and_correct_filename_returns_happy_path(
