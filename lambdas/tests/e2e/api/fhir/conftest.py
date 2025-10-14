@@ -9,6 +9,7 @@ from lambdas.tests.e2e.helpers.pdm_data_helper import PdmDataHelper
 
 pdm_data_helper = PdmDataHelper()
 
+PDM_SNOMED = "717391000000106"
 PDM_METADATA_TABLE = os.environ.get("PDM_METADATA_TABLE")
 PDM_S3_BUCKET = os.environ.get("PDM_S3_BUCKET") or ""
 MTLS_ENDPOINT = os.environ["MTLS_ENDPOINT"]
@@ -25,18 +26,17 @@ def test_data():
 
 
 def fetch_with_retry_mtls(
-    session, url, condition_func, headers, max_retries=5, delay=10
+    session, url, headers, condition_func=None, max_retries=5, delay=10
 ):
     retries = 0
     while retries < max_retries:
         response = session.get(url, headers=headers)
-        print(f"Attempt {retries + 1}: Status Code {response.status_code}")
         try:
             response_json = response.json()
         except ValueError:
             response_json = {}
 
-        if condition_func(response_json):
+        if condition_func is None or condition_func(response_json):
             return response
 
         time.sleep(delay)

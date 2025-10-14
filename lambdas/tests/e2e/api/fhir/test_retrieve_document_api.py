@@ -1,13 +1,12 @@
 import io
 import uuid
 
-# from syrupy.filters import paths
-from tests.e2e.conftest import LLOYD_GEORGE_SNOMED
 from tests.e2e.helpers.pdm_data_helper import PdmDataHelper
 
 from lambdas.tests.e2e.api.fhir.conftest import (
     MTLS_ENDPOINT,
     PDM_S3_BUCKET,
+    PDM_SNOMED,
     create_mtls_session,
 )
 
@@ -25,7 +24,7 @@ def test_small_file(test_data, snapshot_json):
     pdm_data_helper.create_metadata(lloyd_george_record)
     pdm_data_helper.create_resource(lloyd_george_record)
 
-    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{PDM_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
         "X-Correlation-Id": "1234",
@@ -51,7 +50,7 @@ def test_large_file(test_data, snapshot_json):
     pdm_data_helper.create_metadata(lloyd_george_record)
     pdm_data_helper.create_resource(lloyd_george_record)
 
-    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{PDM_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
         "X-Correlation-Id": "1234",
@@ -75,7 +74,7 @@ def test_no_file_found(snapshot_json):
     lloyd_george_record = {}
     lloyd_george_record["id"] = str(uuid.uuid4())
 
-    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{PDM_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
         "X-Correlation-Id": "1234",
@@ -101,7 +100,7 @@ def test_preliminary_file(test_data, snapshot_json):
     pdm_data_helper.create_metadata(lloyd_george_record)
     pdm_data_helper.create_resource(lloyd_george_record)
 
-    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{LLOYD_GEORGE_SNOMED}~{lloyd_george_record['id']}"
+    url = f"https://{MTLS_ENDPOINT}/DocumentReference/{PDM_SNOMED}~{lloyd_george_record['id']}"
     headers = {
         "Authorization": "Bearer 123",
         "X-Correlation-Id": "1234",
