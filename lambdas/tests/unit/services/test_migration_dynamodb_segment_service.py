@@ -12,16 +12,16 @@ def mock_env_bucket_name(mocker):
 
 
 @pytest.fixture
-def service(mock_env_bucket_name):
-    """Creates an instance of the service for testing"""
-    return MigrationDynamoDBSegmentService()
-
-
-@pytest.fixture
 def mock_s3_client(mocker):
     """Mocks the boto3 S3 client"""
     mock_client = mocker.patch("services.migration_dynamodb_segment_service.boto3.client")
     return mock_client.return_value
+
+
+@pytest.fixture
+def service(mock_env_bucket_name, mock_s3_client):
+    """Creates an instance of the service for testing"""
+    return MigrationDynamoDBSegmentService()
 
 
 @pytest.fixture
