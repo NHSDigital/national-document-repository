@@ -9,8 +9,7 @@ def valid_event():
     """Creates a valid event for testing successful scenarios"""
     return {
         "executionId": "arn:aws:states:us-east-1:123456789012:execution:MyStateMachine:execution-12345",
-        "totalSegments": 4,
-        "bucketName": "test-bucket"
+        "totalSegments": 4
     }
 
 
@@ -40,7 +39,7 @@ def test_lambda_handler_success(valid_event, context, mock_migration_service):
     result = lambda_handler(valid_event, context)
     
     # Verify the service was called with correct parameters
-    mock_migration_service.segment.assert_called_once_with("execution-12345", 4, "test-bucket")
+    mock_migration_service.segment.assert_called_once_with("execution-12345", 4)
     assert result == expected_result
 
 
@@ -48,8 +47,7 @@ def test_lambda_handler_success(valid_event, context, mock_migration_service):
 def test_lambda_handler_missing_execution_id(context, mock_migration_service):
     """Test that missing executionId raises ValueError"""
     event = {
-        "totalSegments": 4,
-        "bucketName": "test-bucket"
+        "totalSegments": 4
     }
     
     with pytest.raises(ValueError, match="Invalid or missing 'executionId' in event"):
@@ -60,8 +58,7 @@ def test_lambda_handler_invalid_execution_id_type(context, mock_migration_servic
     """Test that non-string executionId raises ValueError"""
     event = {
         "executionId": 12345,  # Should be string
-        "totalSegments": 4,
-        "bucketName": "test-bucket"
+        "totalSegments": 4
     }
     
     with pytest.raises(ValueError, match="Invalid or missing 'executionId' in event"):
@@ -72,8 +69,7 @@ def test_lambda_handler_empty_execution_id(context, mock_migration_service):
     """Test that empty executionId raises ValueError"""
     event = {
         "executionId": "",
-        "totalSegments": 4,
-        "bucketName": "test-bucket"
+        "totalSegments": 4
     }
     
     with pytest.raises(ValueError, match="Invalid or missing 'executionId' in event"):
@@ -84,8 +80,7 @@ def test_lambda_handler_empty_execution_id(context, mock_migration_service):
 def test_lambda_handler_missing_total_segments(context, mock_migration_service):
     """Test that missing totalSegments raises ValueError"""
     event = {
-        "executionId": "test-execution-id",
-        "bucketName": "test-bucket"
+        "executionId": "test-execution-id"
     }
 
     with pytest.raises(ValueError, match="Missing 'totalSegments' in event"):
@@ -96,8 +91,7 @@ def test_lambda_handler_invalid_total_segments_type(context, mock_migration_serv
     """Test that non-numeric totalSegments raises ValueError"""
     event = {
         "executionId": "test-execution-id",
-        "totalSegments": "invalid",
-        "bucketName": "test-bucket"
+        "totalSegments": "invalid"
     }
 
     with pytest.raises(ValueError, match="Invalid 'totalSegments' in event"):
@@ -108,8 +102,7 @@ def test_lambda_handler_zero_total_segments(context, mock_migration_service):
     """Test that zero totalSegments raises ValueError"""
     event = {
         "executionId": "test-execution-id",
-        "totalSegments": 0,
-        "bucketName": "test-bucket"
+        "totalSegments": 0
     }
 
     with pytest.raises(ValueError, match="Invalid 'totalSegments' in event"):
@@ -120,47 +113,10 @@ def test_lambda_handler_negative_total_segments(context, mock_migration_service)
     """Test that negative totalSegments raises ValueError"""
     event = {
         "executionId": "test-execution-id",
-        "totalSegments": -1,
-        "bucketName": "test-bucket"
+        "totalSegments": -1
     }
 
     with pytest.raises(ValueError, match="Invalid 'totalSegments' in event"):
-        lambda_handler(event, context)
-
-
-# Error test cases - bucketName validation
-def test_lambda_handler_missing_bucket_name(context, mock_migration_service):
-    """Test that missing bucketName raises ValueError"""
-    event = {
-        "executionId": "test-execution-id",
-        "totalSegments": 4
-    }
-
-    with pytest.raises(ValueError, match="Invalid 'bucketName' in event"):
-        lambda_handler(event, context)
-
-
-def test_lambda_handler_invalid_bucket_name_type(context, mock_migration_service):
-    """Test that non-string bucketName raises ValueError"""
-    event = {
-        "executionId": "test-execution-id",
-        "totalSegments": 4,
-        "bucketName": 123
-    }
-
-    with pytest.raises(ValueError, match="Invalid 'bucketName' in event"):
-        lambda_handler(event, context)
-
-
-def test_lambda_handler_empty_bucket_name(context, mock_migration_service):
-    """Test that empty bucketName raises ValueError"""
-    event = {
-        "executionId": "test-execution-id",
-        "totalSegments": 4,
-        "bucketName": ""
-    }
-
-    with pytest.raises(ValueError, match="Invalid 'bucketName' in event"):
         lambda_handler(event, context)
 
 
@@ -169,8 +125,7 @@ def test_lambda_handler_execution_id_parsing(context, mock_migration_service):
     """Test that executionId is correctly parsed (takes last part after colon)"""
     event = {
         "executionId": "arn:aws:states:region:account:execution:machine:my-execution-name",
-        "totalSegments": 2,
-        "bucketName": "test-bucket"
+        "totalSegments": 2
     }
     
     expected_result = {"status": "processed"}
@@ -179,7 +134,7 @@ def test_lambda_handler_execution_id_parsing(context, mock_migration_service):
     lambda_handler(event, context)
     
     # Verify the ID was correctly extracted
-    mock_migration_service.segment.assert_called_once_with("my-execution-name", 2, "test-bucket")
+    mock_migration_service.segment.assert_called_once_with("my-execution-name", 2)
 
 
 # Test service exception handling
@@ -196,8 +151,7 @@ def test_lambda_handler_execution_id_no_colon(context, mock_migration_service):
     """Test executionId without colon separator"""
     event = {
         "executionId": "simple-execution-id",
-        "totalSegments": 1,
-        "bucketName": "test-bucket"
+        "totalSegments": 1
     }
     
     expected_result = {"processed": True}
@@ -206,7 +160,7 @@ def test_lambda_handler_execution_id_no_colon(context, mock_migration_service):
     result = lambda_handler(event, context)
     
     # Should use the entire string as ID
-    mock_migration_service.segment.assert_called_once_with("simple-execution-id", 1, "test-bucket")
+    mock_migration_service.segment.assert_called_once_with("simple-execution-id", 1)
     assert result == expected_result
 
 
@@ -214,8 +168,7 @@ def test_lambda_handler_large_total_segments(context, mock_migration_service):
     """Test with large totalSegments value"""
     event = {
         "executionId": "test-execution-id",
-        "totalSegments": 1000,
-        "bucketName": "test-bucket"
+        "totalSegments": 1000
     }
     
     expected_result = {"segments": 1000}
@@ -223,5 +176,5 @@ def test_lambda_handler_large_total_segments(context, mock_migration_service):
     
     result = lambda_handler(event, context)
     
-    mock_migration_service.segment.assert_called_once_with("test-execution-id", 1000, "test-bucket")
+    mock_migration_service.segment.assert_called_once_with("test-execution-id", 1000)
     assert result == expected_result
