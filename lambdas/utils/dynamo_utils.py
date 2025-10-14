@@ -1,5 +1,4 @@
 import os
-
 from datetime import datetime
 from typing import Any, Dict
 
@@ -10,7 +9,7 @@ from enums.snomed_codes import SnomedCode, SnomedCodes
 from utils.audit_logging_setup import LoggingService
 from utils.common_query_filters import get_not_deleted_filter
 from utils.dynamo_query_filter_builder import DynamoQueryFilterBuilder
-from utils.lambda_exceptions import CreateDocumentRefException
+from utils.lambda_exceptions import InvalidDocTypeException
 
 logger = LoggingService(__name__)
 
@@ -173,4 +172,4 @@ class DocTypeTableRouter:
             logger.error(
                 f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
             )
-            raise CreateDocumentRefException(400, LambdaError.CreateDocInvalidType)
+            raise InvalidDocTypeException(400, LambdaError.DocTypeDB)

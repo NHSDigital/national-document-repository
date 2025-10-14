@@ -1,6 +1,6 @@
 import { Button, Fieldset, Table, TextInput } from 'nhsuk-react-components';
 import { getDocument } from 'pdfjs-dist';
-import { JSX, useEffect, useRef, useState } from 'react';
+import { JSX, Ref, RefObject, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import useTitle from '../../../../helpers/hooks/useTitle';
@@ -29,11 +29,17 @@ export type Props = {
     setDocuments: SetUploadDocuments;
     documents: Array<UploadDocument>;
     documentType: DOCUMENT_TYPE;
+    filesErrorRef: RefObject<boolean>;
 };
 
 type UploadFilesError = ErrorMessageListItem<UPLOAD_FILE_ERROR_TYPE>;
 
-const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): JSX.Element => {
+const DocumentSelectStage = ({
+    documents,
+    setDocuments,
+    documentType,
+    filesErrorRef,
+}: Props): JSX.Element => {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [noFilesSelected, setNoFilesSelected] = useState<boolean>(false);
     const scrollToRef = useRef<HTMLDivElement>(null);
@@ -50,6 +56,13 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
 
         return true;
     };
+
+    useEffect(() => {
+        if (filesErrorRef.current) {
+            navigate(routes.HOME);
+            return;
+        }
+    }, []);
 
     const onFileDrop = (e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
@@ -122,6 +135,17 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
 
         const docs = await Promise.all(documentMap);
 
+        const failedDocs = docs.filter(
+            (doc) => doc.state === DOCUMENT_UPLOAD_STATE.FAILED && doc.error,
+        );
+
+        if (failedDocs.length > 0) {
+            filesErrorRef.current = true;
+            setDocuments(failedDocs);
+            navigate(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS);
+            return;
+        }
+
         updateDocuments([...docs, ...documents]);
     };
 
@@ -181,14 +205,6 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
             <Table.Row key={document.id} id={document.file.name}>
                 <Table.Cell className={document.error ? 'error-cell' : ''}>
                     <strong>{document.file.name}</strong>
-                    {document.error && (
-                        <>
-                            <br />
-                            <span className="nhs-warning-color">
-                                <strong>{fileUploadErrorMessages[document.error!].inline}</strong>
-                            </span>
-                        </>
-                    )}
                 </Table.Cell>
                 <Table.Cell>{formatFileSize(document.file.size)}</Table.Cell>
                 <Table.Cell>

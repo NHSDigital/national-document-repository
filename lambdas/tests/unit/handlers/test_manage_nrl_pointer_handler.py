@@ -5,6 +5,7 @@ from models.fhir.R4.fhir_document_reference import Attachment
 from models.sqs.nrl_sqs_message import NrlSqsMessage
 from utils.exceptions import NrlApiException
 
+
 @pytest.fixture
 def mock_service(mocker):
     mocked_class = mocker.patch("handlers.manage_nrl_pointer_handler.NrlApiService")
