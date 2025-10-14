@@ -1,6 +1,6 @@
 # Build the App
 FROM node:24-alpine AS builder
-RUN apk add unzip wget
+RUN apk update && apk -u list && apk upgrade && apk add unzip wget && rm -rf /var/cache/apk/*
 WORKDIR /app
 
 COPY package.json ./
@@ -17,6 +17,7 @@ RUN npm run build
 
 # Host the App
 FROM nginx:latest
+RUN apt update && apt list --upgradable && apt upgrade -y && rm -rf /var/lib/apt/lists/*
 ARG CONTAINER_PORT
 ARG CLOUDFRONT_DOMAIN_NAME
 WORKDIR /usr/share/nginx/html
