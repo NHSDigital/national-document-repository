@@ -36,6 +36,7 @@ from utils.lloyd_george_validator import (
     validate_filename_with_patient_details_lenient,
     validate_filename_with_patient_details_strict,
     validate_lg_file_names,
+    validate_scan_date,
 )
 from utils.ods_utils import PCSE_ODS_CODE
 from utils.request_context import request_context
@@ -44,7 +45,7 @@ from utils.unicode_utils import (
     convert_to_nfc_form,
     convert_to_nfd_form,
 )
-from utils.utilities import parse_date, validate_nhs_number
+from utils.utilities import validate_nhs_number
 
 logger = LoggingService(__name__)
 
@@ -124,10 +125,10 @@ class BulkUploadService:
         logger.info("SQS event is valid. Validating NHS number and file names")
 
         try:
-            file_names = [
-                os.path.basename(metadata.file_path)
-                for metadata in staging_metadata.files
-            ]
+            file_names = []
+            for file_metadata in staging_metadata.files:
+                file_names.append(os.path.basename(file_metadata.file_path))
+                file_metadata.scan_date = validate_scan_date(file_metadata.scan_date)
             request_context.patient_nhs_no = staging_metadata.nhs_number
             validate_nhs_number(staging_metadata.nhs_number)
             validate_lg_file_names(file_names, staging_metadata.nhs_number)
@@ -137,6 +138,7 @@ class BulkUploadService:
             patient_ods_code = (
                 pds_patient_details.get_ods_code_or_inactive_status_for_gp()
             )
+
             if not self.bypass_pds:
                 if not self.strict_mode:
                     (
@@ -389,12 +391,6 @@ class BulkUploadService:
     ) -> DocumentReference:
         s3_bucket_name = self.bulk_upload_s3_repository.lg_bucket_name
         file_name = os.path.basename(file_metadata.file_path)
-        if file_metadata.scan_date:
-            scan_date_formatted = parse_date(file_metadata.scan_date).strftime(
-                "%Y-%m-%d"
-            )
-        else:
-            scan_date_formatted = None
         if current_gp_ods in PatientOdsInactiveStatus.list():
             custodian = PCSE_ODS_CODE
         else:
@@ -407,7 +403,7 @@ class BulkUploadService:
             current_gp_ods=current_gp_ods,
             custodian=custodian,
             author=file_metadata.gp_practice_code,
-            document_scan_creation=scan_date_formatted,
+            document_scan_creation=file_metadata.scan_date,
             doc_status="preliminary",
         )
         document_reference.set_virus_scanner_result(VirusScanResult.CLEAN)

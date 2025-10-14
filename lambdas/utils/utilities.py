@@ -125,5 +125,4 @@ def parse_date(date_string: str) -> datetime | None:
             return date_object
         except ValueError:
             continue
-
     return None
