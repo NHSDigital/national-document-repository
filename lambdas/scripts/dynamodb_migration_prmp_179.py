@@ -4,13 +4,11 @@ from services.base.dynamo_service import DynamoDBService
 from utils.audit_logging_setup import LoggingService
 from services.base.s3_service import S3Service
 
-# DynamoDB field key constants
-FILESIZE_KEY = "FileSize"
-S3KEY_KEY = "S3Key"
-S3VERSIONID_KEY = "S3VersionID"
-
-
 class VersionMigration:
+    filesize_key = "FileSize"
+    s3_key = "S3Key" 
+    s3_version_id = "S3VersionID"
+
     def __init__(self, environment: str, table_name: str, dry_run: bool = False):
         self.environment = environment
         self.table_name = table_name
@@ -131,20 +129,20 @@ class VersionMigration:
 
         updated_fields = {}
 
-        if FILESIZE_KEY not in entry:
+        if self.filesize_key not in entry:
             if content_length is None:
                 self.logger.error(f"FileSize missing in both DynamoDB and S3 for item {s3_key}")
                 return None
-            updated_fields[FILESIZE_KEY] = content_length
+            updated_fields[self.filesize_key] = content_length
 
-        if S3KEY_KEY not in entry:
-            updated_fields[S3KEY_KEY] = s3_key
+        if self.s3_key not in entry:
+            updated_fields[self.s3_key] = s3_key
 
-        if S3VERSIONID_KEY not in entry:
+        if self.s3_version_id not in entry:
             if version_id is None:
                 self.logger.error(f"S3VersionID missing in both DynamoDB and S3 for item {s3_key}")
                 return None
-            updated_fields[S3VERSIONID_KEY] = version_id
+            updated_fields[self.s3_version_id] = version_id
 
         return updated_fields if updated_fields else None
 
