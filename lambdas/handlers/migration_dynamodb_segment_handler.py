@@ -4,7 +4,7 @@ from services.migration_dynamodb_segment_service import MigrationDynamoDBSegment
 
 logger = logging.getLogger(__name__)
 
-def lambda_handler(event, context):
+def lambda_handler(event):
     execution_id = event.get('executionId', 'unknown')
     total_segments = event.get('totalSegments', 'unknown')
     
@@ -17,6 +17,8 @@ def lambda_handler(event, context):
             total_segments = int(event['totalSegments'])
             if total_segments <= 0:
                 raise ValueError
+            if total_segments > 1000:
+                raise ValueError("'totalSegments' exceeds maximum allowed value of 1000")
         except (ValueError, TypeError):
             raise ValueError("Invalid 'totalSegments' in event")
 
