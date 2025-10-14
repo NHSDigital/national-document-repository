@@ -4,7 +4,7 @@ from services.migration_dynamodb_segment_service import MigrationDynamoDBSegment
 
 logger = logging.getLogger(__name__)
 
-def lambda_handler(event):
+def lambda_handler(event, context):
     total_segments = None
     execution_id = None
     
