@@ -64,7 +64,7 @@ download-api-certs: # Use with poc and dev envs only
 	./scripts/aws/download-api-certs.sh $(env)
 
 test-api-e2e:
-	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api -vv -vv --ignore=tests/e2e/api/fhir
+	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --ignore=tests/e2e/api/fhir -vv
 
 test-fhir-api-e2e:
 	./scripts/test/run-e2e-fhir-api-tests.sh --env $(env)
