@@ -21,6 +21,7 @@ from tests.unit.conftest import MOCK_LG_BUCKET, TEST_CURRENT_GP_ODS, TEST_UUID
 convert_to_sqs_metadata = BulkUploadMetadataProcessorService.convert_to_sqs_metadata
 
 sample_metadata_model = MetadataFile(
+    nhs_number="0000000000",
     file_path="/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf",
     page_count="",
     gp_practice_code="Y12345",
