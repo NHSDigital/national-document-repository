@@ -26,7 +26,7 @@ def test_lambda_handler_success(valid_event, mock_migration_service):
     expected_result = {'bucket': 'migration-bucket', 'key': 'stepfunctionconfig-execution-12345.json'}
     mock_migration_service.segment.return_value = expected_result
     
-    result = lambda_handler(valid_event)
+    result = lambda_handler(valid_event, None)
     
     # Verify the service was called with correct parameters
     mock_migration_service.segment.assert_called_once_with("execution-12345", 4)
@@ -48,7 +48,7 @@ def test_lambda_handler_invalid_execution_id(execution_id, description):
     }
     
     with pytest.raises(ValueError, match="Invalid or missing 'executionId' in event"):
-        lambda_handler(event)
+        lambda_handler(event, None)
 
 
 def test_lambda_handler_missing_execution_id():
@@ -58,7 +58,7 @@ def test_lambda_handler_missing_execution_id():
     }
     
     with pytest.raises(ValueError, match="Invalid or missing 'executionId' in event"):
-        lambda_handler(event)
+        lambda_handler(event, None)
 
 
 # Error test cases - totalSegments validation
@@ -77,7 +77,7 @@ def test_lambda_handler_invalid_total_segments(total_segments, expected_error):
     }
 
     with pytest.raises(ValueError, match=expected_error):
-        lambda_handler(event)
+        lambda_handler(event, None)
 
 
 def test_lambda_handler_missing_total_segments():
@@ -87,7 +87,7 @@ def test_lambda_handler_missing_total_segments():
     }
 
     with pytest.raises(ValueError, match="Invalid 'totalSegments' in event - must be a valid integer"):
-        lambda_handler(event)
+        lambda_handler(event, None)
 
 
 # Type conversion tests
@@ -106,7 +106,7 @@ def test_lambda_handler_total_segments_conversion(total_segments, expected_int, 
     expected_result = {'bucket': 'migration-bucket', 'key': 'stepfunctionconfig-test-execution-id.json'}
     mock_migration_service.segment.return_value = expected_result
     
-    result = lambda_handler(event)
+    result = lambda_handler(event, None)
     
     mock_migration_service.segment.assert_called_once_with("test-execution-id", expected_int)
     assert result == expected_result
@@ -123,15 +123,15 @@ def test_lambda_handler_logging_on_validation_error(mocker):
     }
     
     with pytest.raises(ValueError):
-        lambda_handler(event)
+        lambda_handler(event, None)
     
     # Verify logging was called with correct extras
     mock_logger.error.assert_called_once()
     call_args = mock_logger.error.call_args
     assert "extra" in call_args.kwargs
     extras = call_args.kwargs["extra"]
-    assert extras["executionId"] == ""
-    assert extras["totalSegments"] == 4
+    assert extras["executionId"] == ""  # Original value, not parsed
+    assert extras["totalSegments"] == 4  # Original value, not converted
     assert extras["errorType"] == "ValueError"
     assert call_args.kwargs.get("exc_info") is True
 
@@ -142,14 +142,14 @@ def test_lambda_handler_logging_on_service_error(valid_event, mock_migration_ser
     mock_migration_service.segment.side_effect = RuntimeError("S3 connection failed")
     
     with pytest.raises(RuntimeError):
-        lambda_handler(valid_event)
+        lambda_handler(valid_event, None)
     
     # Verify logging was called with correct extras
     mock_logger.error.assert_called_once()
     call_args = mock_logger.error.call_args
     extras = call_args.kwargs["extra"]
-    assert extras["executionId"] == "execution-12345"
-    assert extras["totalSegments"] == 4
+    assert extras["executionId"] == "execution-12345"  # Parsed value
+    assert extras["totalSegments"] == 4  # Converted value
     assert extras["errorType"] == "RuntimeError"
 
 
@@ -169,7 +169,7 @@ def test_lambda_handler_execution_id_parsing(execution_id, expected_parsed, mock
     expected_result = {'bucket': 'migration-bucket', 'key': f'stepfunctionconfig-{expected_parsed}.json'}
     mock_migration_service.segment.return_value = expected_result
     
-    result = lambda_handler(event)
+    result = lambda_handler(event, None)
     
     # Verify the ID was correctly extracted
     mock_migration_service.segment.assert_called_once_with(expected_parsed, 2)
@@ -182,7 +182,7 @@ def test_lambda_handler_service_exception(valid_event, mock_migration_service):
     mock_migration_service.segment.side_effect = Exception("Service error")
     
     with pytest.raises(Exception, match="Service error"):
-        lambda_handler(valid_event)
+        lambda_handler(valid_event, None)
 
 
 # Boundary testing
@@ -196,7 +196,7 @@ def test_lambda_handler_boundary_values(mock_migration_service):
     expected_result = {'bucket': 'migration-bucket', 'key': 'stepfunctionconfig-test-execution-id.json'}
     mock_migration_service.segment.return_value = expected_result
     
-    result = lambda_handler(event)
+    result = lambda_handler(event, None)
     
     mock_migration_service.segment.assert_called_once_with("test-execution-id", 1)
     assert result == expected_result
@@ -212,7 +212,7 @@ def test_lambda_handler_maximum_boundary_value(mock_migration_service):
     expected_result = {'bucket': 'migration-bucket', 'key': 'stepfunctionconfig-test-execution-id.json'}
     mock_migration_service.segment.return_value = expected_result
     
-    result = lambda_handler(event)
+    result = lambda_handler(event, None)
     
     mock_migration_service.segment.assert_called_once_with("test-execution-id", 1000)
     assert result == expected_result
