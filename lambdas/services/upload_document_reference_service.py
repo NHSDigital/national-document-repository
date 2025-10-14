@@ -2,6 +2,8 @@ import os
 from typing import Optional
 
 from botocore.exceptions import ClientError
+from enums.lambda_error import LambdaError
+from enums.snomed_codes import SnomedCodes
 from enums.virus_scan_result import VirusScanResult
 from models.document_reference import DocumentReference
 from services.base.dynamo_service import DynamoDBService
@@ -9,7 +11,10 @@ from services.base.s3_service import S3Service
 from services.document_service import DocumentService
 from utils.audit_logging_setup import LoggingService
 from utils.common_query_filters import PreliminaryStatus
+from utils.dynamo_utils import DocTypeTableRouter
 from utils.exceptions import DocumentServiceException, FileProcessingException
+from utils.lambda_exceptions import InvalidDocTypeException
+from utils.s3_utils import DocTypeS3BucketRouter
 from utils.utilities import get_virus_scan_service
 
 logger = LoggingService(__name__)
@@ -19,11 +24,13 @@ class UploadDocumentReferenceService:
     def __init__(self):
         self.staging_s3_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
         self.table_name = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
-        self.lg_bucket_name = os.getenv("LLOYD_GEORGE_BUCKET_NAME")
+        self.destination_bucket_name = os.getenv("LLOYD_GEORGE_BUCKET_NAME")
         self.document_service = DocumentService()
         self.dynamo_service = DynamoDBService()
         self.virus_scan_service = get_virus_scan_service()
         self.s3_service = S3Service()
+        self.table_router = DocTypeTableRouter()
+        self.bucket_router = DocTypeS3BucketRouter()
 
     def handle_upload_document_reference_request(
         self, object_key: str, object_size: int = 0
@@ -34,7 +41,9 @@ class UploadDocumentReferenceService:
             return
 
         try:
-            document_key = object_key.split("/")[-1]
+            object_parts = object_key.split("/")
+            document_key = object_parts[-1]
+            self._get_infrastructure_for_document_key(object_parts)
 
             document_reference = self._fetch_document_reference(document_key)
             if not document_reference:
@@ -48,6 +57,22 @@ class UploadDocumentReferenceService:
             logger.error(f"Unexpected error processing document reference: {str(e)}")
             logger.error(f"Failed to process document reference: {object_key}")
             return
+
+    def _get_infrastructure_for_document_key(self, object_parts: list[str]) -> None:
+        doc_type = None
+        if object_parts[0] != "fhir_upload" or not (
+            doc_type := SnomedCodes.find_by_code(object_parts[1])
+        ):
+            return
+
+        try:
+            self.table_name = self.table_router.resolve(doc_type)
+            self.destination_bucket_name = self.bucket_router.resolve(doc_type)
+        except KeyError:
+            logger.error(
+                f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
+            )
+            raise InvalidDocTypeException(400, LambdaError.DocTypeDB)
 
     def _fetch_document_reference(
         self, document_key: str
@@ -154,14 +179,14 @@ class UploadDocumentReferenceService:
             self.s3_service.copy_across_bucket(
                 source_bucket=self.staging_s3_bucket_name,
                 source_file_key=source_file_key,
-                dest_bucket=self.lg_bucket_name,
+                dest_bucket=self.destination_bucket_name,
                 dest_file_key=dest_file_key,
             )
 
             document_reference.s3_file_key = dest_file_key
-            document_reference.s3_bucket_name = self.lg_bucket_name
+            document_reference.s3_bucket_name = self.destination_bucket_name
             document_reference.file_location = document_reference._build_s3_location(
-                self.lg_bucket_name, dest_file_key
+                self.destination_bucket_name, dest_file_key
             )
 
         except ClientError as e:

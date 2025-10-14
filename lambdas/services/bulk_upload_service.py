@@ -22,6 +22,7 @@ from utils.exceptions import (
     DocumentInfectedException,
     InvalidMessageException,
     InvalidNhsNumberException,
+    PatientNotFoundException,
     PatientRecordAlreadyExistException,
     PdsErrorException,
     PdsTooManyRequestsException,
@@ -181,6 +182,7 @@ class BulkUploadService:
         except (
             InvalidNhsNumberException,
             LGInvalidFilesException,
+            PatientNotFoundException,
             PatientRecordAlreadyExistException,
         ) as error:
             logger.info(
