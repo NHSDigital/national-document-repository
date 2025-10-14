@@ -91,6 +91,7 @@ def mock_sqs_service(test_service):
 def base_metadata_file():
     row = {
         "FILEPATH": "valid/path/to/file.pdf",
+        "STORED-FILE-NAME": "valid/path/to/file.pdf",
         "GP-PRACTICE-CODE": "Y12345",
         "NHS-NO": "1234567890",
         "PAGE COUNT": "1",
@@ -291,39 +292,39 @@ def test_download_metadata_from_s3_raise_error_when_failed_to_download(
 
 def test_duplicates_csv_to_staging_metadata(mocker, test_service):
     header = (
-        "FILEPATH,PAGE COUNT,GP-PRACTICE-CODE,NHS-NO,SECTION,SUB-SECTION,"
+        "FILEPATH,STORED-FILE-NAME,PAGE COUNT,GP-PRACTICE-CODE,NHS-NO,SECTION,SUB-SECTION,"
         "SCAN-DATE,SCAN-ID,USER-ID,UPLOAD"
     )
     line1 = (
-        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y12345",'
+        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y12345",'
         '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line2 = (
-        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y12345",'
+        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y12345",'
         '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line3 = (
-        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y6789",'
+        '/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y6789",'
         '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line4 = (
-        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y6789",'
+        '/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf,"","Y6789",'
         '"1234567890","LG","","03/09/2022","NEC","NEC","04/10/2023"'
     )
     line5 = (
-        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,"","Y12345",'
+        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,"","Y12345",'
         '"123456789","LG","","04/09/2022","NEC","NEC","04/10/2023"'
     )
     line6 = (
-        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,"","Y6789",'
+        '1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt,"","Y6789",'
         '"123456789","LG","","04/09/2022","NEC","NEC","04/10/2023"'
     )
     line7 = (
-        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,"","Y12345","","LG","","04/09/2022",'
+        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,"","Y12345","","LG","","04/09/2022",'
         '"NEC","NEC","04/10/2023"'
     )
     line8 = (
-        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,"","Y6789","","LG","","04/09/2022",'
+        '1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt,"","Y6789","","LG","","04/09/2022",'
         '"NEC","NEC","04/10/2023"'
     )
 

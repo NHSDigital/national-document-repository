@@ -25,6 +25,9 @@ class BulkUploadReport(BaseModel):
         default_factory=lambda: date_string_yyyymmdd(datetime.now()),
     )
     file_path: str = Field(alias=MetadataReport.FilePath)
+    stored_file_name: Optional[str] = Field(
+        alias=MetadataReport.StoredFileName, default=None
+    )
     pds_ods_code: str = Field(alias=MetadataReport.PdsOdsCode)
     uploader_ods_code: str = Field(alias=MetadataReport.UploaderOdsCode)
     reason: Optional[str] = Field(default="", alias=MetadataReport.Reason)

@@ -8,6 +8,7 @@ class MetadataReport(StrEnum):
     PdsOdsCode = "PdsOdsCode"
     UploaderOdsCode = "UploaderOdsCode"
     FilePath = "FilePath"
+    StoredFileName = "StoredFileName"
     Date = "Date"
     Timestamp = "Timestamp"
     ID = "ID"

@@ -18,6 +18,7 @@ from tests.unit.helpers.data.bulk_upload.test_data import (
 )
 from utils.exceptions import BulkUploadMetadataException
 
+# METADATA_FILE_DIR = "lambdas/tests/unit/helpers/data/bulk_upload"
 METADATA_FILE_DIR = "tests/unit/helpers/data/bulk_upload"
 MOCK_METADATA_CSV = f"{METADATA_FILE_DIR}/metadata.csv"
 MOCK_DUPLICATE_ODS_METADATA_CSV = (

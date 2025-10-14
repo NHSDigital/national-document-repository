@@ -11,6 +11,7 @@ MOCK_DATA_COMPLETE_UPLOAD = {
     "Date": "2023-10-30",
     "UploadStatus": "complete",
     "FilePath": "/9000000009/1of1_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf",
+    "StoredFileName": "/9000000009/1of1_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf",
     "PdsOdsCode": "Y12345",
     "UploaderOdsCode": "Y12345",
 }
@@ -24,6 +25,7 @@ MOCK_DATA_FAILED_UPLOAD = {
     "UploadStatus": "failed",
     "Reason": MOCK_REASON,
     "FilePath": "/9000000025/invalid_filename.pdf",
+    "StoredFileName": "/9000000025/invalid_filename.pdf",
     "PdsOdsCode": "",
     "UploaderOdsCode": "Y12345",
 }
@@ -51,6 +53,7 @@ def test_create_successful_upload():
         date="2023-10-30",
         upload_status=UploadStatus.COMPLETE,
         file_path="/9000000009/1of1_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf",
+        stored_file_name="/9000000009/1of1_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf",
         pds_ods_code="Y12345",
         uploader_ods_code="Y12345",
     ).model_dump(by_alias=True, exclude_none=True)
@@ -68,6 +71,7 @@ def test_create_failed_upload():
         upload_status=UploadStatus.FAILED,
         reason=MOCK_REASON,
         file_path="/9000000025/invalid_filename.pdf",
+        stored_file_name="/9000000025/invalid_filename.pdf",
         pds_ods_code="",
         uploader_ods_code="Y12345",
     ).model_dump(by_alias=True, exclude_none=True)
@@ -83,6 +87,7 @@ def test_successful_upload_ids_and_timestamp_are_auto_populated_if_not_given(moc
     actual = BulkUploadReport(
         nhs_number="9000000009",
         file_path="/9000000009/1of1_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf",
+        stored_file_name="/9000000009/1of1_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf",
         pds_ods_code="Y12345",
         uploader_ods_code="Y12345",
         upload_status=UploadStatus.COMPLETE,
@@ -97,6 +102,7 @@ def test_failed_upload_ids_and_timestamp_are_auto_populated_if_not_given(mock_uu
     actual = BulkUploadReport(
         nhs_number="9000000025",
         file_path="/9000000025/invalid_filename.pdf",
+        stored_file_name="/9000000025/invalid_filename.pdf",
         reason=MOCK_REASON,
         pds_ods_code="",
         uploader_ods_code="Y12345",

@@ -4,7 +4,6 @@ from unittest.mock import call
 import pytest
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
-
 from enums.dynamo_filter import AttributeOperator
 from enums.metadata_field_names import DocumentReferenceMetadataFields
 from services.base.dynamo_service import DynamoDBService
@@ -57,9 +56,8 @@ def mock_filter_expression():
     ).build()
     yield filter_expression
 
-def mock_scan_implementation(
-    **kwargs
-):
+
+def mock_scan_implementation(**kwargs):
     key = kwargs.get("ExclusiveStartKey")
     if not key:
         return copy.deepcopy(MOCK_PAGINATED_RESPONSE_1)

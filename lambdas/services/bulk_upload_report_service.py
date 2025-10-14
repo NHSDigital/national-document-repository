@@ -301,7 +301,8 @@ class BulkUploadReportService:
             for item in items:
                 dict_writer_object.writerow(
                     item.model_dump(
-                        exclude={str(MetadataReport.ID).lower()}, by_alias=True
+                        exclude={str(MetadataReport.ID).lower(), "stored_file_name"},
+                        by_alias=True,
                     )
                 )
 

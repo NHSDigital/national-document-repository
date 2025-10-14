@@ -12,7 +12,8 @@ from tests.unit.conftest import MOCK_LG_BUCKET, TEST_CURRENT_GP_ODS, TEST_UUID
 from lambdas.enums.nrl_sqs_upload import NrlActionTypes
 
 sample_metadata_model = MetadataFile(
-    file_path="/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf",
+    FILEPATH="/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf",
+    stored_file_name="/1234567890/1of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf",
     page_count="",
     gp_practice_code="Y12345",
     section="LG",
@@ -25,7 +26,8 @@ sample_metadata_model = MetadataFile(
 patient_1_file_1 = sample_metadata_model.model_copy()
 patient_1_file_2 = sample_metadata_model.model_copy(
     update={
-        "file_path": "/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf"
+        "file_path": "/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf",
+        "stored_file_name":"/1234567890/2of2_Lloyd_George_Record_[Joe Bloggs]_[1234567890]_[25-12-2019].pdf",
     }
 )
 patient_1 = StagingMetadata(
@@ -37,6 +39,7 @@ patient_1 = StagingMetadata(
 patient_2_file_1 = sample_metadata_model.model_copy(
     update={
         "file_path": "1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt",
+        "stored_file_name":"1of1_Lloyd_George_Record_[Joe Bloggs_invalid]_[123456789]_[25-12-2019].txt",
         "scan_date": "04/09/2022",
     }
 )
@@ -79,6 +82,7 @@ patient_3_with_missing_nhs_number_metadata_file = sample_metadata_model.model_co
     update={
         "nhs_number": "",
         "file_path": "1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt",
+        "stored_file_name":"1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt",
         "scan_date": "04/09/2022",
     }
 )
@@ -87,6 +91,7 @@ patient_3_with_missing_nhs_number_metadata_file_different_ods_code = sample_meta
     update={
         "nhs_number": "",
         "file_path": "1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt",
+        "stored_file_name": "1of1_Lloyd_George_Record_[Jane Smith]_[1234567892]_[25-12-2019].txt",
         "scan_date": "04/09/2022",
         "gp_practice_code": "Y6789",
     }

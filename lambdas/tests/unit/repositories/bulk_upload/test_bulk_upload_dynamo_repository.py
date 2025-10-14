@@ -47,6 +47,7 @@ def test_report_upload_complete_add_record_to_dynamodb(
         expected_dynamo_db_record = {
             "Date": "2023-10-01",
             "FilePath": file.file_path,
+            "StoredFileName": file.stored_file_name,
             "ID": mock_uuid,
             "NhsNumber": TEST_STAGING_METADATA.nhs_number,
             "Timestamp": 1696165200,
@@ -74,6 +75,7 @@ def test_report_upload_failure_add_record_to_dynamodb(
         expected_dynamo_db_record = {
             "Date": "2023-10-02",
             "FilePath": file.file_path,
+            "StoredFileName": file.stored_file_name,
             "ID": mock_uuid,
             "NhsNumber": TEST_STAGING_METADATA.nhs_number,
             "Timestamp": 1696251600,
