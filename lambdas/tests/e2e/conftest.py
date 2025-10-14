@@ -8,7 +8,6 @@ from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
 
 data_helper = LloydGeorgeDataHelper()
 
-
 LLOYD_GEORGE_SNOMED = 16521000000101
 API_ENDPOINT = os.environ.get("NDR_API_ENDPOINT")
 API_KEY = os.environ.get("NDR_API_KEY")

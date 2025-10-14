@@ -19,6 +19,9 @@ ZIP_COMMON_FILES = lambdas/utils lambdas/models lambdas/services lambdas/reposit
 
 default: help
 
+help: ## This is a help message
+	@grep -E --no-filename '^[a-zA-Z-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-42s\033[0m %s\n", $$1, $$2}'
+
 clean: clean-build clean-py clean-test
 
 clean-build:
@@ -59,16 +62,16 @@ check-packages:
 	./lambdas/venv/bin/pip-audit -r $(REPORTS_REQUIREMENTS)
 	./lambdas/venv/bin/pip-audit -r $(ALERTING_REQUIREMENTS)
 
-download-api-certs: # Use with poc and dev envs only
-	rm -rf ./lambdas/mtls_env_certs/$(env)
-	./scripts/aws/download-api-certs.sh $(env)
+download-api-certs: ## Downloads mTLS certificates (use with dev envs only). Usage: make download-api-certs WORKSPACE=<workspace>
+	rm -rf ./lambdas/mtls_env_certs/$(WORKSPACE)
+	./scripts/aws/download-api-certs.sh $(WORKSPACE)
 
 test-api-e2e:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --ignore=tests/e2e/api/fhir -vv
 
-test-fhir-api-e2e:
-	./scripts/test/run-e2e-fhir-api-tests.sh --env $(env)
-	rm -rf ./lambdas/mtls_env_certs/$(env)
+test-fhir-api-e2e: ## Runs FHIR API E2E tests. Usage: make test-fhir-api-e2e WORKSPACE=<workspace>
+	./scripts/test/run-e2e-fhir-api-tests.sh --workspace $(WORKSPACE)
+	rm -rf ./lambdas/mtls_env_certs/$(WORKSPACE)
 
 test-api-e2e-snapshots:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --snapshot-update
