@@ -216,8 +216,6 @@ def test_segment_logging_on_error(service, mock_s3_client, mock_random_shuffle, 
 
 def test_segment_environment_variable_missing(mocker):
     """Test that missing environment variable raises KeyError"""
-    # Don't mock the environment variable
-    mock_boto3 = mocker.patch("services.migration_dynamodb_segment_service.boto3.client")
     
     with pytest.raises(KeyError, match="MIGRATION_SEGMENT_BUCKET_NAME"):
         MigrationDynamoDBSegmentService()
