@@ -114,9 +114,10 @@ def parse_date(date_string: str) -> datetime | None:
     SUPPORTED_FORMATS = [
         "%d/%m/%Y",
         "%Y-%m-%d",
-        "%m/%d/%Y",
         "%d-%m-%Y",
         "%b %d, %Y",
+        "%d-%b-%Y",
+        "%d-%B-%Y",
     ]
 
     for fmt in SUPPORTED_FORMATS:
