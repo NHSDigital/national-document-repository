@@ -79,7 +79,7 @@ def test_no_file_found(snapshot_json):
     # Use mTLS
     session = create_mtls_session()
     response = session.get(url, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 404
 
     # json = response.json()
     # assert json == snapshot_json

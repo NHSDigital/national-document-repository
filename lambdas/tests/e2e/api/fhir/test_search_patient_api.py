@@ -125,7 +125,7 @@ def test_invalid_patient(snapshot_json):
     # Use mTLS
     session = create_mtls_session()
     response = session.get(url, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 400
 
     # bundle = response.json()
     # assert bundle == snapshot_json
