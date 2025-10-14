@@ -16,7 +16,6 @@ from models.staging_metadata import (
     BulkUploadQueueMetadata,
     MetadataFile,
     StagingSqsMetadata,
-    StagingMetadata,
 )
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
@@ -104,7 +103,7 @@ class BulkUploadMetadataProcessorService:
         )
 
         with open(
-            csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
+                csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
         ) as csv_file_handler:
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
             for row in csv_reader:
@@ -149,8 +148,8 @@ class BulkUploadMetadataProcessorService:
         return nhs_number, ods_code
 
     def validate_and_correct_filename(
-        self,
-        file_metadata: MetadataFile,
+            self,
+            file_metadata: MetadataFile,
     ) -> str:
         try:
             validate_file_name(file_metadata.file_path.split("/")[-1])
@@ -163,10 +162,10 @@ class BulkUploadMetadataProcessorService:
         return valid_filepath
 
     def handle_invalid_filename(
-        self,
-        file_metadata: MetadataFile,
-        error: InvalidFileNameException,
-        nhs_number: str,
+            self,
+            file_metadata: MetadataFile,
+            error: InvalidFileNameException,
+            nhs_number: str,
     ) -> None:
         logger.error(
             f"Failed to process {file_metadata.file_path} due to error: {error}"
@@ -181,7 +180,7 @@ class BulkUploadMetadataProcessorService:
         )
 
     def send_metadata_to_fifo_sqs(
-        self, staging_sqs_metadata_list: list[StagingSqsMetadata]
+            self, staging_sqs_metadata_list: list[StagingSqsMetadata]
     ) -> None:
         sqs_group_id = f"bulk_upload_{uuid.uuid4()}"
 
