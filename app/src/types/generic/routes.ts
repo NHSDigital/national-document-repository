@@ -50,6 +50,7 @@ export enum routeChildren {
     DOCUMENT_UPLOAD_UPLOADING = '/patient/document-upload/in-progress',
     DOCUMENT_UPLOAD_COMPLETED = '/patient/document-upload/completed',
     DOCUMENT_UPLOAD_INFECTED = '/patient/document-upload/infected',
+    DOCUMENT_UPLOAD_FILE_ERRORS = '/patient/document-upload/file-errors',
 }
 
 export enum ROUTE_TYPE {
