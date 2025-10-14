@@ -18,7 +18,6 @@ def lambda_handler(event, context):
             raise ValueError("Invalid 'totalSegments' in event")
 
         id = event['executionId'].split(':')[-1]
-        bucket_name = event['bucketName']
         return MigrationDynamoDBSegmentService().segment(id, total_segments)
     except Exception as e:
         logger.error(f"Exception in migration_dynamodb_segment_handler: {e}")
