@@ -43,6 +43,7 @@ const DocumentSelectStage = ({
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [noFilesSelected, setNoFilesSelected] = useState<boolean>(false);
     const scrollToRef = useRef<HTMLDivElement>(null);
+    const fileInputAreaRef = useRef<HTMLFieldSetElement>(null);
     const [lastErrorsLength, setLastErrorsLength] = useState(0);
 
     const navigate = useNavigate();
@@ -67,6 +68,8 @@ const DocumentSelectStage = ({
         e.preventDefault();
         e.stopPropagation();
 
+        fileInputAreaRef.current?.scrollIntoView({ behavior: 'smooth' });
+
         let fileArray: File[] = [];
         if (e.dataTransfer.items?.length > 0) {
             [...e.dataTransfer.items].forEach((item) => {
@@ -86,6 +89,7 @@ const DocumentSelectStage = ({
     };
 
     const onInput = (e: FileInputEvent): void => {
+        fileInputAreaRef.current?.scrollIntoView({ behavior: 'smooth' });
         const fileArray = Array.from(e.target.files ?? new FileList()).filter(validateFileType);
 
         void updateFileList(fileArray);
@@ -189,7 +193,7 @@ const DocumentSelectStage = ({
 
     const continueClicked = (): void => {
         if (!validateDocuments()) {
-            scrollToRef.current?.scrollIntoView();
+            scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
             return;
         }
 
@@ -240,7 +244,7 @@ const DocumentSelectStage = ({
     useEffect(() => {
         const currentErrorsLength = errorDocs().length;
         if (lastErrorsLength <= currentErrorsLength) {
-            scrollToRef.current?.scrollIntoView();
+            scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
 
         setLastErrorsLength(currentErrorsLength);
@@ -312,7 +316,7 @@ const DocumentSelectStage = ({
                 </p>
             </div>
 
-            <Fieldset>
+            <Fieldset ref={fileInputAreaRef}>
                 <div className={`${noFilesSelected ? 'nhsuk-form-group--error' : ''}`}>
                     <h3>Choose PDF files to upload</h3>
                     {noFilesSelected && (
@@ -362,6 +366,14 @@ const DocumentSelectStage = ({
                             >
                                 Choose PDF files
                             </Button>
+                            {documents && documents.length > 0 && (
+                                <div className="file-count-text" data-testid="file-selected-count">
+                                    <strong>
+                                        {`${documents.length}`} file
+                                        {`${documents.length === 1 ? '' : 's'}`} chosen
+                                    </strong>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -372,7 +384,10 @@ const DocumentSelectStage = ({
                         <Table.Head>
                             <Table.Row>
                                 <Table.Cell className="table-cell-lg-input-cell-border">
-                                    <div className="div-lg-input-cell">
+                                    <div
+                                        className="div-lg-input-cell"
+                                        data-testid="file-selected-count"
+                                    >
                                         <strong>
                                             {`${documents.length}`} file
                                             {`${documents.length === 1 ? '' : 's'}`} chosen
