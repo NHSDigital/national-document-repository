@@ -208,7 +208,7 @@ class DocumentReferenceSearchService(DocumentService):
             or document_reference.created,
             url=document_retrieve_endpoint
             + "/"
-            + SnomedCodes.LLOYD_GEORGE.value.code
+            + document_reference.document_snomed_code_type
             + "~"
             + document_reference.id,
         )
