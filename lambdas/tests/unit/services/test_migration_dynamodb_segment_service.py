@@ -6,7 +6,13 @@ from botocore.exceptions import ClientError, NoCredentialsError
 
 
 @pytest.fixture
-def service():
+def mock_env_bucket_name(mocker):
+    """Mocks the environment variable for bucket name"""
+    return mocker.patch.dict('os.environ', {'MIGRATION_SEGMENT_BUCKET_NAME': 'test-bucket'})
+
+
+@pytest.fixture
+def service(mock_env_bucket_name):
     """Creates an instance of the service for testing"""
     return MigrationDynamoDBSegmentService()
 
@@ -30,7 +36,6 @@ def test_segment_success(service, mock_s3_client, mock_random_shuffle):
     # Arrange
     test_id = "test-execution-123"
     total_segments = 4
-    bucket_name = "test-bucket"
     
     # Mock shuffle to do nothing (keep original order for predictable testing)
     mock_random_shuffle.side_effect = lambda x: None
@@ -40,17 +45,17 @@ def test_segment_success(service, mock_s3_client, mock_random_shuffle):
     expected_body = json.dumps(expected_segments).encode()
     
     # Act
-    result = service.segment(test_id, total_segments, bucket_name)
+    result = service.segment(test_id, total_segments)
     
     # Assert
     mock_s3_client.put_object.assert_called_once_with(
-        Bucket=bucket_name,
+        Bucket='test-bucket',
         Key=expected_key,
         Body=expected_body
     )
     
     expected_result = {
-        'bucket': bucket_name,
+        'bucket': 'test-bucket',
         'key': expected_key
     }
     assert result == expected_result
@@ -61,23 +66,22 @@ def test_segment_with_single_segment(service, mock_s3_client, mock_random_shuffl
     # Arrange
     test_id = "single-segment"
     total_segments = 1
-    bucket_name = "single-bucket"
     
     mock_random_shuffle.side_effect = lambda x: None
     expected_segments = [0]
     
     # Act
-    result = service.segment(test_id, total_segments, bucket_name)
+    result = service.segment(test_id, total_segments)
     
     # Assert
     expected_body = json.dumps(expected_segments).encode()
     mock_s3_client.put_object.assert_called_once_with(
-        Bucket=bucket_name,
+        Bucket='test-bucket',
         Key="stepfunctionconfig-single-segment.json",
         Body=expected_body
     )
     
-    assert result['bucket'] == bucket_name
+    assert result['bucket'] == 'test-bucket'
     assert result['key'] == "stepfunctionconfig-single-segment.json"
 
 
@@ -86,23 +90,22 @@ def test_segment_with_many_segments(service, mock_s3_client, mock_random_shuffle
     # Arrange
     test_id = "large-test"
     total_segments = 100
-    bucket_name = "large-bucket"
     
     mock_random_shuffle.side_effect = lambda x: None
     expected_segments = list(range(0, 100))
     
     # Act
-    result = service.segment(test_id, total_segments, bucket_name)
+    result = service.segment(test_id, total_segments)
     
     # Assert
     expected_body = json.dumps(expected_segments).encode()
     mock_s3_client.put_object.assert_called_once_with(
-        Bucket=bucket_name,
+        Bucket='test-bucket',
         Key="stepfunctionconfig-large-test.json",
         Body=expected_body
     )
     
-    assert result['bucket'] == bucket_name
+    assert result['bucket'] == 'test-bucket'
     assert result['key'] == "stepfunctionconfig-large-test.json"
 
 
@@ -111,10 +114,9 @@ def test_segment_shuffle_is_called(service, mock_s3_client, mock_random_shuffle)
     # Arrange
     test_id = "shuffle-test"
     total_segments = 5
-    bucket_name = "shuffle-bucket"
     
     # Act
-    service.segment(test_id, total_segments, bucket_name)
+    service.segment(test_id, total_segments)
     
     # Assert - verify shuffle was called with the segments list
     mock_random_shuffle.assert_called_once()
@@ -128,12 +130,11 @@ def test_segment_with_special_characters_in_id(service, mock_s3_client, mock_ran
     # Arrange
     test_id = "test-execution_123-abc"
     total_segments = 2
-    bucket_name = "special-bucket"
     
     mock_random_shuffle.side_effect = lambda x: None
     
     # Act
-    result = service.segment(test_id, total_segments, bucket_name)
+    result = service.segment(test_id, total_segments)
     
     # Assert
     expected_key = "stepfunctionconfig-test-execution_123-abc.json"
@@ -147,7 +148,6 @@ def test_segment_s3_client_error(service, mock_s3_client, mock_random_shuffle):
     # Arrange
     test_id = "error-test"
     total_segments = 3
-    bucket_name = "error-bucket"
     
     error = ClientError(
         error_response={'Error': {'Code': 'NoSuchBucket', 'Message': 'Bucket does not exist'}},
@@ -157,7 +157,7 @@ def test_segment_s3_client_error(service, mock_s3_client, mock_random_shuffle):
     
     # Act & Assert
     with pytest.raises(ClientError):
-        service.segment(test_id, total_segments, bucket_name)
+        service.segment(test_id, total_segments)
 
 
 def test_segment_no_credentials_error(service, mock_s3_client, mock_random_shuffle):
@@ -165,13 +165,12 @@ def test_segment_no_credentials_error(service, mock_s3_client, mock_random_shuff
     # Arrange
     test_id = "creds-test"
     total_segments = 2
-    bucket_name = "creds-bucket"
     
     mock_s3_client.put_object.side_effect = NoCredentialsError()
     
     # Act & Assert
     with pytest.raises(NoCredentialsError):
-        service.segment(test_id, total_segments, bucket_name)
+        service.segment(test_id, total_segments)
 
 
 def test_segment_generic_exception(service, mock_s3_client, mock_random_shuffle):
@@ -179,13 +178,12 @@ def test_segment_generic_exception(service, mock_s3_client, mock_random_shuffle)
     # Arrange
     test_id = "generic-error"
     total_segments = 2
-    bucket_name = "generic-bucket"
     
     mock_s3_client.put_object.side_effect = Exception("Generic error")
     
     # Act & Assert
     with pytest.raises(Exception, match="Generic error"):
-        service.segment(test_id, total_segments, bucket_name)
+        service.segment(test_id, total_segments)
 
 
 # Test JSON serialization
@@ -194,13 +192,12 @@ def test_segment_json_serialization(service, mock_s3_client, mock_random_shuffle
     # Arrange
     test_id = "json-test"
     total_segments = 3
-    bucket_name = "json-bucket"
     
     # Mock shuffle to reverse the list for predictable testing
     mock_random_shuffle.side_effect = lambda x: x.reverse()
     
     # Act
-    service.segment(test_id, total_segments, bucket_name)
+    service.segment(test_id, total_segments)
     
     # Assert - check the Body parameter is properly encoded JSON
     call_args = mock_s3_client.put_object.call_args
@@ -224,10 +221,9 @@ def test_segment_creates_s3_client(service, mocker):
     
     test_id = "client-test"
     total_segments = 1
-    bucket_name = "client-bucket"
     
     # Act
-    service.segment(test_id, total_segments, bucket_name)
+    service.segment(test_id, total_segments)
     
     # Assert
     mock_boto3_client.assert_called_once_with("s3")
@@ -239,34 +235,32 @@ def test_segment_zero_segments_edge_case(service, mock_s3_client, mock_random_sh
     # Note: This might not be a valid business case, but testing the technical behavior
     test_id = "zero-test"
     total_segments = 0
-    bucket_name = "zero-bucket"
     
     mock_random_shuffle.side_effect = lambda x: None
     
     # Act
-    result = service.segment(test_id, total_segments, bucket_name)
+    result = service.segment(test_id, total_segments)
     
     # Assert
     expected_segments = []  # range(0, 0) produces empty list
     expected_body = json.dumps(expected_segments).encode()
     
     mock_s3_client.put_object.assert_called_once_with(
-        Bucket=bucket_name,
+        Bucket='test-bucket',
         Key="stepfunctionconfig-zero-test.json",
         Body=expected_body
     )
     
-    assert result['bucket'] == bucket_name
+    assert result['bucket'] == 'test-bucket'
 
 
 def test_segment_empty_id_edge_case(service, mock_s3_client, mock_random_shuffle):
     """Test with empty ID string"""
     test_id = ""
     total_segments = 2
-    bucket_name = "empty-id-bucket"
     
     # Act
-    result = service.segment(test_id, total_segments, bucket_name)
+    result = service.segment(test_id, total_segments)
     
     # Assert
     assert result['key'] == "stepfunctionconfig-.json"
@@ -278,12 +272,11 @@ def test_segment_actual_shuffle_behavior(service, mock_s3_client):
     # Arrange
     test_id = "actual-shuffle"
     total_segments = 10
-    bucket_name = "shuffle-bucket"
     
     # Act - run multiple times to check randomness
     results = []
     for _ in range(5):
-        service.segment(test_id, total_segments, bucket_name)
+        service.segment(test_id, total_segments)
         # Get the body from the last call
         call_args = mock_s3_client.put_object.call_args
         body = call_args.kwargs['Body']
