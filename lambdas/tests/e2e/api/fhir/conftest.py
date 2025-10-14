@@ -9,10 +9,8 @@ from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
 data_helper = LloydGeorgeDataHelper()
 
 LLOYD_GEORGE_SNOMED = 16521000000101
-LG_METADATA_TABLE = os.environ.get("LG_METADATA_TABLE")
-LG_UNSTITCHED_TABLE = os.environ.get("LG_UNSTITCHED_TABLE")
-BULK_REPORT_TABLE = os.environ.get("BULK_REPORT_TABLE")
-LLOYD_GEORGE_S3_BUCKET = os.environ.get("NDR_S3_BUCKET") or ""
+PDM_METADATA_TABLE = os.environ.get("PDM_METADATA_TABLE")
+PDM_S3_BUCKET = os.environ.get("PDM_S3_BUCKET") or ""
 APIM_ENDPOINT = "internal-dev.api.service.nhs.uk"
 MTLS_ENDPOINT = os.environ["MTLS_ENDPOINT"]
 CLIENT_CERT_PATH = os.environ["TESTING_CLIENT_CERT_PATH"]

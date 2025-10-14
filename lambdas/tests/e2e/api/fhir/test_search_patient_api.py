@@ -2,13 +2,14 @@ import io
 import logging
 import uuid
 
-# from syrupy.filters import paths
 from tests.e2e.conftest import APIM_ENDPOINT, LLOYD_GEORGE_SNOMED
-from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
 
 from lambdas.tests.e2e.api.fhir.conftest import MTLS_ENDPOINT, create_mtls_session
 
-data_helper = LloydGeorgeDataHelper()
+# from syrupy.filters import paths
+from lambdas.tests.e2e.helpers.pdm_data_helper import PdmDataHelper
+
+pdm_data_helper = PdmDataHelper()
 
 
 def test_search_patient_details(test_data, snapshot_json):
@@ -19,8 +20,8 @@ def test_search_patient_details(test_data, snapshot_json):
     lloyd_george_record["nhs_number"] = "9449305943"
     lloyd_george_record["data"] = io.BytesIO(b"Sample PDF Content")
 
-    data_helper.create_metadata(lloyd_george_record)
-    data_helper.create_resource(lloyd_george_record)
+    pdm_data_helper.create_metadata(lloyd_george_record)
+    pdm_data_helper.create_resource(lloyd_george_record)
 
     url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {
@@ -58,8 +59,8 @@ def test_multiple_cancelled_search_patient_details(test_data, snapshot_json):
     lloyd_george_record["data"] = io.BytesIO(b"Sample PDF Content")
     lloyd_george_record["doc_status"] = "cancelled"
 
-    data_helper.create_metadata(lloyd_george_record)
-    data_helper.create_resource(lloyd_george_record)
+    pdm_data_helper.create_metadata(lloyd_george_record)
+    pdm_data_helper.create_resource(lloyd_george_record)
 
     second_lloyd_george_record = {}
     test_data.append(second_lloyd_george_record)
@@ -69,8 +70,8 @@ def test_multiple_cancelled_search_patient_details(test_data, snapshot_json):
     second_lloyd_george_record["data"] = io.BytesIO(b"Sample PDF Content")
     second_lloyd_george_record["doc_status"] = "cancelled"
 
-    data_helper.create_metadata(second_lloyd_george_record)
-    data_helper.create_resource(second_lloyd_george_record)
+    pdm_data_helper.create_metadata(second_lloyd_george_record)
+    pdm_data_helper.create_resource(second_lloyd_george_record)
 
     url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{lloyd_george_record['nhs_number']}"
     headers = {

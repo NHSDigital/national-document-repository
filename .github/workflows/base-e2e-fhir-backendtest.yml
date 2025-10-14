@@ -58,12 +58,5 @@ jobs:
           source ./lambdas/venv/bin/activate
           echo PATH=$PATH >> $GITHUB_ENV
 
-      - name: Get MockCIS2 Token
-        run: |
-          MOCK_CIS2_KEY=$(aws ssm get-parameter --name "/auth/password/MOCK_KEY" --with-decryption --query "Parameter.Value" --output text)
-          echo "::add-mask::$MOCK_CIS2_KEY"
-          echo "MOCK_CIS2_KEY=$MOCK_CIS2_KEY" >> $GITHUB_ENV
-
-
       - name: Run E2e Tests
         run: ./scripts/test/run-e2e-tests.sh --env ${{ inputs.sandbox }}

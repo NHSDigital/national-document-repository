@@ -6,20 +6,14 @@ import os
 import requests
 
 # from syrupy.filters import paths
-from tests.e2e.conftest import (
-    APIM_ENDPOINT,
-    LLOYD_GEORGE_S3_BUCKET,
-    LLOYD_GEORGE_SNOMED,
-)
-from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
+from tests.e2e.conftest import APIM_ENDPOINT, LLOYD_GEORGE_SNOMED
 
 from lambdas.tests.e2e.api.fhir.conftest import (
     MTLS_ENDPOINT,
+    PDM_S3_BUCKET,
     create_mtls_session,
     fetch_with_retry_mtls,
 )
-
-data_helper = LloydGeorgeDataHelper()
 
 
 def create_upload_payload(lloyd_george_record):
@@ -155,7 +149,7 @@ def test_create_document_presign(test_data, snapshot_json):
     )
     retrieve_response = raw_retrieve_response.json()
 
-    expected_presign_uri = f"https://{LLOYD_GEORGE_S3_BUCKET}.s3.eu-west-2.amazonaws.com/{lloyd_george_record['nhs_number']}/{lloyd_george_record['id']}"
+    expected_presign_uri = f"https://{PDM_S3_BUCKET}.s3.eu-west-2.amazonaws.com/{lloyd_george_record['nhs_number']}/{lloyd_george_record['id']}"
     assert expected_presign_uri in retrieve_response["content"][0]["attachment"]["url"]
 
     assert isinstance(retrieve_response["content"][0]["attachment"]["size"], (int))

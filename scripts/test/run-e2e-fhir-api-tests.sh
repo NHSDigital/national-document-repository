@@ -18,11 +18,8 @@ echo "Selected environment: $ENVIRONMENT"
 source ./scripts/test/set-e2e-env-vars.sh $ENVIRONMENT
 
 echo "Running E2E tests with:" #todo output all vars here?
-echo "LG_METADATA_TABLE=$LG_METADATA_TABLE"
-echo "LG_UNSTITCHED_TABLE=$LG_UNSTITCHED_TABLE"
-echo "BULK_REPORT_TABLE=$BULK_REPORT_TABLE"
-echo "NDR_S3_BUCKET=$NDR_S3_BUCKET"
-echo "NDR_API_ENDPOINT=$NDR_API_ENDPOINT"
+echo "PDM_METADATA_TABLE=$PDM_METADATA_TABLE"
+echo "PDM_S3_BUCKET=$PDM_S3_BUCKET"
 echo "MTLS_ENDPOINT=$MTLS_ENDPOINT"
 
 
