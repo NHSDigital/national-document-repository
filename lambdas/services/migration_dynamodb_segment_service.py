@@ -22,5 +22,11 @@ class MigrationDynamoDBSegmentService:
             )
             return {'bucket': self.bucket_name, 'key': f"stepfunctionconfig-{id}.json"}
         except Exception as e:
-            logger.error(f"Exception in migration_dynamodb_segment_service: {e}")
+            extras = {
+                'executionId': id,
+                'totalSegments': total_segments,
+                'bucketName': self.bucket_name,
+                'errorType': type(e).__name__
+            }
+            logger.error(f"Exception in migration_dynamodb_segment_service: {e}", extra=extras, exc_info=True)
             raise
