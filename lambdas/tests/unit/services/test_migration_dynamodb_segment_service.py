@@ -216,7 +216,7 @@ def test_segment_logging_on_error(service, mock_s3_client, mock_random_shuffle, 
 
 def test_segment_environment_variable_missing(mocker):
     """Test that missing environment variable raises KeyError"""
-    
+
     with pytest.raises(KeyError, match="MIGRATION_SEGMENT_BUCKET_NAME"):
         MigrationDynamoDBSegmentService()
 
@@ -260,8 +260,6 @@ def test_segment_very_large_segments(service, mock_s3_client, mock_random_shuffl
     total_segments = 1000
     
     mock_random_shuffle.side_effect = lambda x: None
-    
-    result = service.segment(test_id, total_segments)
     
     # Verify the call was made (without checking the entire body)
     mock_s3_client.put_object.assert_called_once()
