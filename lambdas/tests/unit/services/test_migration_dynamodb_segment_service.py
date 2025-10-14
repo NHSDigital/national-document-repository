@@ -186,6 +186,113 @@ def test_segment_generic_exception(service, mock_s3_client, mock_random_shuffle)
         service.segment(test_id, total_segments)
 
 
+def test_segment_logging_on_error(service, mock_s3_client, mock_random_shuffle, mocker):
+    """Test that errors are properly logged with extras"""
+    mock_logger = mocker.patch("services.migration_dynamodb_segment_service.logger")
+    
+    test_id = "logging-test"
+    total_segments = 3
+    
+    error = ClientError(
+        error_response={'Error': {'Code': 'AccessDenied', 'Message': 'Access denied'}},
+        operation_name='PutObject'
+    )
+    mock_s3_client.put_object.side_effect = error
+    
+    with pytest.raises(ClientError):
+        service.segment(test_id, total_segments)
+    
+    # Verify logging was called with correct extras
+    mock_logger.error.assert_called_once()
+    call_args = mock_logger.error.call_args
+    assert "extra" in call_args.kwargs
+    extras = call_args.kwargs["extra"]
+    assert extras["executionId"] == "logging-test"
+    assert extras["totalSegments"] == 3
+    assert extras["bucketName"] == "test-bucket"
+    assert extras["errorType"] == "ClientError"
+    assert call_args.kwargs.get("exc_info") is True
+
+
+def test_segment_environment_variable_missing(mocker):
+    """Test that missing environment variable raises KeyError"""
+    # Don't mock the environment variable
+    mock_boto3 = mocker.patch("services.migration_dynamodb_segment_service.boto3.client")
+    
+    with pytest.raises(KeyError, match="MIGRATION_SEGMENT_BUCKET_NAME"):
+        MigrationDynamoDBSegmentService()
+
+
+def test_segment_with_unicode_id(service, mock_s3_client, mock_random_shuffle):
+    """Test with unicode characters in ID"""
+    test_id = "test-执行-123"
+    total_segments = 2
+    
+    mock_random_shuffle.side_effect = lambda x: None
+    
+    result = service.segment(test_id, total_segments)
+    
+    expected_key = "stepfunctionconfig-test-执行-123.json"
+    assert result['key'] == expected_key
+    mock_s3_client.put_object.assert_called_once()
+
+
+def test_segment_body_encoding(service, mock_s3_client, mock_random_shuffle):
+    """Test that the body is properly UTF-8 encoded"""
+    test_id = "encoding-test"
+    total_segments = 2
+    
+    mock_random_shuffle.side_effect = lambda x: None
+    
+    service.segment(test_id, total_segments)
+    
+    call_args = mock_s3_client.put_object.call_args
+    body_arg = call_args.kwargs['Body']
+    
+    # Verify it's bytes and can be decoded as UTF-8
+    assert isinstance(body_arg, bytes)
+    decoded = body_arg.decode('utf-8')
+    parsed = json.loads(decoded)
+    assert parsed == [0, 1]
+
+
+def test_segment_very_large_segments(service, mock_s3_client, mock_random_shuffle):
+    """Test with very large number of segments"""
+    test_id = "large-segments"
+    total_segments = 1000
+    
+    mock_random_shuffle.side_effect = lambda x: None
+    
+    result = service.segment(test_id, total_segments)
+    
+    # Verify the call was made (without checking the entire body)
+    mock_s3_client.put_object.assert_called_once()
+    call_args = mock_s3_client.put_object.call_args
+    
+    # Verify the segments list is correct size
+    body = call_args.kwargs['Body']
+    segments = json.loads(body.decode('utf-8'))
+    assert len(segments) == 1000
+    assert segments == list(range(1000))
+
+
+def test_segment_put_object_parameters(service, mock_s3_client, mock_random_shuffle):
+    """Test that put_object is called with exactly the right parameters"""
+    test_id = "param-test"
+    total_segments = 3
+    
+    mock_random_shuffle.side_effect = lambda x: None
+    
+    service.segment(test_id, total_segments)
+    
+    # Verify exact parameters
+    call_args = mock_s3_client.put_object.call_args
+    assert len(call_args.kwargs) == 3  # Only Bucket, Key, Body
+    assert call_args.kwargs['Bucket'] == 'test-bucket'
+    assert call_args.kwargs['Key'] == 'stepfunctionconfig-param-test.json'
+    assert isinstance(call_args.kwargs['Body'], bytes)
+
+
 # Test JSON serialization
 def test_segment_json_serialization(service, mock_s3_client, mock_random_shuffle):
     """Test that segments are properly JSON serialized"""

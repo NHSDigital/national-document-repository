@@ -5,7 +5,9 @@ from services.migration_dynamodb_segment_service import MigrationDynamoDBSegment
 logger = logging.getLogger(__name__)
 
 def lambda_handler(event):
-
+    total_segments = None
+    id = None
+    
     try:
         if 'executionId' not in event or not isinstance(event['executionId'], str) or event['executionId'].strip() == '':
             raise ValueError("Invalid or missing 'executionId' in event")
@@ -24,8 +26,8 @@ def lambda_handler(event):
         return MigrationDynamoDBSegmentService().segment(id, total_segments)
     except Exception as e:
         extras = {
-            'executionId': id,
-            'totalSegments': total_segments,
+            'executionId': id if id is not None else event.get('executionId'),
+            'totalSegments': total_segments if total_segments is not None else event.get('totalSegments'),
             'errorType': type(e).__name__
         }
         logger.error(f"Exception in migration_dynamodb_segment_handler: {e}", extra=extras, exc_info=True)
