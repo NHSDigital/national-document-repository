@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 import pytest
 from botocore.exceptions import ClientError
 from enums.virus_scan_result import VirusScanResult
-from lambdas.enums.snomed_codes import SnomedCodes
 from models.document_reference import DocumentReference
 from services.mock_virus_scan_service import MockVirusScanService
 from services.upload_document_reference_service import UploadDocumentReferenceService
@@ -16,6 +15,8 @@ from tests.unit.conftest import (
 )
 from utils.common_query_filters import PreliminaryStatus
 from utils.exceptions import DocumentServiceException, FileProcessingException
+
+from lambdas.enums.snomed_codes import SnomedCodes
 
 
 @pytest.fixture

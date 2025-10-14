@@ -1,4 +1,5 @@
 from enum import StrEnum, auto
+
 from enums.lambda_error import LambdaError
 from utils.audit_logging_setup import LoggingService
 from utils.lambda_exceptions import InvalidDocTypeException
