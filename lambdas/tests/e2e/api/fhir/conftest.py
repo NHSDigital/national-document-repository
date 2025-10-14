@@ -4,9 +4,10 @@ import time
 import pytest
 import requests
 from syrupy.extensions.json import JSONSnapshotExtension
-from tests.e2e.helpers.lloyd_george_data_helper import LloydGeorgeDataHelper
 
-data_helper = LloydGeorgeDataHelper()
+from lambdas.tests.e2e.helpers.pdm_data_helper import PdmDataHelper
+
+pdm_data_helper = PdmDataHelper()
 
 PDM_METADATA_TABLE = os.environ.get("PDM_METADATA_TABLE")
 PDM_S3_BUCKET = os.environ.get("PDM_S3_BUCKET") or ""
@@ -20,7 +21,7 @@ def test_data():
     test_records = []
     yield test_records
     for record in test_records:
-        data_helper.tidyup(record)
+        pdm_data_helper.tidyup(record)
 
 
 def fetch_with_retry_mtls(

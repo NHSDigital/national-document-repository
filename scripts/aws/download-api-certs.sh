@@ -5,7 +5,7 @@ set -euo pipefail
 ENVIRONMENT="$1"
 echo "selected environment3: $ENVIRONMENT"
 # All sandbox envs map to ndr-dev for certs
-if [[ "$ENVIRONMENT" == ndr* ]]; then
+if [[ "$ENVIRONMENT" != "ndr-test" && "$ENVIRONMENT" != "pre-prod" && "$ENVIRONMENT" != "prod" ]]; then
     PERSISTENT_ENVIRONMENT="ndr-dev"
 else    
     PERSISTENT_ENVIRONMENT="$ENVIRONMENT"
