@@ -212,12 +212,15 @@ def test_segment_json_serialization(service, mock_s3_client, mock_random_shuffle
 
 
 # Test boto3 client creation
-def test_segment_creates_s3_client(service, mocker):
+def test_segment_creates_s3_client(mock_env_bucket_name, mocker):
     """Test that boto3.client is called to create S3 client"""
     # Arrange
     mock_boto3_client = mocker.patch("services.migration_dynamodb_segment_service.boto3.client")
     mock_s3_client = MagicMock()
     mock_boto3_client.return_value = mock_s3_client
+    
+    # Create service after mocking
+    service = MigrationDynamoDBSegmentService()
     
     test_id = "client-test"
     total_segments = 1
