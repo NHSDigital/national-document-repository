@@ -15,7 +15,7 @@ class VersionMigration:
         self.environment = environment
         self.table_name = table_name
         self.dry_run = dry_run
-        self.logger = LoggingService("CustodianMigration")
+        self.logger = LoggingService("S3Migration")
         self.dynamo_service = DynamoDBService()
         self.s3_service = S3Service()
 
