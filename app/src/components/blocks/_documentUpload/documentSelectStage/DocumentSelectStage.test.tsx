@@ -94,6 +94,11 @@ describe('DocumentSelectStage', () => {
 
             const file2 = await screen.findByText(lgDocumentTwo.name);
             expect(file2).toBeInTheDocument();
+
+            const fileSelectedCount = screen.getAllByTestId('file-selected-count');
+            expect(fileSelectedCount).toHaveLength(2);
+            expect(fileSelectedCount[0]).toHaveTextContent('2 files chosen');
+            expect(fileSelectedCount[1]).toHaveTextContent('2 files chosen');
         });
 
         it('can select and then remove a file', async () => {
