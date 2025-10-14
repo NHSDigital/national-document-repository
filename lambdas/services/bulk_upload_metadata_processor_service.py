@@ -16,6 +16,7 @@ from models.staging_metadata import (
     BulkUploadQueueMetadata,
     MetadataFile,
     StagingSqsMetadata,
+    StagingMetadata,
 )
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
