@@ -63,6 +63,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return_fhir=True,
         additional_filters=search_filters,
         check_upload_completed=False,
+        api_request_context=event.get("request_context", {}),
     )
 
     if not document_references:

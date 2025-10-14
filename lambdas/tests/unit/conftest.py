@@ -149,7 +149,7 @@ def set_env(monkeypatch):
     monkeypatch.setenv(MOCK_PDM_TABLE_NAME_ENV_NAME, MOCK_PDM_TABLE_NAME)
     monkeypatch.setenv(MOCK_PDM_BUCKET_ENV_NAME, MOCK_PDM_BUCKET)
     monkeypatch.setenv(
-        "DYNAMODB_TABLE_LIST", json.dumps([MOCK_ARF_TABLE_NAME, MOCK_LG_TABLE_NAME])
+        "DYNAMODB_TABLE_LIST", json.dumps([MOCK_PDM_TABLE_NAME, MOCK_LG_TABLE_NAME])
     )
     monkeypatch.setenv(MOCK_ZIP_OUTPUT_BUCKET_ENV_NAME, MOCK_ZIP_OUTPUT_BUCKET)
     monkeypatch.setenv(MOCK_ZIP_TRACE_TABLE_ENV_NAME, MOCK_ZIP_TRACE_TABLE)
