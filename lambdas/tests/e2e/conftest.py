@@ -10,19 +10,12 @@ data_helper = LloydGeorgeDataHelper()
 
 
 LLOYD_GEORGE_SNOMED = 16521000000101
-API_ENDPOINT = os.environ.get(
-    "NDR_API_ENDPOINT",
-    "https://api-ndr-dev.access-request-fulfilment.patient-deductions.nhs.uk",
-)
-API_KEY = os.environ.get("NDR_API_KEY", "MliLC4R1R343IVbxgc7j3eO2BhXVCIO2hT2HFywe")
-LG_METADATA_TABLE = os.environ.get(
-    "LG_METADATA_TABLE", "ndr-dev_LloydGeorgeReferenceMetadata"
-)
-LG_UNSTITCHED_TABLE = os.environ.get(
-    "LG_UNSTITCHED_TABLE", "ndr-dev_UnstitchedLloydGeorgeReferenceMetadata"
-)
-BULK_REPORT_TABLE = os.environ.get("BULK_REPORT_TABLE", "ndr-dev_BulkUploadReport")
-LLOYD_GEORGE_S3_BUCKET = os.environ.get("NDR_S3_BUCKET", "ndr-dev-lloyd-george-store")
+API_ENDPOINT = os.environ.get("NDR_API_ENDPOINT")
+API_KEY = os.environ.get("NDR_API_KEY")
+LG_METADATA_TABLE = os.environ.get("LG_METADATA_TABLE")
+LG_UNSTITCHED_TABLE = os.environ.get("LG_UNSTITCHED_TABLE")
+BULK_REPORT_TABLE = os.environ.get("BULK_REPORT_TABLE")
+LLOYD_GEORGE_S3_BUCKET = os.environ.get("NDR_S3_BUCKET") or ""
 APIM_ENDPOINT = "internal-dev.api.service.nhs.uk"
 
 

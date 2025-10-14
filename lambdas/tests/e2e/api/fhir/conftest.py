@@ -9,7 +9,7 @@ from lambdas.tests.e2e.helpers.pdm_data_helper import PdmDataHelper
 
 pdm_data_helper = PdmDataHelper()
 
-PDM_SNOMED = "717391000000106"
+PDM_SNOMED = 717391000000106
 PDM_METADATA_TABLE = os.environ.get("PDM_METADATA_TABLE")
 PDM_S3_BUCKET = os.environ.get("PDM_S3_BUCKET") or ""
 MTLS_ENDPOINT = os.environ["MTLS_ENDPOINT"]
