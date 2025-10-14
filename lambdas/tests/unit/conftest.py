@@ -6,13 +6,13 @@ from dataclasses import dataclass
 from enum import Enum
 
 import pytest
-from utils.audit_logging_setup import LoggingService
 from botocore.exceptions import ClientError
 from models.document_reference import DocumentReference
 from models.pds_models import Patient, PatientDetails
 from pydantic import ValidationError
 from requests import Response
 from tests.unit.helpers.data.pds.pds_patient_response import PDS_PATIENT
+from utils.audit_logging_setup import LoggingService
 
 REGION_NAME = "eu-west-2"
 
@@ -24,6 +24,7 @@ MOCKED_LG_BUCKET_URL = f"{MOCKED_LG_BUCKET_ENV}-lloyd-test-test.com"
 MOCK_ARF_TABLE_NAME_ENV_NAME = "DOCUMENT_STORE_DYNAMODB_NAME"
 MOCK_ARF_BUCKET_ENV_NAME = "DOCUMENT_STORE_BUCKET_NAME"
 MOCK_PDM_TABLE_NAME_ENV_NAME = "PDM_DYNAMODB_NAME"
+MOCK_PDM_BUCKET_ENV_NAME = "PDM_BUCKET_NAME"
 
 MOCK_LG_TABLE_NAME_ENV_NAME = "LLOYD_GEORGE_DYNAMODB_NAME"
 MOCK_UNSTITCHED_LG_TABLE_ENV_NAME = "UNSTITCHED_LLOYD_GEORGE_DYNAMODB_NAME"
@@ -68,6 +69,7 @@ MOCK_UNSTITCHED_LG_TABLE_NAME = "test_unstitched_lg_table"
 MOCK_BULK_REPORT_TABLE_NAME = "test_report_dynamoDB_table"
 MOCK_ARF_BUCKET = "test_arf_s3_bucket"
 MOCK_LG_BUCKET = "test_lg_s3_bucket"
+MOCK_PDM_BUCKET = "test_pdm_s3_bucket"
 MOCK_ZIP_OUTPUT_BUCKET = "test_s3_output_bucket"
 MOCK_ZIP_TRACE_TABLE = "test_zip_table"
 MOCK_STAGING_STORE_BUCKET = "test_staging_bulk_store"
@@ -145,6 +147,7 @@ def set_env(monkeypatch):
     monkeypatch.setenv(MOCK_UNSTITCHED_LG_TABLE_ENV_NAME, MOCK_UNSTITCHED_LG_TABLE_NAME)
     monkeypatch.setenv(MOCK_LG_BUCKET_ENV_NAME, MOCK_LG_BUCKET)
     monkeypatch.setenv(MOCK_PDM_TABLE_NAME_ENV_NAME, MOCK_PDM_TABLE_NAME)
+    monkeypatch.setenv(MOCK_PDM_BUCKET_ENV_NAME, MOCK_PDM_BUCKET)
     monkeypatch.setenv(
         "DYNAMODB_TABLE_LIST", json.dumps([MOCK_ARF_TABLE_NAME, MOCK_LG_TABLE_NAME])
     )
@@ -387,4 +390,3 @@ def attach_caplog_handler(caplog):
             instance.logger.removeHandler(caplog.handler)
         except Exception:
             pass
-

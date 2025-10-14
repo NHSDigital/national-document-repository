@@ -3,12 +3,11 @@ import binascii
 import io
 import os
 
-from typing import Optional
 from botocore.exceptions import ClientError
 from enums.lambda_error import LambdaError
+from enums.mtls import MtlsCommonNames
 from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCode, SnomedCodes
-from enums.mtls import MtlsCommonNames
 from models.document_reference import DocumentReference
 from models.fhir.R4.fhir_document_reference import SNOMED_URL, Attachment
 from models.fhir.R4.fhir_document_reference import (
@@ -46,7 +45,7 @@ class PostFhirDocumentReferenceService:
         self.doc_router = DocTypeTableRouter()
 
     def process_fhir_document_reference(
-        self, fhir_document: str, request_headers: dict = {}
+        self, fhir_document: str, api_request_context: dict = {}
     ) -> str:
         """
         Process a FHIR Document Reference request
@@ -58,8 +57,7 @@ class PostFhirDocumentReferenceService:
             FHIR Document Reference response JSON object
         """
         try:
-            headers = {k.lower(): v for k, v in request_headers.items()}
-            common_name = validate_common_name_in_mtls(headers)
+            common_name = validate_common_name_in_mtls(api_request_context)
 
             validated_fhir_doc = FhirDocumentReference.model_validate_json(
                 fhir_document
@@ -170,6 +168,13 @@ class PostFhirDocumentReferenceService:
                 if current_gp_ods not in PatientOdsInactiveStatus.list()
                 else PCSE_ODS_CODE
             )
+
+        sub_folder = (
+            "user_upload"
+            if doc_type != SnomedCodes.PATIENT_DATA.value
+            else f"fhir_upload/{doc_type.code}"
+        )
+
         document_reference = DocumentReference(
             id=document_id,
             nhs_number=nhs_number,
@@ -182,7 +187,7 @@ class PostFhirDocumentReferenceService:
             document_snomed_code_type=doc_type.code,
             doc_status="preliminary",
             status="current",
-            sub_folder="user_upload",
+            sub_folder=sub_folder,
             document_scan_creation=fhir_doc.content[0].attachment.creation,
         )
 

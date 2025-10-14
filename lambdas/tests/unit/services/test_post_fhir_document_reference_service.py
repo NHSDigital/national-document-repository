@@ -18,12 +18,11 @@ from services.post_fhir_document_reference_service import (
 from tests.unit.conftest import APIM_API_URL
 from tests.unit.conftest import (
     EXPECTED_PARSED_PATIENT_BASE_CASE as mock_pds_patient_details,
-    MOCK_PDM_TABLE_NAME,
-    MOCK_LG_TABLE_NAME,
 )
+from tests.unit.conftest import MOCK_LG_TABLE_NAME, MOCK_PDM_TABLE_NAME
 from tests.unit.helpers.data.bulk_upload.test_data import TEST_DOCUMENT_REFERENCE
 from utils.exceptions import PatientNotFoundException
-from utils.lambda_exceptions import CreateDocumentRefException
+from utils.lambda_exceptions import CreateDocumentRefException, InvalidDocTypeException
 
 
 @pytest.fixture
@@ -47,6 +46,19 @@ def mock_service(set_env, mocker, mock_pds_service_fetch):
     service.dynamo_service = mock_dynamo.return_value
 
     yield service
+
+
+@pytest.fixture
+def valid_non_mtls_request_context():
+    return {
+        "accountId": "123456789012",
+        "apiId": "abc123",
+        "domainName": "api.example.com",
+        "identity": {
+            "sourceIp": "1.2.3.4",
+            "userAgent": "curl/7.64.1",
+        },
+    }
 
 
 @pytest.fixture
@@ -104,7 +116,29 @@ def valid_mtls_header():
     return {
         "Accept": "text/json",
         "Host": "example.com",
-        "x-amzn-mtls-clientcert-subject": "CN=ndrclient.main.dev.pdm.national.nhs.uk",
+    }
+
+
+@pytest.fixture
+def valid_mtls_request_context():
+    return {
+        "accountId": "123456789012",
+        "apiId": "abc123",
+        "domainName": "api.example.com",
+        "identity": {
+            "sourceIp": "1.2.3.4",
+            "userAgent": "curl/7.64.1",
+            "clientCert": {
+                "clientCertPem": "-----BEGIN CERTIFICATE-----...",
+                "subjectDN": "CN=client.dev.ndr.national.nhs.uk,O=NHS,C=UK",
+                "issuerDN": "CN=NHS Root CA,O=NHS,C=UK",
+                "serialNumber": "12:34:56",
+                "validity": {
+                    "notBefore": "May 10 00:00:00 2024 GMT",
+                    "notAfter": "May 10 00:00:00 2025 GMT",
+                },
+            },
+        },
     }
 
 
@@ -426,11 +460,11 @@ def test_get_dynamo_table_for_unsupported_doc_type(mock_service):
 
     non_lg_code = SnomedCode(code="non-lg-code", display_name="Non Lloyd George")
 
-    with pytest.raises(CreateDocumentRefException) as excinfo:
+    with pytest.raises(InvalidDocTypeException) as excinfo:
         mock_service._get_dynamo_table_for_doc_type(non_lg_code)
 
     assert excinfo.value.status_code == 400
-    assert excinfo.value.error == LambdaError.CreateDocInvalidType
+    assert excinfo.value.error == LambdaError.DocTypeDB
 
 
 def test_create_document_reference_with_author(mock_service, mocker):
@@ -734,13 +768,13 @@ def test_process_fhir_document_reference_with_invalid_base64_data(mock_service):
 
 
 def test_process_mtls_fhir_document_reference_with_binary(
-    mock_service, valid_mtls_fhir_doc_with_binary, valid_mtls_header
+    mock_service, valid_mtls_fhir_doc_with_binary, valid_mtls_request_context
 ):
     """Test a happy path with binary data in the request."""
     custom_endpoint = f"{APIM_API_URL}/DocumentReference"
 
     result = mock_service.process_fhir_document_reference(
-        valid_mtls_fhir_doc_with_binary, valid_mtls_header
+        valid_mtls_fhir_doc_with_binary, valid_mtls_request_context
     )
 
     assert isinstance(result, str)
@@ -761,3 +795,78 @@ def test_determine_document_type_with_correct_common_name(mock_service, mocker):
 
     result = mock_service._determine_document_type(fhir_doc, MtlsCommonNames.PDM)
     assert result == SnomedCodes.PATIENT_DATA.value
+
+
+def test_s3_file_key_for_pdm(mock_service, mocker):
+    """Test _create_document_reference method without custodian information."""
+
+    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
+    fhir_doc.content = [
+        DocumentReferenceContent(
+            attachment=Attachment(
+                contentType="application/pdf",
+                title="test-file.pdf",
+                creation="2023-01-01T12:00:00Z",
+            )
+        )
+    ]
+    fhir_doc.author = [
+        Reference(
+            identifier=Identifier(
+                system="https://fhir.nhs.uk/Id/ods-organization-code", value="B67890"
+            )
+        )
+    ]
+    fhir_doc.custodian = None
+
+    doc_type = SnomedCodes.PATIENT_DATA.value
+    current_gp_ods = "C13579"
+
+    result = mock_service._create_document_reference(
+        nhs_number="9000000009",
+        doc_type=doc_type,
+        fhir_doc=fhir_doc,
+        current_gp_ods=current_gp_ods,
+    )
+
+    assert (
+        f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}/9000000009"
+        in result.s3_file_key
+    )
+    assert result.sub_folder == f"fhir_upload/{SnomedCodes.PATIENT_DATA.value.code}"
+
+
+def test_s3_file_key_for_lg(mock_service, mocker):
+    """Test _create_document_reference method without custodian information."""
+
+    fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
+    fhir_doc.content = [
+        DocumentReferenceContent(
+            attachment=Attachment(
+                contentType="application/pdf",
+                title="test-file.pdf",
+                creation="2023-01-01T12:00:00Z",
+            )
+        )
+    ]
+    fhir_doc.author = [
+        Reference(
+            identifier=Identifier(
+                system="https://fhir.nhs.uk/Id/ods-organization-code", value="B67890"
+            )
+        )
+    ]
+    fhir_doc.custodian = None
+
+    doc_type = SnomedCodes.LLOYD_GEORGE.value
+    current_gp_ods = "C13579"
+
+    result = mock_service._create_document_reference(
+        nhs_number="9000000009",
+        doc_type=doc_type,
+        fhir_doc=fhir_doc,
+        current_gp_ods=current_gp_ods,
+    )
+
+    assert "user_upload/9000000009" in result.s3_file_key
+    assert result.sub_folder == "user_upload"

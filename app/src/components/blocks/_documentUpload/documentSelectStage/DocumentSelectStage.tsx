@@ -1,6 +1,6 @@
 import { Button, Fieldset, Table, TextInput } from 'nhsuk-react-components';
 import { getDocument } from 'pdfjs-dist';
-import { JSX, useEffect, useRef, useState } from 'react';
+import { JSX, Ref, RefObject, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import useTitle from '../../../../helpers/hooks/useTitle';
@@ -29,14 +29,21 @@ export type Props = {
     setDocuments: SetUploadDocuments;
     documents: Array<UploadDocument>;
     documentType: DOCUMENT_TYPE;
+    filesErrorRef: RefObject<boolean>;
 };
 
 type UploadFilesError = ErrorMessageListItem<UPLOAD_FILE_ERROR_TYPE>;
 
-const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): JSX.Element => {
+const DocumentSelectStage = ({
+    documents,
+    setDocuments,
+    documentType,
+    filesErrorRef,
+}: Props): JSX.Element => {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [noFilesSelected, setNoFilesSelected] = useState<boolean>(false);
     const scrollToRef = useRef<HTMLDivElement>(null);
+    const fileInputAreaRef = useRef<HTMLFieldSetElement>(null);
     const [lastErrorsLength, setLastErrorsLength] = useState(0);
 
     const navigate = useNavigate();
@@ -50,9 +57,18 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
         return true;
     };
 
+    useEffect(() => {
+        if (filesErrorRef.current) {
+            navigate(routes.HOME);
+            return;
+        }
+    }, []);
+
     const onFileDrop = (e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
         e.stopPropagation();
+
+        fileInputAreaRef.current?.scrollIntoView({ behavior: 'smooth' });
 
         let fileArray: File[] = [];
         if (e.dataTransfer.items?.length > 0) {
@@ -73,6 +89,7 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
     };
 
     const onInput = (e: FileInputEvent): void => {
+        fileInputAreaRef.current?.scrollIntoView({ behavior: 'smooth' });
         const fileArray = Array.from(e.target.files ?? new FileList()).filter(validateFileType);
 
         void updateFileList(fileArray);
@@ -117,6 +134,17 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
             });
 
         const docs = await Promise.all(documentMap);
+
+        const failedDocs = docs.filter(
+            (doc) => doc.state === DOCUMENT_UPLOAD_STATE.FAILED && doc.error,
+        );
+
+        if (failedDocs.length > 0) {
+            filesErrorRef.current = true;
+            setDocuments(failedDocs);
+            navigate(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS);
+            return;
+        }
 
         updateDocuments([...docs, ...documents]);
     };
@@ -165,7 +193,7 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
 
     const continueClicked = (): void => {
         if (!validateDocuments()) {
-            scrollToRef.current?.scrollIntoView();
+            scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
             return;
         }
 
@@ -177,14 +205,6 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
             <Table.Row key={document.id} id={document.file.name}>
                 <Table.Cell className={document.error ? 'error-cell' : ''}>
                     <strong>{document.file.name}</strong>
-                    {document.error && (
-                        <>
-                            <br />
-                            <span className="nhs-warning-color">
-                                <strong>{fileUploadErrorMessages[document.error!].inline}</strong>
-                            </span>
-                        </>
-                    )}
                 </Table.Cell>
                 <Table.Cell>{formatFileSize(document.file.size)}</Table.Cell>
                 <Table.Cell>
@@ -224,7 +244,7 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
     useEffect(() => {
         const currentErrorsLength = errorDocs().length;
         if (lastErrorsLength <= currentErrorsLength) {
-            scrollToRef.current?.scrollIntoView();
+            scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
 
         setLastErrorsLength(currentErrorsLength);
@@ -296,7 +316,7 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
                 </p>
             </div>
 
-            <Fieldset>
+            <Fieldset ref={fileInputAreaRef}>
                 <div className={`${noFilesSelected ? 'nhsuk-form-group--error' : ''}`}>
                     <h3>Choose PDF files to upload</h3>
                     {noFilesSelected && (
@@ -346,6 +366,14 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
                             >
                                 Choose PDF files
                             </Button>
+                            {documents && documents.length > 0 && (
+                                <div className="file-count-text" data-testid="file-selected-count">
+                                    <strong>
+                                        {`${documents.length}`} file
+                                        {`${documents.length === 1 ? '' : 's'}`} chosen
+                                    </strong>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -356,7 +384,10 @@ const DocumentSelectStage = ({ documents, setDocuments, documentType }: Props): 
                         <Table.Head>
                             <Table.Row>
                                 <Table.Cell className="table-cell-lg-input-cell-border">
-                                    <div className="div-lg-input-cell">
+                                    <div
+                                        className="div-lg-input-cell"
+                                        data-testid="file-selected-count"
+                                    >
                                         <strong>
                                             {`${documents.length}`} file
                                             {`${documents.length === 1 ? '' : 's'}`} chosen

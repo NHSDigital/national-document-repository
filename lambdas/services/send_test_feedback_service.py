@@ -15,7 +15,6 @@ class SendTestFeedbackService:
         self.send_itoc_feedback_via_slack(feedback)
         self.send_itoc_feedback_via_teams(feedback)
 
-
     def send_itoc_feedback_via_slack(self, feedback: Feedback):
         logger.info("Sending ITOC test feedback via slack")
         headers = {

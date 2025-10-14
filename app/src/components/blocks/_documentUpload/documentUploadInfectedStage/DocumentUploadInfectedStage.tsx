@@ -4,7 +4,7 @@ import { routes } from '../../../../types/generic/routes';
 
 const DocumentUploadInfectedStage = (): React.JSX.Element => {
     const navigate = useNavigate();
-    const pageHeader = "We couldn't upload your files because we found a virus";
+    const pageHeader = 'Warning: we found a virus in your files';
     useTitle({ pageTitle: pageHeader });
 
     return (
@@ -17,7 +17,10 @@ const DocumentUploadInfectedStage = (): React.JSX.Element => {
                 To keep patient information safe and our systems secure, we've stopped the upload.
             </p>
 
-            <p>Contact your local IT support desk for help.</p>
+            <p>
+                Contact your local IT support desk for help immediately. Do not attempt to upload
+                the files again until they have been made safe.
+            </p>
 
             <p>
                 <button

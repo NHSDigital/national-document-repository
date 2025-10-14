@@ -2,11 +2,10 @@ import json
 from copy import deepcopy
 
 import pytest
-from requests import Response
-
 from enums.lambda_error import LambdaError
 from handlers.send_feedback_handler import is_itoc_test_feedback, lambda_handler
 from models.feedback_model import Feedback
+from requests import Response
 from services.send_feedback_service import SendFeedbackService
 from tests.unit.conftest import (
     MOCK_FEEDBACK_RECIPIENT_EMAIL_LIST,
@@ -79,7 +78,6 @@ def mock_valid_feedback_event(event):
 @pytest.fixture
 def mock_post(mocker):
     yield mocker.patch("requests.post")
-
 
 
 def test_lambda_handler_respond_with_200_when_successful(
@@ -224,7 +222,7 @@ def test_lambda_handler_respond_with_200_when_itoc_feedback_sent(
     mock_jwt_encode_itoc_user,
     mock_itoc_test_event,
     mock_feedback_service,
-    mock_get_email_recipients_list
+    mock_get_email_recipients_list,
 ):
     mock_validator.return_value = MOCK_PARSED_ITOC_FEEDBACK
 
@@ -247,7 +245,7 @@ def test_lambda_handler_respond_with_200_when_failed_to_send_itoc_feedback(
     mock_itoc_test_event,
     mock_post,
     mock_feedback_service,
-    mock_get_email_recipients_list
+    mock_get_email_recipients_list,
 ):
 
     response = Response()
