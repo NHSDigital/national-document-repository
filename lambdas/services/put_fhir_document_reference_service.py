@@ -129,7 +129,7 @@ class PutFhirDocumentReferenceService:
                 400, LambdaError.DocumentReferenceGeneralError
             )
         
-        if validated_fhir_doc.meta == None:
+        if validated_fhir_doc.meta is None:
             logger.error("Missing version number")
             raise UpdateFhirDocumentReferenceException(400, LambdaError.DocumentReferenceMissingParameters)
         
