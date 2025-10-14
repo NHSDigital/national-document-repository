@@ -105,16 +105,6 @@ def base_metadata_file():
     return MetadataFile.model_validate(row)
 
 
-# TODO: Possibly needed as part of PRMT-576
-# def test_update_date_in_row(test_service):
-#     metadata_row = {"SCAN-DATE": "2025.01.01", "UPLOAD": "2025.01.01"}
-#
-#     updated_row = test_service.update_date_in_row(metadata_row)
-#
-#     assert updated_row["SCAN-DATE"] == "2025/01/01"
-#     assert updated_row["UPLOAD"] == "2025/01/01"
-
-
 def test_process_metadata_send_metadata_to_sqs_queue(
     mocker,
     test_service,
