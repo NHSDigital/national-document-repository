@@ -74,7 +74,7 @@ test-fhir-api-e2e: ## Runs FHIR API E2E tests. Usage: make test-fhir-api-e2e WOR
 	rm -rf ./lambdas/mtls_env_certs/$(WORKSPACE)
 
 test-api-e2e-snapshots:
-	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --snapshot-update
+	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/api --ignore=tests/e2e/api/fhir --snapshot-update
 
 test-bulk-upload-e2e:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/bulk_upload -vv
