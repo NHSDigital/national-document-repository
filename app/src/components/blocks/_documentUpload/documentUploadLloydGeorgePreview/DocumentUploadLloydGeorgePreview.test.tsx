@@ -60,11 +60,14 @@ describe('DocumentUploadCompleteStage', () => {
             const mockBlob = new Blob(['test pdf content'], { type: 'application/pdf' });
             vi.mocked(getMergedPdfBlob).mockResolvedValue(mockBlob);
 
+            const stitchedBlobLoaded = vi.fn();
+
             await act(async () => {
                 render(
                     <DocumentUploadLloydGeorgePreview
                         documents={testDocuments}
                         setMergedPdfBlob={mockSetMergedPdfBlob}
+                        stitchedBlobLoaded={stitchedBlobLoaded}
                     />,
                 );
             });
@@ -73,6 +76,7 @@ describe('DocumentUploadCompleteStage', () => {
 
             await waitFor(() => {
                 expect(mockSetMergedPdfBlob).toHaveBeenCalledWith(mockBlob);
+                expect(stitchedBlobLoaded).toHaveBeenCalledTimes(2);
             });
         });
     });

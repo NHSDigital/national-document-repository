@@ -1,5 +1,5 @@
 import { Button, Select, Table } from 'nhsuk-react-components';
-import { Dispatch, JSX, SetStateAction, useEffect, useRef } from 'react';
+import { Dispatch, JSX, SetStateAction, useEffect, useRef, useState } from 'react';
 import { FieldErrors, FieldValues, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import useTitle from '../../../../helpers/hooks/useTitle';
@@ -21,6 +21,7 @@ import ErrorBox from '../../../layout/errorBox/ErrorBox';
 import DocumentUploadLloydGeorgePreview from '../documentUploadLloydGeorgePreview/DocumentUploadLloydGeorgePreview';
 import { ErrorMessageListItem } from '../../../../types/pages/genericPageErrors';
 import getMergedPdfBlob from '../../../../helpers/utils/pdfMerger';
+import SpinnerButton from '../../../generic/spinnerButton/SpinnerButton';
 
 type Props = {
     documents: UploadDocument[];
@@ -38,6 +39,7 @@ const DocumentSelectOrderStage = ({
     setMergedPdfBlob,
 }: Props): JSX.Element => {
     const navigate = useNavigate();
+    const [stitchedBlobLoaded, setStitchedBlobLoaded] = useState(false);
 
     const documentPositionKey = (documentId: string): string => {
         return `${documentId}`;
@@ -341,9 +343,12 @@ const DocumentSelectOrderStage = ({
                             .filter((doc) => doc.docType === DOCUMENT_TYPE.LLOYD_GEORGE)
                             .sort((a, b) => a.position! - b.position!)}
                         setMergedPdfBlob={setMergedPdfBlob}
+                        stitchedBlobLoaded={(loaded: boolean) => {
+                            setStitchedBlobLoaded(loaded);
+                        }}
                     />
                 </div>
-                {documents.length > 0 && (
+                {documents.length > 0 && stitchedBlobLoaded && (
                     <Button
                         type="submit"
                         id="form-submit"
@@ -354,6 +359,14 @@ const DocumentSelectOrderStage = ({
                     >
                         Continue
                     </Button>
+                )}
+                {documents.length > 0 && !stitchedBlobLoaded && (
+                    <SpinnerButton
+                        id="continue-spinner"
+                        status="Stitching PDF"
+                        disabled={true}
+                        className="mt-4"
+                    />
                 )}
             </form>
         </>

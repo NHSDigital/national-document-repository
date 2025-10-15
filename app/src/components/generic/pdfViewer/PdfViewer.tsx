@@ -1,30 +1,10 @@
-import { useEffect, useRef } from 'react';
-
 type Props = {
     fileUrl: string;
     customClasses?: string[];
-    onLoaded?: () => void;
+    customStyleSheet?: string;
 };
 
-const PdfViewer = ({ fileUrl, customClasses, onLoaded }: Props) => {
-    const loadedRef = useRef(false);
-
-    useEffect(() => {
-        const test = async () => {
-            while (!document.querySelector('pdfjs-viewer-element')) {}
-
-            if (!loadedRef.current) {
-                loadedRef.current = true;
-
-                if (onLoaded) {
-                    onLoaded();
-                }
-            }
-        };
-
-        test();
-    });
-
+const PdfViewer = ({ fileUrl, customClasses, customStyleSheet }: Props) => {
     return (
         <pdfjs-viewer-element
             id="pdf-viewer"
@@ -32,6 +12,7 @@ const PdfViewer = ({ fileUrl, customClasses, onLoaded }: Props) => {
             src={fileUrl}
             title="Embedded PDF Viewer"
             viewer-path="/pdfjs"
+            viewer-extra-styles={customStyleSheet}
             viewer-extra-styles-urls="['/pdf-viewer.css']"
             className={customClasses?.join(' ')}
         ></pdfjs-viewer-element>
