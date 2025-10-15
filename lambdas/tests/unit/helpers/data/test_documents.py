@@ -138,7 +138,7 @@ def create_valid_fhir_doc_json(nhs_number: str = "9000000009"):
             "type": {
                 "coding": [
                     {
-                        "system": "https://snomed.info/sct",
+                        "system": "http://snomed.info/sct",
                         "code": SnomedCodes.LLOYD_GEORGE.value.code,
                         "display": SnomedCodes.LLOYD_GEORGE.value.display_name,
                     }

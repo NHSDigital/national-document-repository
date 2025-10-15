@@ -484,7 +484,7 @@ def test_get_batch_document_references_by_id_client_error(
             "type": {
                 "coding": [
                     {
-                        "system": "https://snomed.info/sct",
+                        "system": "http://snomed.info/sct",
                         "code": "invalid-code",
                         "display": "Invalid",
                     }
