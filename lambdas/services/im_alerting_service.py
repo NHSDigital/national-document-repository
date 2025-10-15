@@ -417,7 +417,7 @@ class IMAlertingService:
         for prefix in prefixes:
             alarm_name = alarm_name.replace(prefix, "")
 
-        url_extension = re.sub(r'[-_. ]', '%20', alarm_name)
+        url_extension = re.sub(r"[-_. ]", "%20", alarm_name)
 
         return f"{base_url}{search_query}{url_extension}"
 

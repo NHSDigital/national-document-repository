@@ -16,6 +16,7 @@ from models.staging_metadata import (
     BulkUploadQueueMetadata,
     MetadataFile,
     StagingSqsMetadata,
+    StagingMetadata
 )
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
@@ -103,7 +104,7 @@ class BulkUploadMetadataProcessorService:
         )
 
         with open(
-                csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
+            csv_file_path, mode="r", encoding="utf-8-sig", errors="replace"
         ) as csv_file_handler:
             csv_reader: Iterable[dict] = csv.DictReader(csv_file_handler)
             for row in csv_reader:

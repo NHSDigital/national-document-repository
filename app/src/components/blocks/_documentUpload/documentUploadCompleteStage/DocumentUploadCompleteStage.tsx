@@ -71,6 +71,17 @@ const DocumentUploadCompleteStage = ({ documents }: Props): React.JSX.Element =>
             </p>
 
             <p>
+                If you think you've made a mistake, contact the Patient Record Management team at{' '}
+                <a href="mailto:england.prmteam@nhs.net">england.prmteam@nhs.net</a>.
+            </p>
+
+            <p>
+                You can add a note to the patient's electronic health record to say their Lloyd
+                George record is stored in this service. Use SNOMED code 'Lloyd George record
+                folder' 16521000000101.
+            </p>
+
+            <p>
                 For information on destroying your paper records and removing the digital files from
                 your system, read the article{' '}
                 <Link
