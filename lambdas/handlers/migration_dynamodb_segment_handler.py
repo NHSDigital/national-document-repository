@@ -9,7 +9,11 @@ def lambda_handler(event, context):
     execution_id = None
     
     try:
-        if 'executionId' not in event or not isinstance(event['executionId'], str) or event['executionId'].strip() == '':
+        if 'executionId' not in event:
+            raise ValueError("Invalid or missing 'executionId' in event")
+        
+        execution_id = event['executionId']
+        if not isinstance(execution_id, str) or execution_id.strip() == "":
             raise ValueError("Invalid or missing 'executionId' in event")
         
         if 'totalSegments' not in event:
@@ -25,7 +29,7 @@ def lambda_handler(event, context):
         if total_segments > 1000:
             raise ValueError("'totalSegments' exceeds maximum allowed value of 1000")
 
-        execution_id = event['executionId'].split(':')[-1]
+        execution_id = execution_id.split(':')[-1]
         return MigrationDynamoDBSegmentService().segment(execution_id, total_segments)
     except Exception as e:
         extras = {
