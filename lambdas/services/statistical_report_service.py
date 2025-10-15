@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 import polars as pl
 import polars.selectors as column_select
 from inflection import humanize
-
 from models.report.statistics import (
     ApplicationData,
     LoadedStatisticData,

@@ -19,10 +19,10 @@ describe('DocumentUploadInfectedStage', () => {
     describe('Rendering', () => {
         it('renders infected warning when document has infected status', () => {
             const contentStrings = [
-                "We couldn't upload your files because we found a virus",
+                'Warning: we found a virus in your files',
                 'One or more of your files has a virus.',
                 "To keep patient information safe and our systems secure, we've stopped the upload.",
-                'Contact your local IT support desk for help.',
+                'Contact your local IT support desk for help immediately. Do not attempt to upload the files again until they have been made safe.',
                 'Go to home',
             ];
 

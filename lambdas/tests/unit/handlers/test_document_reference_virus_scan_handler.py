@@ -34,7 +34,7 @@ def test_lambda_handler_returns_200(mocked_service, context):
     )
 
 
-def test_lambda_handler_returns_200_multipule_objects(mocked_service, context):
+def test_lambda_handler_returns_200_multiple_objects(mocked_service, context):
     object_key_1 = "user_upload/test_file.pdf"
     object_key_2 = "user_upload/test_file2.pdf"
 
