@@ -369,8 +369,8 @@ def test_validate_update_document_reference_request_with_non_final_document(mock
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
         mock_service._validate_update_document_reference_request(valid_fhir_doc_json)
 
-    assert excinfo.value.status_code == 403
-    assert excinfo.value.error == LambdaError.DocumentReferenceForbidden
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.error == LambdaError.UpdateDocNotLatestVersion
 
 
 def test_validate_update_document_reference_request_mismatched_version(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):

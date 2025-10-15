@@ -126,9 +126,9 @@ class PutFhirDocumentReferenceService:
             )
 
         if not current_doc.doc_status == "final":
-            logger.error("Document is not the latest version.") #would it be better to have the same error message as above?
+            logger.error("Document is not the latest version.")
             raise UpdateFhirDocumentReferenceException(
-                403, LambdaError.DocumentReferenceForbidden
+                400, LambdaError.UpdateDocNotLatestVersion
             )
         
         put_nhs_number = self.document_service.extract_nhs_number_from_fhir(validated_fhir_doc)

@@ -163,6 +163,11 @@ class LambdaError(Enum):
         "message": "NHS number did not match",
         "fhir_coding": FhirIssueCoding.INVARIANT
     }
+    UpdateDocNotLatestVersion = {
+        "err_code": "UDR_5006",
+        "message": "Document is no the latest version",
+        "fhir_coding": FhirIssueCoding.INVARIANT
+    }
 
     """
        Errors for InvalidDocTypeException
