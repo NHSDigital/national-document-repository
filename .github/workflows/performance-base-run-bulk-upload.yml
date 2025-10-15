@@ -38,6 +38,11 @@ on:
         required: false
         type: "string"
         default: "1"
+      use_bulk_upload_metadata_processor:
+        description: "Use BulkUploadMetadataProcessor Lambda"
+        required: true
+        type: "boolean"
+        default: false
     secrets:
       AWS_ASSUME_ROLE:
         required: true
@@ -85,7 +90,13 @@ jobs:
 
       - name: Run Bulk Upload
         run: |
+          if [[ "${{inputs.use_bulk_upload_metadata_processor}}" == "true" ]]; then
+            BULK_UPLOAD_METADATA_PROCESSOR_FLAG="--use-bulk-upload-metadata-processor"
+          else
+            BULK_UPLOAD_METADATA_PROCESSOR_FLAG=""
+          fi
           python performance_run_bulk_upload.py \
             --environment "${{ inputs.sandbox }}" \
-            --start-bulk-upload
+            --start-bulk-upload\
+            "${BULK_UPLOAD_METADATA_PROCESSOR_FLAG}"
         working-directory: ./tests/bulk-upload/scripts

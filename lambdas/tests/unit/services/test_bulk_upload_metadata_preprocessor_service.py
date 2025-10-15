@@ -16,7 +16,7 @@ from tests.unit.conftest import (
 from utils.exceptions import InvalidFileNameException, MetadataPreprocessingException
 
 
-class TestMetadataPreprocessorService(MetadataPreprocessorService):
+class MockMetadataPreprocessorService(MetadataPreprocessorService):
     def validate_record_filename(self, original_filename: str, *args, **kwargs) -> str:
         return original_filename
 
@@ -25,7 +25,7 @@ class TestMetadataPreprocessorService(MetadataPreprocessorService):
 @freeze_time("2025-01-01T12:00:00")
 def test_service(mocker, set_env):
     mocker.patch("services.bulk_upload_metadata_preprocessor_service.S3Service")
-    service = TestMetadataPreprocessorService(
+    service = MockMetadataPreprocessorService(
         practice_directory="test_practice_directory"
     )
     return service
