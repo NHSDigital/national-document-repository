@@ -519,9 +519,6 @@ def test_get_batch_document_references_by_id_client_error(
     with pytest.raises(ClientError):
         mock_service.get_batch_document_references_by_id(document_ids, doc_type)
 
-def test_store_binary_in_s3(mock_service, mock_dynamo_service):
-    pass
-
 @pytest.mark.parametrize(
     "modify_doc",
     [
@@ -567,11 +564,11 @@ def test_dynamo_error(mock_service, mocker):
 
     mock_document = mocker.MagicMock()
 
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.save_document_reference_to_dynamo("", mock_document)
 
 
-def test_save_document_reference_to_dynamo_error(mock_service, mocker):
+def test_save_document_reference_to_dynamo_error(mock_service):
     """Test _save_document_reference_to_dynamo method with DynamoDB error."""
 
     mock_service.dynamo_service.create_item.side_effect = ClientError(
@@ -589,7 +586,7 @@ def test_save_document_reference_to_dynamo_error(mock_service, mocker):
         document_snomed_code_type="test-code",
     )
 
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.save_document_reference_to_dynamo("test-table", document_ref)
 
     mock_service.dynamo_service.create_item.assert_called_once()
@@ -605,7 +602,7 @@ def test_check_nhs_number_with_pds_raise_error(mock_service, mocker):
     mock_service_object.fetch_patient_details.side_effect = PatientNotFoundException(
         "test test"
     )
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.check_nhs_number_with_pds("9000000009")
 
 
@@ -617,7 +614,7 @@ def test_extract_nhs_number_from_fhir_with_invalid_system(mock_service, mocker):
         identifier=Identifier(system="invalid-system", value="9000000009")
     )
 
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.extract_nhs_number_from_fhir(fhir_doc)
 
 
@@ -718,7 +715,7 @@ def test_extract_nhs_number_from_fhir_with_missing_identifier(mock_service, mock
     fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
     fhir_doc.subject = Reference(identifier=None)
 
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.extract_nhs_number_from_fhir(fhir_doc)
 
 
@@ -727,7 +724,7 @@ def test_determine_document_type_with_missing_type(mock_service, mocker):
     fhir_doc = mocker.MagicMock(spec=FhirDocumentReference)
     fhir_doc.type = None
 
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.determine_document_type(fhir_doc)
 
 
@@ -737,7 +734,7 @@ def test_determine_document_type_with_missing_coding(mock_service, mocker):
     fhir_doc.type = mocker.MagicMock()
     fhir_doc.type.coding = None
 
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.determine_document_type(fhir_doc)
 
 
@@ -815,7 +812,7 @@ def test_store_binary_in_s3_with_client_error(mock_service):
         "PutObject",
     )
 
-    with pytest.raises(DocumentServiceException) as excinfo:
+    with pytest.raises(DocumentServiceException):
         mock_service.store_binary_in_s3(TEST_DOCUMENT_REFERENCE, binary_data)
 
 
@@ -856,7 +853,7 @@ def test_get_document_reference_no_documents_found(mocker, mock_service):
     """Test that get_document_reference raises an error when there are no document results"""
     mock_service.fetch_documents_from_table = mocker.patch("services.document_service.DocumentService.fetch_documents_from_table", return_value=[])
 
-    with pytest.raises(DocumentServiceException) as e:
+    with pytest.raises(DocumentServiceException):
         mock_service.get_document_reference("", "")
 
 
@@ -876,7 +873,7 @@ def test_create_s3_presigned_url_error(mock_service):
     mock_service.s3_service.create_put_presigned_url.side_effect = ClientError({"Error": {}}, "")
     document = create_test_lloyd_george_doc_store_refs()[0]
 
-    with pytest.raises(DocumentServiceException) as e:
+    with pytest.raises(DocumentServiceException):
         mock_service.create_s3_presigned_url(document)
 
 
@@ -896,7 +893,7 @@ def test_store_binary_in_s3_on_memory_error(mock_service):
     mock_service.s3_service.upload_file_obj.side_effect = MemoryError()
     document = create_test_lloyd_george_doc_store_refs()[0]
 
-    with pytest.raises(DocumentServiceException) as e:
+    with pytest.raises(DocumentServiceException):
         mock_service.store_binary_in_s3(document, bytes())
 
 
@@ -905,7 +902,7 @@ def test_store_binary_in_s3_on_oserror(mock_service):
     mock_service.s3_service.upload_file_obj.side_effect = OSError()
     document = create_test_lloyd_george_doc_store_refs()[0]
 
-    with pytest.raises(DocumentServiceException) as e:
+    with pytest.raises(DocumentServiceException):
         mock_service.store_binary_in_s3(document, bytes())
 
 
@@ -914,7 +911,7 @@ def test_store_binary_in_s3_on_ioerror(mock_service):
     mock_service.s3_service.upload_file_obj.side_effect = IOError()
     document = create_test_lloyd_george_doc_store_refs()[0]
 
-    with pytest.raises(DocumentServiceException) as e:
+    with pytest.raises(DocumentServiceException):
         mock_service.store_binary_in_s3(document, bytes())
 
 def test_get_available_lloyd_george_record_for_patient_return_docs(mocker, mock_service, valid_nhs_number):
@@ -937,7 +934,7 @@ def test_get_available_lloyd_george_record_for_patient_no_available_docs_error(m
         return_value = None
     )
 
-    with pytest.raises(NoAvailableDocument) as e:
+    with pytest.raises(NoAvailableDocument):
         mock_service.get_available_lloyd_george_record_for_patient(valid_nhs_number)
 
 
@@ -953,7 +950,7 @@ def test_get_available_lloyd_george_record_for_patient_file_upload_in_progress(m
     return_value = documents
     )
 
-    with pytest.raises(FileUploadInProgress) as e:
+    with pytest.raises(FileUploadInProgress):
         mock_service.get_available_lloyd_george_record_for_patient(valid_nhs_number)
 
 
@@ -962,7 +959,7 @@ def test_delete_document_object_error_on_nonexistant_file(mock_service):
        when the file doesn't exist"""
     mock_service.s3_service.file_exist_on_s3.return_value = None
 
-    with pytest.raises(DocumentServiceException) as e:
+    with pytest.raises(DocumentServiceException):
         mock_service.delete_document_object("", "")
 
 
@@ -1000,7 +997,7 @@ def test_fetch_documents_from_table_pagination(mock_service):
 
     mock_service.dynamo_service.query_table_by_index.side_effect = [first_mock_response, second_mock_response]
 
-    response = mock_service.fetch_documents_from_table("", "", "")
+    mock_service.fetch_documents_from_table("", "", "")
 
     mock_service.dynamo_service.query_table_by_index.assert_any_call(
         table_name=ANY,
