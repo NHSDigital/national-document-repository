@@ -2,7 +2,7 @@
 
 These tests focus on the features of the NDR. This will serve as a blended suite of integration and end-to-end (E2E) tests, with the aim to validate API functionality and snapshot comparisons.
 
-There are 2 suites which seperately test
+There are 2 suites which separately test
 
 1. FHIR API endpoints using mTLS `lambdas/tests/e2e/api/fhir/` (routed to **PDM** usecase)
 2. API endpoints **not** using mTLS `lambdas/tests/e2e/api/` (routed to **Lloyd George** usecase)
@@ -17,7 +17,7 @@ aws sso login --profile <your-aws-profile>
 export AWS_PROFILE=<your-aws-profile>
 ```
 
-An exmaple profile:
+An example profile:
 
 ```bash
 [sso-session PRM]
@@ -36,7 +36,7 @@ Make sure your AWS profile has access to the required resources.
 
 ## 🔧 Available Make Commands
 
-- `make test-fhir-api-e2etest-fhir-api-e2e WORKSPACE=<workspace>` — Runs the FHIR API E2E tests with mTLS against a given workspace
+- `make test-fhir-api-e2e WORKSPACE=<workspace>` — Runs the FHIR API E2E tests with mTLS against a given workspace
 
 - `make test-api-e2e` — Runs the E2E tests without mTLS
 
@@ -54,7 +54,7 @@ This runs pytest with the additional argument `--snapshot-update` which will rep
 
 You can download the mTLS certificates used in the requests if you need to inspect them by running
 
-- `make download-api-certs WORKSPACE=<workspae>` — Downloads mTLS client cert and client key used in the request
+- `make download-api-certs WORKSPACE=<workspace>` — Downloads mTLS client cert and client key used in the request
 
 ❗ Always delete these after use and never commit them.
 

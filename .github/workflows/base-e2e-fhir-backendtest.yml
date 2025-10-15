@@ -59,4 +59,4 @@ jobs:
           echo PATH=$PATH >> $GITHUB_ENV
 
       - name: Run E2e Tests
-        run: ./scripts/test/run-e2e-fhir-api-tests.sh --workspace ${{ inputs.sandbox }}
+        run: make test-fhir-api-e2e WORKSPACE=${{ inputs.sandbox }}
