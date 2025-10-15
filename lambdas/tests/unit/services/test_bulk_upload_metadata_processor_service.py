@@ -5,15 +5,13 @@ from unittest.mock import call
 
 import pytest
 from botocore.exceptions import ClientError
-from freezegun import freeze_time
-
 from enums.upload_status import UploadStatus
+from freezegun import freeze_time
 from models.staging_metadata import (
     METADATA_FILENAME,
     BulkUploadQueueMetadata,
     MetadataFile,
 )
-
 from services.bulk_upload_metadata_preprocessor_service import (
     MetadataPreprocessorService,
 )
@@ -525,9 +523,7 @@ def test_handle_invalid_filename_writes_failed_entry_to_dynamo(
         test_service.dynamo_repository, "write_report_upload_to_dynamo"
     )
 
-    test_service.handle_invalid_filename(
-        base_metadata_file, error, nhs_number
-    )
+    test_service.handle_invalid_filename(base_metadata_file, error, nhs_number)
 
     expected_file = test_service.convert_to_sqs_metadata(
         base_metadata_file, base_metadata_file.file_path

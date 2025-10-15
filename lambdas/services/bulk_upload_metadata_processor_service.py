@@ -9,14 +9,12 @@ from typing import Iterable
 
 import pydantic
 from botocore.exceptions import ClientError
-
 from enums.upload_status import UploadStatus
 from models.staging_metadata import (
     METADATA_FILENAME,
     BulkUploadQueueMetadata,
     MetadataFile,
     StagingSqsMetadata,
-    StagingMetadata
 )
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
@@ -119,7 +117,7 @@ class BulkUploadMetadataProcessorService:
         ]
 
     def process_metadata_row(
-            self, row: dict, patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]]
+        self, row: dict, patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]]
     ) -> None:
         file_metadata = MetadataFile.model_validate(row)
         nhs_number, ods_code = self.extract_patient_info(file_metadata)
@@ -127,9 +125,7 @@ class BulkUploadMetadataProcessorService:
         try:
             correct_file_name = self.validate_and_correct_filename(file_metadata)
         except InvalidFileNameException as error:
-            self.handle_invalid_filename(
-                file_metadata, error, nhs_number
-            )
+            self.handle_invalid_filename(file_metadata, error, nhs_number)
             return
 
         sqs_metadata = self.convert_to_sqs_metadata(file_metadata, correct_file_name)
@@ -137,7 +133,7 @@ class BulkUploadMetadataProcessorService:
 
     @staticmethod
     def convert_to_sqs_metadata(
-            file: MetadataFile, stored_file_name: str
+        file: MetadataFile, stored_file_name: str
     ) -> BulkUploadQueueMetadata:
         return BulkUploadQueueMetadata(
             **file.model_dump(), stored_file_name=stored_file_name
@@ -149,8 +145,8 @@ class BulkUploadMetadataProcessorService:
         return nhs_number, ods_code
 
     def validate_and_correct_filename(
-            self,
-            file_metadata: MetadataFile,
+        self,
+        file_metadata: MetadataFile,
     ) -> str:
         try:
             validate_file_name(file_metadata.file_path.split("/")[-1])
@@ -163,15 +159,17 @@ class BulkUploadMetadataProcessorService:
         return valid_filepath
 
     def handle_invalid_filename(
-            self,
-            file_metadata: MetadataFile,
-            error: InvalidFileNameException,
-            nhs_number: str,
+        self,
+        file_metadata: MetadataFile,
+        error: InvalidFileNameException,
+        nhs_number: str,
     ) -> None:
         logger.error(
             f"Failed to process {file_metadata.file_path} due to error: {error}"
         )
-        failed_file = self.convert_to_sqs_metadata(file_metadata, file_metadata.file_path)
+        failed_file = self.convert_to_sqs_metadata(
+            file_metadata, file_metadata.file_path
+        )
         failed_entry = StagingSqsMetadata(
             nhs_number=nhs_number,
             files=[failed_file],
@@ -181,7 +179,7 @@ class BulkUploadMetadataProcessorService:
         )
 
     def send_metadata_to_fifo_sqs(
-            self, staging_sqs_metadata_list: list[StagingSqsMetadata]
+        self, staging_sqs_metadata_list: list[StagingSqsMetadata]
     ) -> None:
         sqs_group_id = f"bulk_upload_{uuid.uuid4()}"
 
