@@ -23,6 +23,7 @@ from tests.unit.helpers.data.dynamo.dynamo_responses import (
 )
 from tests.unit.helpers.data.test_documents import (
     create_test_lloyd_george_doc_store_refs,
+    create_valid_fhir_doc_json
 )
 from utils.common_query_filters import NotDeleted
 from utils.dynamo_query_filter_builder import DynamoQueryFilterBuilder
@@ -41,9 +42,7 @@ from utils.exceptions import (
     DocumentServiceException,
     FileUploadInProgress,
     NoAvailableDocument,
-    InvalidResourceIdException,
     PatientNotFoundException,
-    PdsErrorException,
 )
 
 MOCK_DOCUMENT = MOCK_SEARCH_RESPONSE["Items"][0]
@@ -88,55 +87,7 @@ def valid_nhs_number():
 
 @pytest.fixture
 def valid_fhir_doc_json(valid_nhs_number):
-    return json.dumps(
-        {
-            "resourceType": "DocumentReference",
-            "docStatus": "final",
-            "status": "current",
-            "subject": {
-                "identifier": {
-                    "system": "https://fhir.nhs.uk/Id/nhs-number",
-                    "value": valid_nhs_number,
-                }
-            },
-            "type": {
-                "coding": [
-                    {
-                        "system": "http://snomed.info/sct",
-                        "code": SnomedCodes.LLOYD_GEORGE.value.code,
-                        "display": SnomedCodes.LLOYD_GEORGE.value.display_name,
-                    }
-                ]
-            },
-            "custodian": {
-                "identifier": {
-                    "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                    "value": "A12345",
-                }
-            },
-            "author": [
-                {
-                    "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                        "value": "A12345",
-                    }
-                }
-            ],
-            "content": [
-                {
-                    "attachment": {
-                        "contentType": "application/pdf",
-                        "language": "en-GB",
-                        "title": "test-file.pdf",
-                        "creation": "2023-01-01T12:00:00Z",
-                    }
-                }
-            ],
-            "meta": {
-                "versionId": "1"
-            }
-        }
-    )
+    return create_valid_fhir_doc_json(valid_nhs_number)
 
 
 @pytest.fixture
@@ -533,7 +484,7 @@ def test_get_batch_document_references_by_id_client_error(
             "type": {
                 "coding": [
                     {
-                        "system": "http://snomed.info/sct",
+                        "system": "https://snomed.info/sct",
                         "code": "invalid-code",
                         "display": "Invalid",
                     }

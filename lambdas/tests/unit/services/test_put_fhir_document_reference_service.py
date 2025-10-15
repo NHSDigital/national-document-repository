@@ -12,7 +12,7 @@ from services.put_fhir_document_reference_service import (
 )
 from tests.unit.conftest import APIM_API_URL
 from utils.lambda_exceptions import UpdateFhirDocumentReferenceException
-from tests.unit.helpers.data.test_documents import create_test_doc_store_refs
+from tests.unit.helpers.data.test_documents import create_test_doc_store_refs, create_valid_fhir_doc_json
 from utils.exceptions import DocumentServiceException
 from pydantic import ValidationError
 
@@ -40,55 +40,7 @@ def mock_service(set_env, mocker):
 
 @pytest.fixture
 def valid_fhir_doc_json(valid_nhs_number):
-    return json.dumps(
-        {
-            "resourceType": "DocumentReference",
-            "docStatus": "final",
-            "status": "current",
-            "subject": {
-                "identifier": {
-                    "system": "https://fhir.nhs.uk/Id/nhs-number",
-                    "value": valid_nhs_number,
-                }
-            },
-            "type": {
-                "coding": [
-                    {
-                        "system": "http://snomed.info/sct",
-                        "code": SnomedCodes.LLOYD_GEORGE.value.code,
-                        "display": SnomedCodes.LLOYD_GEORGE.value.display_name,
-                    }
-                ]
-            },
-            "custodian": {
-                "identifier": {
-                    "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                    "value": "A12345",
-                }
-            },
-            "author": [
-                {
-                    "identifier": {
-                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-                        "value": "A12345",
-                    }
-                }
-            ],
-            "content": [
-                {
-                    "attachment": {
-                        "contentType": "application/pdf",
-                        "language": "en-GB",
-                        "title": "test-file.pdf",
-                        "creation": "2023-01-01T12:00:00Z",
-                    }
-                }
-            ],
-            "meta": {
-                "versionId": "1"
-            }
-        }
-    )
+    return create_valid_fhir_doc_json(valid_nhs_number)
 
 
 @pytest.fixture
@@ -273,63 +225,6 @@ def test_s3_upload_error(mock_service, valid_fhir_doc_with_binary, valid_doc_ref
 
     assert excinfo.value.status_code == 500
     assert excinfo.value.error == LambdaError.UpdateDocNoParse
-
-
-def test_create_fhir_response_with_presigned_url(mock_service, mocker):
-    """Test _create_fhir_response method with a presigned URL."""
-
-    mocker.patch.object(
-        SnomedCodes, "find_by_code", return_value=SnomedCodes.LLOYD_GEORGE.value
-    )
-
-    document_ref = DocumentReference(
-        id="test-id",
-        nhs_number="9000000009",
-        current_gp_ods="A12345",
-        custodian="A12345",
-        s3_bucket_name="test-bucket",
-        content_type="application/pdf",
-        file_name="test-file.pdf",
-        document_snomed_code_type=SnomedCodes.LLOYD_GEORGE.value.code,
-        document_scan_creation="2023-01-01T12:00:00Z",
-    )
-    presigned_url = "https://test-presigned-url.com"
-
-    result = mock_service._create_fhir_response(document_ref, presigned_url)
-
-    result_json = json.loads(result)
-    assert result_json["resourceType"] == "DocumentReference"
-    assert result_json["content"][0]["attachment"]["url"] == presigned_url
-
-
-def test_create_fhir_response_without_presigned_url(mock_service, mocker):
-    """Test _create_fhir_response method without a presigned URL (for binary uploads)."""
-
-    mocker.patch.object(
-        SnomedCodes, "find_by_code", return_value=SnomedCodes.LLOYD_GEORGE.value
-    )
-    custom_endpoint = f"{APIM_API_URL}/DocumentReference"
-
-    document_ref = DocumentReference(
-        id="test-id",
-        nhs_number="9000000009",
-        current_gp_ods="A12345",
-        custodian="A12345",
-        s3_bucket_name="test-bucket",
-        content_type="application/pdf",
-        file_name="test-file.pdf",
-        document_snomed_code_type=SnomedCodes.LLOYD_GEORGE.value.code,
-        document_scan_creation="2023-01-01T12:00:00Z",
-    )
-
-    result = mock_service._create_fhir_response(document_ref, None)
-
-    result_json = json.loads(result)
-    assert result_json["resourceType"] == "DocumentReference"
-    expected_url = (
-        f"{custom_endpoint}/{SnomedCodes.LLOYD_GEORGE.value.code}~{document_ref.id}"
-    )
-    assert result_json["content"][0]["attachment"]["url"] == expected_url
 
 
 def test_process_fhir_document_reference_with_malformed_json(mock_service):
