@@ -10,9 +10,10 @@ on:
         type: 'string'
 
 permissions:
+  actions: read   # Required for anchore/sbom-action
+  contents: write # Required for anchore/sbom-action
   pull-requests: write
   id-token: write # This is required for requesting the JWT
-  contents: read # This is required for actions/checkout
 
 jobs:
   react_testing_job:

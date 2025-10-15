@@ -1,10 +1,17 @@
+import os
 from datetime import datetime
 from typing import Any, Dict
 
 import inflection
 from enums.dynamo_filter import AttributeOperator
+from enums.lambda_error import LambdaError
+from enums.snomed_codes import SnomedCode, SnomedCodes
+from utils.audit_logging_setup import LoggingService
 from utils.common_query_filters import get_not_deleted_filter
 from utils.dynamo_query_filter_builder import DynamoQueryFilterBuilder
+from utils.lambda_exceptions import InvalidDocTypeException
+
+logger = LoggingService(__name__)
 
 
 def create_expressions(requested_fields: list) -> tuple[str, dict]:
@@ -147,3 +154,22 @@ def parse_dynamo_record(dynamodb_record: Dict[str, Any]) -> Dict[str, Any]:
             case _:
                 raise ValueError(f"Unsupported DynamoDB type for key {key}: {value}")
     return result
+
+
+class DocTypeTableRouter:
+    def __init__(self):
+        self.lg_dynamo_table = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
+        self.pdm_dynamo_table = os.getenv("PDM_DYNAMODB_NAME")
+        self.mapping = {
+            SnomedCodes.LLOYD_GEORGE.value.code: self.lg_dynamo_table,
+            SnomedCodes.PATIENT_DATA.value.code: self.pdm_dynamo_table,
+        }
+
+    def resolve(self, doc_type: SnomedCode) -> str:
+        try:
+            return self.mapping[doc_type.code]
+        except KeyError:
+            logger.error(
+                f"SNOMED code {doc_type.code} - {doc_type.display_name} is not supported"
+            )
+            raise InvalidDocTypeException(400, LambdaError.DocTypeDB)
