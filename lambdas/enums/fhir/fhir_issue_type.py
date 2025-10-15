@@ -7,6 +7,7 @@ class FhirIssueCoding(Enum):
     NOT_FOUND = ("not-found", "Not Found")
     EXCEPTION = ("exception", "Exception")
     UNKNOWN = ("unknown", "Unknown User")
+    CONFLICT = ("conflict", "Edit Version Conflict")
 
     @property
     def code(self):
