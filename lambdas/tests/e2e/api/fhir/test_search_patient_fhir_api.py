@@ -30,14 +30,6 @@ def test_search_patient_details(test_data):
     bundle = response.json()
     logging.info(bundle)
 
-    # attachment_url = bundle["entry"][1]["resource"]["content"][0]["attachment"]["url"]
-    # This will fail for now as the search endpoint is searching both tables, so if a record from Lloyd George
-    # comes back first, that snomed will be used
-    # assert (
-    #     f"https://{APIM_ENDPOINT}/national-document-repository/DocumentReference/{PDM_SNOMED}~"
-    #     in attachment_url
-    # )
-
 
 def test_multiple_cancelled_search_patient_details(test_data):
     pdm_record = {}

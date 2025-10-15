@@ -18,7 +18,7 @@ def test_small_file(test_data):
     test_data.append(pdm_record)
 
     pdm_record["id"] = str(uuid.uuid4())
-    pdm_record["nhs_number"] = "9449305943"  # chnage this?
+    pdm_record["nhs_number"] = "9449305943"
     pdm_record["data"] = io.BytesIO(b"Sample PDF Content")
 
     pdm_data_helper.create_metadata(pdm_record)
