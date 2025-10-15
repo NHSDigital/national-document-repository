@@ -2,7 +2,7 @@ import json
 
 import pytest
 from enums.lambda_error import LambdaError
-from handlers.post_fhir_document_reference_handler import lambda_handler
+from handlers.post_document_reference_fhir_handler import lambda_handler
 from utils.lambda_exceptions import CreateDocumentRefException
 
 
@@ -87,7 +87,7 @@ def valid_mtls_event():
 @pytest.fixture
 def mock_service(mocker):
     mock_service = mocker.patch(
-        "handlers.post_fhir_document_reference_handler.PostFhirDocumentReferenceService"
+        "handlers.post_document_reference_fhir_handler.PostFhirDocumentReferenceService"
     )
     mock_service_instance = mock_service.return_value
     return mock_service_instance

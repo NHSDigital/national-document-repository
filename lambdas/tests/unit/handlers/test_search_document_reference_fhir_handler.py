@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from enums.lambda_error import LambdaError
-from handlers.fhir_document_reference_search_handler import (
+from handlers.search_document_reference_fhir_handler import (
     extract_bearer_token,
     lambda_handler,
     parse_query_parameters,
@@ -95,7 +95,7 @@ def missing_auth_event():
 @pytest.fixture
 def mock_document_reference_search_service():
     with patch(
-        "handlers.fhir_document_reference_search_handler.DocumentReferenceSearchService"
+        "handlers.search_document_reference_fhir_handler.DocumentReferenceSearchService"
     ) as mock_service:
         service_instance = mock_service.return_value
         yield service_instance
@@ -104,7 +104,7 @@ def mock_document_reference_search_service():
 @pytest.fixture
 def mock_oidc_service():
     with patch(
-        "handlers.fhir_document_reference_search_handler.OidcService"
+        "handlers.search_document_reference_fhir_handler.OidcService"
     ) as mock_service:
         service_instance = mock_service.return_value
         yield service_instance
@@ -113,7 +113,7 @@ def mock_oidc_service():
 @pytest.fixture
 def mock_search_patient_service():
     with patch(
-        "handlers.fhir_document_reference_search_handler.SearchPatientDetailsService"
+        "handlers.search_document_reference_fhir_handler.SearchPatientDetailsService"
     ) as mock_service:
         yield mock_service
 
@@ -121,7 +121,7 @@ def mock_search_patient_service():
 @pytest.fixture
 def mock_dynamic_config_service():
     with patch(
-        "handlers.fhir_document_reference_search_handler.DynamicConfigurationService"
+        "handlers.search_document_reference_fhir_handler.DynamicConfigurationService"
     ) as mock_service:
         service_instance = mock_service.return_value
         yield service_instance
@@ -371,11 +371,11 @@ def test_extract_bearer_token_missing():
     assert e.value.status_code == 401
 
 
-@patch("handlers.fhir_document_reference_search_handler.OidcService")
-@patch("handlers.fhir_document_reference_search_handler.SearchPatientDetailsService")
-@patch("handlers.fhir_document_reference_search_handler.DynamicConfigurationService")
-@patch("handlers.fhir_document_reference_search_handler.SSMService")
-@patch("handlers.fhir_document_reference_search_handler.WebApplicationClient")
+@patch("handlers.search_document_reference_fhir_handler.OidcService")
+@patch("handlers.search_document_reference_fhir_handler.SearchPatientDetailsService")
+@patch("handlers.search_document_reference_fhir_handler.DynamicConfigurationService")
+@patch("handlers.search_document_reference_fhir_handler.SSMService")
+@patch("handlers.search_document_reference_fhir_handler.WebApplicationClient")
 def test_validate_user_access_success(
     mock_web_client,
     mock_ssm,
@@ -416,8 +416,8 @@ def test_validate_user_access_success(
     )
 
 
-@patch("handlers.fhir_document_reference_search_handler.OidcService")
-@patch("handlers.fhir_document_reference_search_handler.DynamicConfigurationService")
+@patch("handlers.search_document_reference_fhir_handler.OidcService")
+@patch("handlers.search_document_reference_fhir_handler.DynamicConfigurationService")
 def test_validate_user_access_oidc_failure(mock_config_service, mock_oidc_service):
     # Setup mocks
     mock_oidc_instance = mock_oidc_service.return_value
@@ -432,9 +432,9 @@ def test_validate_user_access_oidc_failure(mock_config_service, mock_oidc_servic
     assert e.value.status_code == 403
 
 
-@patch("handlers.fhir_document_reference_search_handler.OidcService")
-@patch("handlers.fhir_document_reference_search_handler.SearchPatientDetailsService")
-@patch("handlers.fhir_document_reference_search_handler.DynamicConfigurationService")
+@patch("handlers.search_document_reference_fhir_handler.OidcService")
+@patch("handlers.search_document_reference_fhir_handler.SearchPatientDetailsService")
+@patch("handlers.search_document_reference_fhir_handler.DynamicConfigurationService")
 def test_validate_user_access_patient_search_failure(
     mock_config_service, mock_search_service, mock_oidc_service
 ):
@@ -462,8 +462,8 @@ def test_validate_user_access_patient_search_failure(
     assert e.value.status_code == 403
 
 
-@patch("handlers.fhir_document_reference_search_handler.OidcService")
-@patch("handlers.fhir_document_reference_search_handler.DynamicConfigurationService")
+@patch("handlers.search_document_reference_fhir_handler.OidcService")
+@patch("handlers.search_document_reference_fhir_handler.DynamicConfigurationService")
 def test_validate_user_access_authorization_failure(
     mock_config_service, mock_oidc_service
 ):

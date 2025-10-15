@@ -19,6 +19,9 @@ ZIP_COMMON_FILES = lambdas/utils lambdas/models lambdas/services lambdas/reposit
 
 default: help
 
+help: ## This help message
+		@grep -E --no-filename '^[a-zA-Z-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-42s\033[0m %s\n", $$1, $$2}'
+
 clean: clean-build clean-py clean-test
 
 clean-build:
@@ -68,7 +71,7 @@ test-api-e2e-snapshots:
 test-bulk-upload-e2e:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/e2e/bulk_upload -vv
 
-test-unit:
+test-unit: ## Run unit tests.
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/unit
 
 test-unit-coverage:
@@ -80,7 +83,7 @@ test-unit-coverage-html:
 test-unit-collect:
 	cd ./lambdas && ./venv/bin/python3 -m pytest tests/unit --collect-only
 
-env:
+env: ## build a virtual environment.
 	rm -rf lambdas/venv || true
 	python3 -m venv ./lambdas/venv
 	./lambdas/venv/bin/pip3 install --upgrade pip
@@ -90,6 +93,9 @@ env:
 	./lambdas/venv/bin/pip3 install -r $(REPORTS_REQUIREMENTS) --no-cache-dir
 	./lambdas/venv/bin/pip3 install -r $(ALERTING_REQUIREMENTS) --no-cache-dir
 
+destroy-env: ## Destroy a virtual environment.
+	deactivate
+	rm -rf lambdas/venv || true
 
 github_env:
 	rm -rf lambdas/venv || true
@@ -157,13 +163,13 @@ build:
 build-env-check:
 	npm --prefix ./app run build-env-check
 
-docker-up:
+docker-up: ## Run docker container.
 	docker-compose -f ./app/docker-compose.yml up -d
 
-docker-up-rebuild:
+docker-up-rebuild: ## Rebuild docker container.
 	docker-compose -f ./app/docker-compose.yml up -d --build --force-recreate
 
-docker-down:
+docker-down: ## Destroy docker container. 
 	docker-compose -f ./app/docker-compose.yml down
 
 cypress-open:
