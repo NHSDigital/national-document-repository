@@ -155,8 +155,13 @@ class LambdaError(Enum):
     }
     UpdateDocVersionMismatch = {
         "err_code": "UDR_5004",
-        "message": "",
+        "message": "Document reference version did not match current document version",
         "fhir_coding": FhirIssueCoding.CONFLICT,
+    }
+    UpdateDocNHSNumberMismatch = {
+        "err_code": "UDR_5005",
+        "message": "NHS number did not match",
+        "fhir_coding": FhirIssueCoding.INVARIANT
     }
 
     """

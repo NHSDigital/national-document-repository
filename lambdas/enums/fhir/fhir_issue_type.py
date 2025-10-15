@@ -8,6 +8,7 @@ class FhirIssueCoding(Enum):
     EXCEPTION = ("exception", "Exception")
     UNKNOWN = ("unknown", "Unknown User")
     CONFLICT = ("conflict", "Edit Version Conflict")
+    INVARIANT = ("invariant", "Validation rule failed")
 
     @property
     def code(self):
