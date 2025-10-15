@@ -83,7 +83,7 @@ def test_create_document_base64(test_data):
     retrieve_url = f"https://{MTLS_ENDPOINT}/DocumentReference/{upload_response['id']}"
 
     # Data gets attched after virus scanner check so need to poll until it's there
-    # Don't check for data attchement here - this can be a seperate test
+    # This attachement work is still in progress for PDM usecase
     # def condition(response_json):
     #     logging.info(response_json)
     #     return response_json["content"][0]["attachment"].get("data", False)

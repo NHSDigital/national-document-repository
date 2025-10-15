@@ -1,5 +1,5 @@
 # .github/workflows/terraform-dev
-name: "Z-BASE E2e Test: E2e shared actions for running tests on the NDR Backend"
+name: "Z-BASE FHIR API E2E Test: E2e shared actions for running FHIR API tests on the NDR Backend"
 
 on:
   workflow_call:

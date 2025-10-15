@@ -16,8 +16,16 @@ permissions:
   contents: read # This is required for actions/checkout
 
 jobs:
-   services-e2etest:
+  services-e2etest:
     uses: ./.github/workflows/base-e2e-backendtest.yml
+    with:
+      build_branch: main
+      environment: development
+      sandbox: ndr-dev
+    secrets:
+      AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
+  services-fhir-api-e2etest:
+    uses: ./.github/workflows/base-e2e-fhir-backendtest.yml
     with:
       build_branch: main
       environment: development

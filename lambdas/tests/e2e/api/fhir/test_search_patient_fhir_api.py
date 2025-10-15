@@ -72,18 +72,6 @@ def test_multiple_cancelled_search_patient_details(test_data):
     response = session.get(url, headers=headers)
     assert response.status_code == 200
 
-    # bundle = response.json()
-    # assert bundle["entry"][0] == snapshot_json(
-    #     exclude=paths(
-    #         "resource.id", "resource.date", "resource.content.0.attachment.url"
-    #     )
-    # )
-    # assert bundle["entry"][1] == snapshot_json(
-    #     exclude=paths(
-    #         "resource.id", "resource.date", "resource.content.0.attachment.url"
-    #     )
-    # )
-
 
 def test_no_records():
     pdm_record = {}

@@ -17,7 +17,7 @@ class PdmDataHelper:
             "ID": pdm_document_details["id"],
             "ContentType": "application/pdf",
             "Created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            "CurrentGpOds": "H81109",  # maybe?
+            "CurrentGpOds": "H81109",
             "Custodian": "H81109",
             "DocStatus": pdm_document_details.get("doc_status", "final"),
             "DocumentScanCreation": "2023-01-01",

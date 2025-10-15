@@ -27,3 +27,11 @@ jobs:
       sandbox: ${{ inputs.sandbox }}
     secrets:
       AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
+  services-fhir-api-e2etest:
+    uses: ./.github/workflows/base-e2e-fhir-backendtest.yml
+    with:
+      build_branch: ${{ inputs.build_branch }}
+      environment: development
+      sandbox: ${{ inputs.sandbox }}
+    secrets:
+      AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
