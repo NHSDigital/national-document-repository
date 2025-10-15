@@ -132,7 +132,8 @@ class UpdateDocumentReferenceService:
                     author = user_ods_code
                 )
 
-                # need to extract the id from the request path and send it down to base service (instead of validated_doc.clientId)
+                # need to extract the id from the request path and send 
+                # it down to base service (instead of validated_doc.clientId)
                 fhir_doc_ref = doc_ref_info.create_fhir_document_reference_object_basic(validated_doc.clientId)
 
                 fhir_doc_ref_service = PutFhirDocumentReferenceService()

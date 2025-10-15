@@ -94,7 +94,6 @@ def lambda_handler(event, context):
 
 def processing_event_details(event):
     failed_message = "Update document reference failed"
-    # '{"resourceType": "DocumentReference", "subject": {"identifier": {"value": "9000000009"}}, "content": [{"attachment": [{"fileName": "1of3_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf", "contentType": "application/pdf", "docType": "LG", "clientId": "uuid1"}, {"fileName": "2of3_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf", "contentType": "application/pdf", "docType": "LG", "clientId": "uuid2"}, {"fileName": "3of3_Lloyd_George_Record_[Joe Bloggs]_[9000000009]_[25-12-2019].pdf", "contentType": "application/pdf", "docType": "LG", "clientId": "uuid3"}]}], "created": "2023-10-02T15:55:30.650Z"}'
     try:
         body = json.loads(event["body"])
         nhs_number = body["subject"]["identifier"]["value"]
