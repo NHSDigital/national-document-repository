@@ -146,6 +146,20 @@ jobs:
     secrets:
       AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
 
+  deploy_bulk_upload_metadata_processor_lambda:
+    name: Deploy bulk_upload_metadata_processor
+    uses: ./.github/workflows/base-lambdas-reusable-deploy.yml
+    with:
+      environment: ${{ inputs.environment}}
+      python_version: ${{ inputs.python_version }}
+      build_branch: ${{ inputs.build_branch}}
+      sandbox: ${{ inputs.sandbox }}
+      lambda_handler_name: bulk_upload_metadata_processor_handler
+      lambda_aws_name: BulkUploadMetadataProcessor
+      lambda_layer_names: 'core_lambda_layer'
+    secrets:
+      AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
+
   deploy_token_request_lambda:
     name: Deploy TokenRequestHandler
     if: ${{ !inputs.mock_login_enabled }}
