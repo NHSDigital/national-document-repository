@@ -502,7 +502,7 @@ def test_document_validation_errors(
     doc = json.loads(valid_fhir_doc_json)
     modified_doc = FhirDocumentReference(**modify_doc(doc))
 
-    with pytest.raises(DocumentServiceException) as e:
+    with pytest.raises(DocumentServiceException):
         mock_service.determine_document_type(modified_doc)
 
 
