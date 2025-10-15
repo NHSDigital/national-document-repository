@@ -302,7 +302,6 @@ class LambdaError(Enum):
         "message": "Failed to fetch parameters for sending email from SSM param store",
     }
 
-
     """
        Errors for Feature Flags lambda 
     """
@@ -362,7 +361,7 @@ class LambdaError(Enum):
         "err_code": "UC_4001",
         "message": "Missing GET request query parameters",
     }
-    
+
     UploadConfirmResultFilesNotClean = {
         "err_code": "UC_4005",
         "message": "Some of the given document references are not referring to clean files",

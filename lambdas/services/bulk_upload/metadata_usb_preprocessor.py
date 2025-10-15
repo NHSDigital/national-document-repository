@@ -54,10 +54,12 @@ class MetadataUsbPreprocessorService(MetadataPreprocessorService):
     def validate_record_filename(
         self, file_path, metadata_nhs_number=None, *args, **kwargs
     ) -> str:
-        self._validate_signal_file_for_patient(metadata_nhs_number)
+        self._validate_single_file_for_patient(metadata_nhs_number)
         directory_path, file_name = extract_document_path(file_path)
 
         self._validate_document_parts(file_path, file_name)
+
+        self._validate_file_extension(file_name)
 
         (
             nhs_number,
@@ -83,7 +85,7 @@ class MetadataUsbPreprocessorService(MetadataPreprocessorService):
     def _count_files_for_patient(self, nhs_number):
         self.nhs_number_counts[nhs_number] += 1
 
-    def _validate_signal_file_for_patient(self, nhs_number):
+    def _validate_single_file_for_patient(self, nhs_number):
         if self.nhs_number_counts[nhs_number] > 1:
             raise InvalidFileNameException(
                 f"More than one file is found for {nhs_number}"

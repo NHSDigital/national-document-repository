@@ -46,9 +46,7 @@ class SearchPatientDetailsService:
             if not patient_details.deceased:
                 self._check_authorization(patient_details.general_practice_ods)
 
-            logger.info(
-                "Searched for patient details", {"Result": "Patient found"}
-            )
+            logger.info("Searched for patient details", {"Result": "Patient found"})
 
             if update_session:
                 self._update_session(nhs_number, patient_details.deceased)

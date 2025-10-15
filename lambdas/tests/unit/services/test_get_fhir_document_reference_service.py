@@ -4,12 +4,15 @@ import json
 from io import BytesIO
 
 import pytest
-
 from enums.lambda_error import LambdaError
-from enums.snomed_codes import SnomedCodes
+from enums.snomed_codes import SnomedCodes, SnomedCode
 from services.get_fhir_document_reference_service import GetFhirDocumentReferenceService
-from tests.unit.conftest import MOCK_LG_TABLE_NAME
+from tests.unit.conftest import MOCK_LG_TABLE_NAME, MOCK_PDM_TABLE_NAME
 from tests.unit.helpers.data.test_documents import create_test_doc_store_refs
+from utils.lambda_exceptions import (
+    GetFhirDocumentReferenceException,
+    InvalidDocTypeException,
+)
 from utils.lambda_exceptions import GetFhirDocumentReferenceException
 from utils.ods_utils import PCSE_ODS_CODE
 
@@ -51,11 +54,34 @@ def test_handle_get_document_reference_request(patched_service, mocker, set_env)
     assert expected == actual
 
 
-def test_get_document_reference_request_no_table_associated_to_snomed_code_throws_exception(
-    patched_service,
-):
-    with pytest.raises(GetFhirDocumentReferenceException):
-        patched_service.handle_get_document_reference_request("12345678", "test-id")
+def test_get_dynamo_table_for_patient_data_doc_type(patched_service):
+    """Test _get_dynamo_table_for_doc_type method with a non-Lloyd George document type."""
+
+    patient_data_code = SnomedCodes.PATIENT_DATA.value
+
+    result = patched_service._get_dynamo_table_for_doc_type(patient_data_code)
+    assert result == MOCK_PDM_TABLE_NAME
+
+
+def test_get_dynamo_table_for_unsupported_doc_type(patched_service):
+    """Test _get_dynamo_table_for_doc_type method with a non-Lloyd George document type."""
+
+    non_lg_code = SnomedCode(code="non-lg-code", display_name="Non Lloyd George")
+
+    with pytest.raises(InvalidDocTypeException) as excinfo:
+        patched_service._get_dynamo_table_for_doc_type(non_lg_code)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.error == LambdaError.DocTypeDB
+
+
+def test_get_dynamo_table_for_lloyd_george_doc_type(patched_service):
+    """Test _get_dynamo_table_for_doc_type method with Lloyd George document type."""
+    lg_code = SnomedCodes.LLOYD_GEORGE.value
+
+    result = patched_service._get_dynamo_table_for_doc_type(lg_code)
+
+    assert result == MOCK_LG_TABLE_NAME
 
 
 def test_get_presigned_url(patched_service, mocker):

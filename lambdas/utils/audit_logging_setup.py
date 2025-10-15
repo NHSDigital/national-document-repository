@@ -1,5 +1,6 @@
 import logging
 import sys
+
 from utils.logging_formatter import LoggingFormatter
 
 
@@ -13,7 +14,7 @@ class LoggingService:
         return cls._instances[name]
 
     def __init__(self, name):
-        if getattr(self, '_initialized', False):
+        if getattr(self, "_initialized", False):
             return
 
         self.name = name
@@ -30,21 +31,37 @@ class LoggingService:
         self._initialized = True
 
     def info(self, message, custom_args: dict = None, *args, **kwargs):
-        self.logger.info(message, extra={"custom_args": custom_args or {}}, *args, **kwargs)
+        self.logger.info(
+            message, extra={"custom_args": custom_args or {}}, *args, **kwargs
+        )
 
     def error(self, message, custom_args: dict = None, *args, **kwargs):
-        self.logger.error(message, extra={"custom_args": custom_args or {}}, *args, **kwargs)
+        self.logger.error(
+            message, extra={"custom_args": custom_args or {}}, *args, **kwargs
+        )
 
     def warning(self, message, custom_args: dict = None, *args, **kwargs):
-        self.logger.warning(message, extra={"custom_args": custom_args or {}}, *args, **kwargs)
+        self.logger.warning(
+            message, extra={"custom_args": custom_args or {}}, *args, **kwargs
+        )
 
     def debug(self, message, custom_args: dict = None, *args, **kwargs):
-        self.logger.debug(message, extra={"custom_args": custom_args or {}}, *args, **kwargs)
+        self.logger.debug(
+            message, extra={"custom_args": custom_args or {}}, *args, **kwargs
+        )
 
-    def exception(self, message, custom_args: dict = None, *args, exc_info=True, **kwargs):
+    def exception(
+        self, message, custom_args: dict = None, *args, exc_info=True, **kwargs
+    ):
         self.logger.exception(
-            message, exc_info=exc_info, extra={"custom_args": custom_args or {}}, *args, **kwargs
+            message,
+            exc_info=exc_info,
+            extra={"custom_args": custom_args or {}},
+            *args,
+            **kwargs
         )
 
     def critical(self, message, custom_args: dict = None, *args, **kwargs):
-        self.logger.critical(message, extra={"custom_args": custom_args or {}}, *args, **kwargs)
+        self.logger.critical(
+            message, extra={"custom_args": custom_args or {}}, *args, **kwargs
+        )
