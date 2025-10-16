@@ -1,14 +1,19 @@
 import { UploadDocument } from '../../../../types/pages/UploadDocumentsPage/types';
-import { Dispatch, JSX, SetStateAction, useEffect, useRef, useState } from 'react';
+import { JSX, useEffect, useRef, useState } from 'react';
 import PdfViewer from '../../../generic/pdfViewer/PdfViewer';
 import getMergedPdfBlob from '../../../../helpers/utils/pdfMerger';
 
 type Props = {
     documents: UploadDocument[];
-    setMergedPdfBlob: Dispatch<SetStateAction<Blob | undefined>>;
+    setMergedPdfBlob: (blob: Blob) => void;
+    stitchedBlobLoaded?: (value: boolean) => void;
 };
 
-const DocumentUploadLloydGeorgePreview = ({ documents, setMergedPdfBlob }: Props): JSX.Element => {
+const DocumentUploadLloydGeorgePreview = ({
+    documents,
+    setMergedPdfBlob,
+    stitchedBlobLoaded,
+}: Props): JSX.Element => {
     const [mergedPdfUrl, setMergedPdfUrl] = useState('');
 
     const runningRef = useRef(false);
@@ -20,16 +25,26 @@ const DocumentUploadLloydGeorgePreview = ({ documents, setMergedPdfBlob }: Props
             }
             return;
         }
+
         if (runningRef.current) return;
 
         runningRef.current = true;
 
         const render = async (): Promise<void> => {
+            if (stitchedBlobLoaded) {
+                stitchedBlobLoaded(false);
+            }
+
             const blob = await getMergedPdfBlob(documents.map((doc) => doc.file));
             setMergedPdfBlob(blob);
+
             const url = URL.createObjectURL(blob);
             runningRef.current = false;
             setMergedPdfUrl(url);
+
+            if (stitchedBlobLoaded) {
+                stitchedBlobLoaded(true);
+            }
         };
 
         render().catch((err) => {

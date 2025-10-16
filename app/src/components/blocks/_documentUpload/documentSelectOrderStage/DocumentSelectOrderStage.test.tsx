@@ -31,11 +31,23 @@ URL.createObjectURL = vi.fn(() => 'mocked-url');
 Element.prototype.scrollIntoView = vi.fn();
 
 vi.mock('../documentUploadLloydGeorgePreview/DocumentUploadLloydGeorgePreview', () => ({
-    default: ({ documents }: { documents: UploadDocument[] }): React.JSX.Element => (
-        <div data-testid="lloyd-george-preview">
-            Lloyd George Preview for {documents.length} documents
-        </div>
-    ),
+    default: ({
+        documents,
+        stitchedBlobLoaded,
+    }: {
+        documents: UploadDocument[];
+        stitchedBlobLoaded?: (loaded: boolean) => void;
+    }): React.JSX.Element => {
+        // Simulate the PDF stitching completion
+        if (stitchedBlobLoaded) {
+            setTimeout(() => stitchedBlobLoaded(true), 0);
+        }
+        return (
+            <div data-testid="lloyd-george-preview">
+                Lloyd George Preview for {documents.length} documents
+            </div>
+        );
+    },
 }));
 
 describe('DocumentSelectOrderStage', () => {
@@ -100,10 +112,12 @@ describe('DocumentSelectOrderStage', () => {
             expect(screen.getByText('Remove')).toBeInTheDocument();
         });
 
-        it('renders continue button when documents are present', () => {
+        it('renders continue button when documents are present', async () => {
             renderSut(documents);
 
-            expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+            });
         });
 
         it('does not show "Remove all" button when there is only one document', () => {
@@ -411,8 +425,13 @@ describe('DocumentSelectOrderStage', () => {
 
             renderSut(documentsWithDuplicatePositions);
 
-            const continueButton = screen.getByRole('button', { name: 'Continue' });
-            await user.click(continueButton);
+            let continueButton;
+            await waitFor(() => {
+                continueButton = screen.getByRole('button', { name: 'Continue' });
+                expect(continueButton).toBeInTheDocument();
+            });
+
+            await user.click(continueButton!);
 
             await waitFor(() => {
                 expect(screen.getByText('There is a problem')).toBeInTheDocument();
