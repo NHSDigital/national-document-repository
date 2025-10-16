@@ -18,7 +18,7 @@ def create_upload_payload(pdm_record):
         "type": {
             "coding": [
                 {
-                    "system": "http://snomed.info/sct",
+                    "system": "https://snomed.info/sct",
                     "code": f"{PDM_SNOMED}",
                     "display": "Confidential patient data",
                 }
