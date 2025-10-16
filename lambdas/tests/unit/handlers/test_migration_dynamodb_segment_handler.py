@@ -1,6 +1,6 @@
 import pytest
 from botocore.exceptions import ClientError
-from handlers.migration_dynamodb_segment_handler import lambda_handler, validate_execution_id, validate_total_segments, validate_table_arn, validate_table_exists
+from handlers.migration_dynamodb_segment_handler import lambda_handler, validate_execution_id, validate_total_segments, validate_table_arn, validate_table_exists, get_dynamodb_client
 
 
 # Test fixtures - these are reusable test data/mocks
@@ -13,9 +13,6 @@ def valid_event():
         "tableArn": "arn:aws:dynamodb:us-east-1:123456789012:table/MyTable"
     }
 
-#test comment 
-
-
 @pytest.fixture
 def mock_migration_service(mocker):
     """Mocks the MigrationDynamoDBSegmentService class"""
@@ -26,9 +23,9 @@ def mock_migration_service(mocker):
 
 @pytest.fixture
 def mock_dynamodb_client(mocker):
-    """Mocks the boto3 DynamoDB client"""
+    """Mocks the get_dynamodb_client function to return a mock client"""
     mock_client = mocker.MagicMock()
-    mocker.patch("handlers.migration_dynamodb_segment_handler.boto3.client", return_value=mock_client)
+    mocker.patch("handlers.migration_dynamodb_segment_handler.get_dynamodb_client", return_value=mock_client)
     return mock_client
  
 
@@ -372,6 +369,44 @@ class TestLambdaHandler:
         assert extras["totalSegments"] == -1  # Original value (validation failed)
         assert extras["errorType"] == "ValueError"
 
+
+# Tests for get_dynamodb_client function
+class TestGetDynamoDBClient:
+    """Test cases for the get_dynamodb_client function"""
+    
+    def test_get_dynamodb_client_creates_new_client(self, mocker):
+        """Test that a new client is created when none exists"""
+        mock_boto_client = mocker.patch("handlers.migration_dynamodb_segment_handler.boto3.client")
+        mock_client = mocker.MagicMock()
+        mock_boto_client.return_value = mock_client
+        
+        # Clear the cached client
+        import handlers.migration_dynamodb_segment_handler
+        handlers.migration_dynamodb_segment_handler.dynamodb_client = None
+        
+        result = get_dynamodb_client("us-east-1")
+        
+        assert result == mock_client
+        mock_boto_client.assert_called_once_with('dynamodb', region_name='us-east-1', config=mocker.ANY)
+    
+    def test_get_dynamodb_client_returns_cached_client(self, mocker):
+        """Test that cached client is returned on subsequent calls"""
+        mock_boto_client = mocker.patch("handlers.migration_dynamodb_segment_handler.boto3.client")
+        mock_client = mocker.MagicMock()
+        mock_boto_client.return_value = mock_client
+        
+        # Clear the cached client
+        import handlers.migration_dynamodb_segment_handler
+        handlers.migration_dynamodb_segment_handler.dynamodb_client = None
+        
+        # First call creates the client
+        result1 = get_dynamodb_client("us-east-1")
+        # Second call should return cached client
+        result2 = get_dynamodb_client("us-west-2")
+        
+        assert result1 == result2
+        # boto3.client should only be called once
+        mock_boto_client.assert_called_once()
 
 # Integration tests
 class TestIntegration:

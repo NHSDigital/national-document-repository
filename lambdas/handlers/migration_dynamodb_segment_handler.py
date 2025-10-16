@@ -1,10 +1,28 @@
 import logging
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from services.migration_dynamodb_segment_service import MigrationDynamoDBSegmentService
 
 logger = logging.getLogger(__name__)
+
+# Initialize boto3 client outside handler with explicit timeout
+config = Config(
+    connect_timeout=5,
+    read_timeout=10,
+    retries={'max_attempts': 3}
+)
+
+# Initialize DynamoDB client for reuse across invocations
+dynamodb_client = None
+
+def get_dynamodb_client(region):
+    """Get or create a DynamoDB client for the specified region"""
+    global dynamodb_client
+    if dynamodb_client is None:
+        dynamodb_client = boto3.client('dynamodb', region_name=region, config=config)
+    return dynamodb_client
 
 def validate_execution_id(event):
     """Validate and extract execution_id from event"""
@@ -73,7 +91,7 @@ def validate_table_arn(event):
 def validate_table_exists(table_name, region):
     """Validate that the DynamoDB table exists and is accessible"""
     try:
-        client = boto3.client('dynamodb', region_name=region)
+        client = get_dynamodb_client(region)
         response = client.describe_table(TableName=table_name)
         table_status = response['Table']['TableStatus']
         
