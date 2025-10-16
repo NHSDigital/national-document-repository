@@ -12,7 +12,7 @@ from enums.upload_status import UploadStatus
 from enums.virus_scan_result import VirusScanResult
 from models.document_reference import DocumentReference
 from models.sqs.pdf_stitching_sqs_message import PdfStitchingSqsMessage
-from models.staging_metadata import MetadataFile, StagingMetadata
+from models.staging_metadata import BulkUploadQueueMetadata, StagingSqsMetadata
 from repositories.bulk_upload.bulk_upload_dynamo_repository import (
     BulkUploadDynamoRepository,
 )
@@ -115,7 +115,7 @@ class BulkUploadService:
         accepted_reason = None
         try:
             staging_metadata_json = message["body"]
-            staging_metadata = StagingMetadata.model_validate_json(
+            staging_metadata = StagingSqsMetadata.model_validate_json(
                 staging_metadata_json
             )
         except (pydantic.ValidationError, KeyError) as e:
@@ -309,7 +309,7 @@ class BulkUploadService:
             f"Message sent to stitching queue for patient {staging_metadata.nhs_number}"
         )
 
-    def resolve_source_file_path(self, staging_metadata: StagingMetadata):
+    def resolve_source_file_path(self, staging_metadata: StagingSqsMetadata):
         sample_file_path = staging_metadata.files[0].file_path
 
         if not contains_accent_char(sample_file_path):
@@ -352,7 +352,7 @@ class BulkUploadService:
         self.file_path_cache = resolved_file_paths
 
     def create_lg_records_and_copy_files(
-        self, staging_metadata: StagingMetadata, current_gp_ods: str
+        self, staging_metadata: StagingSqsMetadata, current_gp_ods: str
     ):
         nhs_number = staging_metadata.nhs_number
         for file_metadata in staging_metadata.files:
@@ -388,7 +388,10 @@ class BulkUploadService:
             )
 
     def convert_to_document_reference(
-        self, file_metadata: MetadataFile, nhs_number: str, current_gp_ods: str
+        self,
+        file_metadata: BulkUploadQueueMetadata,
+        nhs_number: str,
+        current_gp_ods: str,
     ) -> DocumentReference:
         s3_bucket_name = self.bulk_upload_s3_repository.lg_bucket_name
         file_name = os.path.basename(file_metadata.file_path)
@@ -415,8 +418,6 @@ class BulkUploadService:
 
     @staticmethod
     def strip_leading_slash(filepath: str) -> str:
-        # Handle the filepaths irregularity in the given example of metadata.csv,
-        # where some filepaths begin with '/' and some does not.
         return filepath.lstrip("/")
 
     @staticmethod
