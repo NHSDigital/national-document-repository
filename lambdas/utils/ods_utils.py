@@ -7,7 +7,7 @@ https://digital.nhs.uk/services/organisation-data-service/export-data-files/csv-
 Sometimes, a patient will not have a generalPractitioner on PDS. Internally, we can also add codes to mark inactive
 patients for reporting purposes. The only values that should be considered 'active' are valid ODS codes.
 """
-PCSE_ODS_CODE = "X4S4L"
+PCSE_ODS_CODE = "8JD29"
 
 
 def is_ods_code_active(gp_ods) -> bool:
