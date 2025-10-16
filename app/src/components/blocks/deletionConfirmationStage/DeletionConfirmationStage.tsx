@@ -15,11 +15,15 @@ export type Props = {
     setStage?: Dispatch<SetStateAction<LG_RECORD_STAGE>>;
 };
 
-function DeletionConfirmationStage({ numberOfFiles, setStage, setDownloadStage }: Props) {
+const DeletionConfirmationStage = ({
+    numberOfFiles,
+    setStage,
+    setDownloadStage,
+}: Props): React.JSX.Element => {
     const navigate = useNavigate();
     const role = useRole();
 
-    const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    const handleClick = (e: MouseEvent<HTMLAnchorElement>): void => {
         e.preventDefault();
         if (setStage && setDownloadStage) {
             setDownloadStage(DOWNLOAD_STAGE.REFRESH);
@@ -62,7 +66,7 @@ function DeletionConfirmationStage({ numberOfFiles, setStage, setDownloadStage }
                     <Link
                         id="start-again-link"
                         to=""
-                        onClick={(e) => {
+                        onClick={(e): void => {
                             e.preventDefault();
                             navigate(routes.START);
                         }}
@@ -73,6 +77,6 @@ function DeletionConfirmationStage({ numberOfFiles, setStage, setDownloadStage }
             </p>
         </div>
     );
-}
+};
 
 export default DeletionConfirmationStage;

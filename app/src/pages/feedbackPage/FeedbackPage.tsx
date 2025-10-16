@@ -1,6 +1,6 @@
 import { JSX, useEffect, useRef, useState } from 'react';
 
-import { FieldValues, SubmitHandler, useForm, UseFormRegisterReturn } from 'react-hook-form';
+import { SubmitHandler, useForm, UseFormRegisterReturn } from 'react-hook-form';
 import isEmail from 'validator/lib/isEmail';
 import {
     Button,
@@ -36,7 +36,7 @@ import { ErrorMessageListItem } from '../../types/pages/genericPageErrors';
 
 type FeedbackError = ErrorMessageListItem<FEEDBACK_ERROR_TYPE>;
 
-function FeedbackPage(): JSX.Element {
+const FeedbackPage = (): JSX.Element => {
     const baseUrl = useBaseAPIUrl();
     const baseHeaders = useBaseAPIHeaders();
     const {
@@ -55,7 +55,7 @@ function FeedbackPage(): JSX.Element {
         scrollToRef.current?.scrollIntoView();
     });
 
-    const submit: SubmitHandler<FormData> = async (formData) => {
+    const submit: SubmitHandler<FormData> = async (formData): Promise<void> => {
         setStage(SUBMISSION_STAGE.Submitting);
         try {
             await sendEmail({ formData, baseUrl, baseHeaders });
@@ -73,12 +73,16 @@ function FeedbackPage(): JSX.Element {
         }
     };
 
-    const renameRefKey = (props: UseFormRegisterReturn, newRefKey: string) => {
+    const renameRefKey = (
+        props: UseFormRegisterReturn,
+        newRefKey: string,
+    ): UseFormRegisterReturn => {
         const { ref, ...otherProps } = props;
+
         return {
             [newRefKey]: ref,
             ...otherProps,
-        };
+        } as UseFormRegisterReturn;
     };
 
     const feedbackContentProps = renameRefKey(
@@ -244,6 +248,6 @@ function FeedbackPage(): JSX.Element {
             </form>
         </div>
     );
-}
+};
 
 export default FeedbackPage;

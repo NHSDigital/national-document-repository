@@ -1,5 +1,5 @@
 import moment from 'moment';
 
-export function unixTimestamp() {
+export const unixTimestamp = (): number => {
     return moment().unix();
-}
+};

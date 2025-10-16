@@ -1,12 +1,11 @@
 import { ErrorSummary } from 'nhsuk-react-components';
 import ServiceDeskLink from '../../generic/serviceDeskLink/ServiceDeskLink';
-import React from 'react';
 
 type Props = {
     message?: string;
 };
 
-const ServiceError = ({ message }: Props) => {
+const ServiceError = ({ message }: Props): React.JSX.Element => {
     const serviceErrorSummaryId = 'service-error-summary';
     const defaultMessage = 'Please try again later.';
 

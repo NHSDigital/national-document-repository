@@ -34,7 +34,7 @@ type FormData = {
     [FORM_FIELDS.OtherReasonText]: string;
 };
 
-const DeceasedPatientAccessAudit = () => {
+const DeceasedPatientAccessAudit = (): React.JSX.Element => {
     /* HOOKS */
     const pageTitle = 'Deceased patient record';
     useTitle({ pageTitle });
@@ -165,7 +165,7 @@ const DeceasedPatientAccessAudit = () => {
         }
     };
 
-    const handleSuccess = (accessAuditData: AccessAuditData) => {
+    const handleSuccess = (accessAuditData: AccessAuditData): void => {
         const newPatientAccessAudit = patientAccessAudit?.map((audit): PatientAccessAudit => {
             if (
                 audit.accessAuditType === AccessAuditType.deceasedPatient &&
@@ -191,7 +191,7 @@ const DeceasedPatientAccessAudit = () => {
         navigate(routes.LLOYD_GEORGE);
     };
 
-    const handleError = (fields: FieldValues) => {
+    const handleError = (fields: FieldValues): void => {
         const errorMessages = Object.entries(fields).map(
             ([k, v]: [string, { message: string; ref: Element }]) => {
                 return {
@@ -205,7 +205,10 @@ const DeceasedPatientAccessAudit = () => {
         scrollToErrorRef.current?.scrollIntoView();
     };
 
-    const ReasonCheckbox = (reason: DeceasedAccessAuditReasons, label: string) => {
+    const ReasonCheckbox = (
+        reason: DeceasedAccessAuditReasons,
+        label: string,
+    ): React.JSX.Element => {
         const key = `reason-checkbox-${reason}`;
 
         return (

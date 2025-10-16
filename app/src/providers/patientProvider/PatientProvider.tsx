@@ -14,7 +14,7 @@ export type PatientContext = [
 
 const PatientDetailsContext = createContext<PatientContext | null>(null);
 
-const PatientDetailsProvider = ({ children, patientDetails }: Props) => {
+const PatientDetailsProvider = ({ children, patientDetails }: Props): React.JSX.Element => {
     const patientState: PatientContext = useState(patientDetails ?? null);
 
     return (
@@ -25,4 +25,5 @@ const PatientDetailsProvider = ({ children, patientDetails }: Props) => {
 };
 
 export default PatientDetailsProvider;
-export const usePatientDetailsContext = () => useContext(PatientDetailsContext) as PatientContext;
+export const usePatientDetailsContext = (): PatientContext =>
+    useContext(PatientDetailsContext) as PatientContext;

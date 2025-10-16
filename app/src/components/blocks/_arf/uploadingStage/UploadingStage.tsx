@@ -12,7 +12,7 @@ interface Props {
     documents: Array<UploadDocument>;
 }
 
-function UploadingStage({ documents }: Props) {
+const UploadingStage = ({ documents }: Props): React.JSX.Element => {
     const pageHeader = 'Your documents are uploading';
     useTitle({ pageTitle: 'Uploading documents' });
 
@@ -63,6 +63,6 @@ function UploadingStage({ documents }: Props) {
             </Table>
         </>
     );
-}
+};
 
 export default UploadingStage;

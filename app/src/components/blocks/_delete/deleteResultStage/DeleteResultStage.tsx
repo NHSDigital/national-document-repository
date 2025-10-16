@@ -1,4 +1,4 @@
-import React, { Dispatch, MouseEvent, SetStateAction } from 'react';
+import { Dispatch, MouseEvent, SetStateAction } from 'react';
 import { ButtonLink, Card } from 'nhsuk-react-components';
 import { routes } from '../../../../types/generic/routes';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,20 +13,22 @@ export type Props = {
     setDownloadStage?: Dispatch<SetStateAction<DOWNLOAD_STAGE>>;
 };
 
-function DeleteResultStage({ numberOfFiles, setDownloadStage }: Props) {
+const DeleteResultStage = ({ numberOfFiles, setDownloadStage }: Props): React.JSX.Element => {
     const navigate = useNavigate();
     const role = useRole();
 
-    const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    const handleClick = (e: MouseEvent<HTMLAnchorElement>): void => {
         e.preventDefault();
         if (setDownloadStage) {
             setDownloadStage(DOWNLOAD_STAGE.REFRESH);
         }
         navigate(routes.LLOYD_GEORGE);
     };
+
     const isGP = role === REPOSITORY_ROLE.GP_ADMIN || role === REPOSITORY_ROLE.GP_CLINICAL;
     const pageHeader = 'You have permanently removed the record of:';
     useTitle({ pageTitle: pageHeader });
+
     return (
         <div className="deletion-complete">
             <Card className="deletion-complete_card">
@@ -86,7 +88,7 @@ function DeleteResultStage({ numberOfFiles, setDownloadStage }: Props) {
                         id="start-again-link"
                         data-testid="start-again-link"
                         to=""
-                        onClick={(e) => {
+                        onClick={(e): void => {
                             e.preventDefault();
                             navigate(routes.START);
                         }}
@@ -97,6 +99,6 @@ function DeleteResultStage({ numberOfFiles, setDownloadStage }: Props) {
             </p>
         </div>
     );
-}
+};
 
 export default DeleteResultStage;

@@ -6,7 +6,7 @@ export type Props = {
     setCurrentPage: Dispatch<SetStateAction<number>>;
 };
 
-const Pagination = ({ totalPages, currentPage, setCurrentPage }: Props) => {
+const Pagination = ({ totalPages, currentPage, setCurrentPage }: Props): React.JSX.Element => {
     if (totalPages === 1) {
         return <></>;
     }
@@ -16,7 +16,7 @@ const Pagination = ({ totalPages, currentPage, setCurrentPage }: Props) => {
         setCurrentPage(page);
     };
 
-    const pageNumber = (page: number | null, index: number) => {
+    const pageNumber = (page: number | null, index: number): React.JSX.Element => {
         if (page === null) {
             return (
                 <li
@@ -39,7 +39,7 @@ const Pagination = ({ totalPages, currentPage, setCurrentPage }: Props) => {
             >
                 <button
                     className="govuk-link govuk-pagination__link"
-                    onClick={(e) => updateCurrentPage(e, page)}
+                    onClick={(e): void => updateCurrentPage(e, page)}
                     aria-label={`Page ${displayPage}`}
                     data-testid={`page-${displayPage}-button`}
                 >
@@ -104,7 +104,7 @@ const Pagination = ({ totalPages, currentPage, setCurrentPage }: Props) => {
                         className="govuk-link govuk-pagination__link"
                         data-testid="previous-page-button"
                         rel="prev"
-                        onClick={(e) => updateCurrentPage(e, currentPage - 1)}
+                        onClick={(e): void => updateCurrentPage(e, currentPage - 1)}
                     >
                         <svg
                             className="govuk-pagination__icon govuk-pagination__icon--prev"
@@ -130,7 +130,7 @@ const Pagination = ({ totalPages, currentPage, setCurrentPage }: Props) => {
                         className="govuk-link govuk-pagination__link"
                         data-testid="next-page-button"
                         rel="next"
-                        onClick={(e) => updateCurrentPage(e, currentPage + 1)}
+                        onClick={(e): void => updateCurrentPage(e, currentPage + 1)}
                     >
                         <span className="govuk-pagination__link-title">
                             Next<span className="govuk-visually-hidden"> page</span>

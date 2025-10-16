@@ -7,7 +7,7 @@ type Props = {
     redirectRoute: routes;
 };
 
-function NonAuthGuard({ children, redirectRoute }: Props) {
+const NonAuthGuard = ({ children, redirectRoute }: Props): React.JSX.Element => {
     const [session] = useSessionContext();
     const navigate = useNavigate();
 
@@ -18,6 +18,6 @@ function NonAuthGuard({ children, redirectRoute }: Props) {
     }, [session, navigate, redirectRoute]);
 
     return <>{children}</>;
-}
+};
 
 export default NonAuthGuard;

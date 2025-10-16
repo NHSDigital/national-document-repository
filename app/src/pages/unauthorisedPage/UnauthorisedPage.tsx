@@ -6,17 +6,20 @@ import Spinner from '../../components/generic/spinner/Spinner';
 import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
 import useTitle from '../../helpers/hooks/useTitle';
 
-const UnauthorisedPage = () => {
+const UnauthorisedPage = (): React.JSX.Element => {
     const baseAPIUrl = useBaseAPIUrl();
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
-    const handleLogin = (e: MouseEvent<HTMLAnchorElement>) => {
+
+    const handleLogin = (e: MouseEvent<HTMLAnchorElement>): void => {
         setIsLoading(true);
         e.preventDefault();
         window.location.replace(`${baseAPIUrl}${endpoints.LOGIN}`);
     };
+
     const pageHeader = 'Unauthorised access';
     useTitle({ pageTitle: pageHeader });
+
     return !isLoading ? (
         <>
             <h1>{pageHeader}</h1>
@@ -29,7 +32,7 @@ const UnauthorisedPage = () => {
             </p>
             <Link
                 to="#"
-                onClick={(e) => {
+                onClick={(e): void => {
                     e.preventDefault();
                     navigate(routes.START);
                 }}
@@ -41,4 +44,5 @@ const UnauthorisedPage = () => {
         <Spinner status="Signing in..." />
     );
 };
+
 export default UnauthorisedPage;

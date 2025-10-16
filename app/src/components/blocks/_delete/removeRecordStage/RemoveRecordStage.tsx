@@ -33,7 +33,12 @@ export type Props = {
     resetDocState: () => void;
 };
 
-function RemoveRecordStage({ numberOfFiles, recordType, setDownloadStage, resetDocState }: Props) {
+const RemoveRecordStage = ({
+    numberOfFiles,
+    recordType,
+    setDownloadStage,
+    resetDocState,
+}: Props): React.JSX.Element => {
     useTitle({ pageTitle: 'Remove record' });
     const patientDetails = usePatient();
     const [submissionState, setSubmissionState] = useState(SUBMISSION_STATE.PENDING);
@@ -49,12 +54,12 @@ function RemoveRecordStage({ numberOfFiles, recordType, setDownloadStage, resetD
 
     const mounted = useRef(false);
     useEffect(() => {
-        const onSuccess = (result: Array<SearchResult>) => {
+        const onSuccess = (result: Array<SearchResult>): void => {
             setSearchResults(result);
             setSubmissionState(SUBMISSION_STATE.SUCCEEDED);
         };
 
-        const onPageLoad = async () => {
+        const onPageLoad = async (): Promise<void> => {
             try {
                 const results = await getDocumentSearchResults({
                     nhsNumber,
@@ -92,7 +97,7 @@ function RemoveRecordStage({ numberOfFiles, recordType, setDownloadStage, resetD
 
     const hasDocuments = !!searchResults.length && !!patientDetails;
 
-    const PageIndexView = () => (
+    const PageIndexView = (): React.JSX.Element => (
         <>
             <BackButton />
             <h1>Remove this {recordType} record</h1>
@@ -166,7 +171,7 @@ function RemoveRecordStage({ numberOfFiles, recordType, setDownloadStage, resetD
                     {submissionState === SUBMISSION_STATE.SUCCEEDED && (
                         <Button
                             data-testid="remove-btn"
-                            onClick={() => {
+                            onClick={(): void => {
                                 navigate(routeChildren.LLOYD_GEORGE_DELETE_CONFIRMATION);
                             }}
                         >
@@ -217,5 +222,5 @@ function RemoveRecordStage({ numberOfFiles, recordType, setDownloadStage, resetD
             <Outlet></Outlet>
         </>
     );
-}
+};
 export default RemoveRecordStage;

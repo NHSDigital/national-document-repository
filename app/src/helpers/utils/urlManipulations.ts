@@ -1,3 +1,3 @@
-export function getLastURLPath(url: string) {
+export const getLastURLPath = (url: string): string | undefined => {
     return url.split('/').at(-1);
-}
+};

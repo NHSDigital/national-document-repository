@@ -26,7 +26,7 @@ import { REPOSITORY_ROLE } from '../../types/generic/authRole';
 
 export const incorrectFormatMessage = "Enter patient's 10 digit NHS number";
 
-function PatientSearchPage(): JSX.Element {
+const PatientSearchPage = (): JSX.Element => {
     const [, setPatientDetails] = usePatientDetailsContext();
     const [submissionState, setSubmissionState] = useState<SEARCH_STATES>(SEARCH_STATES.IDLE);
     const [statusCode, setStatusCode] = useState<null | number>(null);
@@ -186,6 +186,6 @@ function PatientSearchPage(): JSX.Element {
             </form>
         </>
     );
-}
+};
 
 export default PatientSearchPage;

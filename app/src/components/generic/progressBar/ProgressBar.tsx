@@ -1,6 +1,6 @@
 type Props = { status: string; className?: string };
 
-const ProgressBar = (props: Props) => {
+const ProgressBar = (props: Props): React.JSX.Element => {
     const { status, className, ...elementProps } = props;
     return (
         <div className={className} {...elementProps}>

@@ -11,13 +11,12 @@ import TestPanel from '../../components/blocks/testPanel/TestPanel';
 import ServiceDeskLink from '../../components/generic/serviceDeskLink/ServiceDeskLink';
 import useTitle from '../../helpers/hooks/useTitle';
 
-type Props = {};
-
-function StartPage(props: Props) {
+const StartPage = (): React.JSX.Element => {
     const navigate = useNavigate();
     const baseAPIUrl = useBaseAPIUrl();
     const [isLoading, setIsLoading] = useState(false);
-    const handleLogin = (e: MouseEvent<HTMLAnchorElement>) => {
+
+    const handleLogin = (e: MouseEvent<HTMLAnchorElement>): void => {
         setIsLoading(true);
         e.preventDefault();
         if (isLocal) {
@@ -26,8 +25,10 @@ function StartPage(props: Props) {
             window.location.replace(`${baseAPIUrl}${endpoints.LOGIN}`);
         }
     };
+
     const pageHeader = 'Access and store digital patient documents';
     useTitle({ pageTitle: pageHeader });
+
     return !isLoading ? (
         <>
             <h1>{pageHeader}</h1>
@@ -71,6 +72,6 @@ function StartPage(props: Props) {
     ) : (
         <Spinner status="Signing in..." />
     );
-}
+};
 
 export default StartPage;

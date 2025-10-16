@@ -30,7 +30,7 @@ export type Props = {
     resetDocState: () => void;
 };
 
-function LloydGeorgeViewRecordStage({
+const LloydGeorgeViewRecordStage = ({
     downloadStage,
     lastUpdated,
     setStage,
@@ -38,7 +38,7 @@ function LloydGeorgeViewRecordStage({
     pdfObjectUrl,
     showMenu,
     resetDocState,
-}: Props) {
+}: Props): React.JSX.Element => {
     const patientDetails = usePatient();
     const [session, setUserSession] = useSessionContext();
     const config = useConfig();
@@ -47,7 +47,7 @@ function LloydGeorgeViewRecordStage({
 
     const hasRecordInStorage = downloadStage === DOWNLOAD_STAGE.SUCCEEDED;
 
-    const setFullScreen = (isFullscreen: boolean) => {
+    const setFullScreen = (isFullscreen: boolean): void => {
         if (isFullscreen) {
             if (document.fullscreenEnabled) {
                 document.documentElement.requestFullscreen?.();
@@ -60,7 +60,7 @@ function LloydGeorgeViewRecordStage({
     };
 
     let recordLinksToShow = getUserRecordActionLinks({ role, hasRecordInStorage }).map((link) => {
-        link.onClick = () => {
+        link.onClick = (): void => {
             setFullScreen(false);
         };
 
@@ -78,7 +78,7 @@ function LloydGeorgeViewRecordStage({
     const mounted = useRef(false);
 
     useEffect(() => {
-        const onPageLoad = async () => {
+        const onPageLoad = async (): Promise<void> => {
             resetDocState();
             refreshRecord();
         };
@@ -99,7 +99,7 @@ function LloydGeorgeViewRecordStage({
                             reverse
                             data-testid="back-link"
                             className="exit-fullscreen-button"
-                            onClick={() => {
+                            onClick={(): void => {
                                 setFullScreen(false);
                             }}
                         >
@@ -110,7 +110,7 @@ function LloydGeorgeViewRecordStage({
                         <a
                             className="sign-out-link"
                             href={routes.LOGOUT}
-                            onClick={() => {
+                            onClick={(): void => {
                                 setFullScreen(false);
                             }}
                         >
@@ -196,11 +196,11 @@ function LloydGeorgeViewRecordStage({
             </div>
         </div>
     );
-}
+};
 
 type RecordDetailsProps = Pick<Props, 'downloadStage' | 'lastUpdated'>;
 
-const RecordDetails = ({ downloadStage, lastUpdated }: RecordDetailsProps) => {
+const RecordDetails = ({ downloadStage, lastUpdated }: RecordDetailsProps): React.JSX.Element => {
     const [{ isFullscreen }] = useSessionContext();
 
     switch (downloadStage) {

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ButtonLink } from 'nhsuk-react-components';
 import useTitle from '../../helpers/hooks/useTitle';
 
-const UnauthorisedLoginPage = () => {
+const UnauthorisedLoginPage = (): React.JSX.Element => {
     const navigate = useNavigate();
     const pageHeader = 'Your account cannot access this service';
     const location = useLocation();
@@ -47,7 +47,7 @@ const UnauthorisedLoginPage = () => {
             </p>
             <ButtonLink
                 href="#"
-                onClick={(e) => {
+                onClick={(e): void => {
                     e.preventDefault();
                     navigate(routes.START);
                 }}

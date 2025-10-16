@@ -19,7 +19,11 @@ export type Session = {
 export type SessionContext = [Session, Dispatch<SetStateAction<Session>> | SetSessionOverride];
 
 const UserSessionContext = createContext<SessionContext | null>(null);
-const SessionProvider = ({ children, sessionOverride, setSessionOverride }: Props) => {
+const SessionProvider = ({
+    children,
+    sessionOverride,
+    setSessionOverride,
+}: Props): React.JSX.Element => {
     const emptySession = useMemo(
         () => ({ auth: null, isLoggedIn: false, ...sessionOverride, isFullscreen: false }),
         [sessionOverride],
@@ -45,4 +49,5 @@ const SessionProvider = ({ children, sessionOverride, setSessionOverride }: Prop
 };
 
 export default SessionProvider;
-export const useSessionContext = () => useContext(UserSessionContext) as SessionContext;
+export const useSessionContext = (): SessionContext =>
+    useContext(UserSessionContext) as SessionContext;

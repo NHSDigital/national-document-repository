@@ -9,7 +9,7 @@ import useBaseAPIHeaders from '../../helpers/hooks/useBaseAPIHeaders';
 import logout, { Args } from '../../helpers/requests/logout';
 import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
 
-const LogoutPage = () => {
+const LogoutPage = (): React.JSX.Element => {
     const baseUrl = useBaseAPIUrl();
     const [, setSession] = useSessionContext();
     const navigate = useNavigate();
@@ -18,7 +18,7 @@ const LogoutPage = () => {
     useEffect(() => {
         const args: Args = { baseUrl, baseHeaders };
 
-        const onSuccess = () => {
+        const onSuccess = (): void => {
             setSession({
                 auth: null,
                 isLoggedIn: false,
@@ -26,7 +26,7 @@ const LogoutPage = () => {
             navigate(routes.START);
         };
 
-        const handleCallback = async (args: Args) => {
+        const handleCallback = async (args: Args): Promise<void> => {
             try {
                 await logout(args);
                 onSuccess();

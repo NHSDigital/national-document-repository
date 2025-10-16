@@ -21,7 +21,11 @@ interface Props {
     startUpload: () => Promise<void>;
 }
 
-function SelectStage({ setDocuments, documents, startUpload }: Readonly<Props>) {
+const SelectStage = ({
+    setDocuments,
+    documents,
+    startUpload,
+}: Readonly<Props>): React.JSX.Element => {
     const arfInputRef = useRef<HTMLInputElement | null>(null);
 
     const hasFileInput = documents.length > 0;
@@ -107,6 +111,6 @@ function SelectStage({ setDocuments, documents, startUpload }: Readonly<Props>) 
             </form>
         </>
     );
-}
+};
 
 export default SelectStage;

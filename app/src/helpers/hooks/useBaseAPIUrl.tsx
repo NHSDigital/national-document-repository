@@ -1,4 +1,4 @@
-function useBaseAPIUrl() {
+const useBaseAPIUrl = (): string => {
     const apiEndpoint: string | undefined = import.meta.env.VITE_DOC_STORE_API_ENDPOINT;
 
     if (!apiEndpoint) {
@@ -6,6 +6,6 @@ function useBaseAPIUrl() {
     }
 
     return apiEndpoint;
-}
+};
 
 export default useBaseAPIUrl;

@@ -15,7 +15,11 @@ type Props = {
     documentType: DOCUMENT_TYPE;
 };
 
-const DocumentUploadRemoveFilesStage = ({ documents, setDocuments, documentType }: Props) => {
+const DocumentUploadRemoveFilesStage = ({
+    documents,
+    setDocuments,
+    documentType,
+}: Props): React.JSX.Element => {
     const navigate = useNavigate();
 
     const pageTitle = 'Are you sure you want to remove all selected files?';
@@ -29,7 +33,7 @@ const DocumentUploadRemoveFilesStage = ({ documents, setDocuments, documentType 
                 type="button"
                 id="remove-files-button"
                 data-testid="remove-files-button"
-                onClick={() => {
+                onClick={(): void => {
                     setDocuments(documents.filter((doc) => doc.docType !== documentType));
                     navigate(routes.DOCUMENT_UPLOAD);
                 }}
@@ -38,7 +42,7 @@ const DocumentUploadRemoveFilesStage = ({ documents, setDocuments, documentType 
             </Button>
 
             <LinkButton
-                onClick={() => {
+                onClick={(): void => {
                     navigate(-1);
                 }}
             >

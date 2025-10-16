@@ -1,5 +1,4 @@
 import { BackLink } from 'nhsuk-react-components';
-import React from 'react';
 import type { MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,10 +8,14 @@ interface BackButtonProps {
     dataTestid?: string;
 }
 
-const BackButton = ({ toLocation, dataTestid, backLinkText = 'Go back' }: BackButtonProps) => {
+const BackButton = ({
+    toLocation,
+    dataTestid,
+    backLinkText = 'Go back',
+}: BackButtonProps): React.JSX.Element => {
     const navigate = useNavigate();
 
-    const onBack = (e: MouseEvent<HTMLAnchorElement>) => {
+    const onBack = (e: MouseEvent<HTMLAnchorElement>): void => {
         e.preventDefault();
 
         if (toLocation) navigate(toLocation);

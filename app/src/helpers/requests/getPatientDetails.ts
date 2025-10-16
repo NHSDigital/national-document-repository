@@ -13,7 +13,11 @@ type GetPatientDetailsResponse = {
     data: PatientDetails;
 };
 
-const getPatientDetails = async ({ nhsNumber, baseUrl, baseHeaders }: Args) => {
+const getPatientDetails = async ({
+    nhsNumber,
+    baseUrl,
+    baseHeaders,
+}: Args): Promise<PatientDetails> => {
     const gatewayUrl = baseUrl + endpoints.PATIENT_SEARCH;
 
     try {

@@ -13,7 +13,12 @@ export type DeleteResponse = {
     data: string;
     status: number;
 };
-const deleteAllDocuments = async ({ docType, nhsNumber, baseUrl, baseHeaders }: Args) => {
+const deleteAllDocuments = async ({
+    docType,
+    nhsNumber,
+    baseUrl,
+    baseHeaders,
+}: Args): Promise<DeleteResponse> => {
     const gatewayUrl = baseUrl + '/DocumentDelete';
 
     try {

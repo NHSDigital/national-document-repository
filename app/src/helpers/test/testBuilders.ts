@@ -20,7 +20,7 @@ import {
     PatientAccessAudit,
 } from '../../types/generic/accessAudit';
 
-const buildUserAuth = (userAuthOverride?: Partial<UserAuth>) => {
+const buildUserAuth = (userAuthOverride?: Partial<UserAuth>): UserAuth => {
     const auth: UserAuth = {
         role: REPOSITORY_ROLE.GP_ADMIN,
         authorisation_token: '111xxx222',
@@ -29,7 +29,7 @@ const buildUserAuth = (userAuthOverride?: Partial<UserAuth>) => {
     return auth;
 };
 
-const buildPatientDetails = (patientDetailsOverride?: Partial<PatientDetails>) => {
+const buildPatientDetails = (patientDetailsOverride?: Partial<PatientDetails>): PatientDetails => {
     const patient: PatientDetails = {
         birthDate: '1970-01-01',
         familyName: 'Doe',
@@ -46,7 +46,7 @@ const buildPatientDetails = (patientDetailsOverride?: Partial<PatientDetails>) =
     return patient;
 };
 
-const buildTextFile = (name: string, size?: number) => {
+const buildTextFile = (name: string, size?: number): File => {
     const file = new File(['test'], `${name}.txt`, {
         type: 'text/plain',
     });
@@ -72,7 +72,7 @@ const buildDocument = (
     file: File,
     uploadStatus: DOCUMENT_UPLOAD_STATE,
     docType?: DOCUMENT_TYPE,
-) => {
+): UploadDocument => {
     const mockDocument: UploadDocument = {
         file,
         state: uploadStatus ?? documentUploadStates.SUCCEEDED,
@@ -105,7 +105,7 @@ const buildUploadSession = (documents: Array<UploadDocument>): UploadSession => 
     );
 };
 
-const buildSearchResult = (searchResultOverride?: Partial<SearchResult>) => {
+const buildSearchResult = (searchResultOverride?: Partial<SearchResult>): SearchResult => {
     const result: SearchResult = {
         fileName: 'fileName.pdf',
         created: moment().format(),
@@ -117,7 +117,7 @@ const buildSearchResult = (searchResultOverride?: Partial<SearchResult>) => {
     return result;
 };
 
-const buildLgSearchResult = () => {
+const buildLgSearchResult = (): LloydGeorgeStitchResult => {
     const result: LloydGeorgeStitchResult = {
         jobStatus: 'Completed',
         numberOfFiles: 7,
@@ -131,7 +131,7 @@ const buildLgSearchResult = () => {
 const buildConfig = (
     localFlagsOverride?: Partial<LocalFlags>,
     featureFlagsOverride?: Partial<FeatureFlags>,
-) => {
+): GlobalConfig => {
     const globalConfig: GlobalConfig = {
         mockLocal: {
             recordUploaded: true,

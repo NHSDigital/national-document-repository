@@ -1,6 +1,6 @@
 import React from 'react';
 
-function LinkButton(props: React.HTMLProps<HTMLButtonElement>) {
+const LinkButton = (props: React.HTMLProps<HTMLButtonElement>): React.JSX.Element => {
     const classNames = 'lloydgeorge_link align-center pt-3 pb-3 pl-3 pr-3';
     return (
         <button
@@ -11,6 +11,6 @@ function LinkButton(props: React.HTMLProps<HTMLButtonElement>) {
             <div>{props.children}</div>
         </button>
     );
-}
+};
 
 export default LinkButton;

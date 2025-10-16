@@ -1,4 +1,4 @@
-const LloydGeorgeSummaryDescription = () => {
+const LloydGeorgeSummaryDescription = (): React.JSX.Element => {
     return (
         <>
             <p>This report contains:</p>

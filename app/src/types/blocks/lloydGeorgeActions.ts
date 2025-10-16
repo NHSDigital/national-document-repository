@@ -45,11 +45,11 @@ type Args = {
     inputLinks: Array<LGRecordActionLink>;
 };
 
-export function getRecordActionLinksAllowedForRole({
+export const getRecordActionLinksAllowedForRole = ({
     role,
     hasRecordInStorage,
     inputLinks,
-}: Args): Array<LGRecordActionLink> {
+}: Args): Array<LGRecordActionLink> => {
     const allowedLinks = inputLinks.filter((link) => {
         if (!role || link.unauthorised?.includes(role)) {
             return false;
@@ -57,14 +57,14 @@ export function getRecordActionLinksAllowedForRole({
         return hasRecordInStorage === link.showIfRecordInStorage;
     });
     return allowedLinks;
-}
+};
 
 type ArgsLink = Omit<Args, 'inputLinks'>;
 
-export function getUserRecordActionLinks({
+export const getUserRecordActionLinks = ({
     role,
     hasRecordInStorage,
-}: ArgsLink): Array<LGRecordActionLink> {
+}: ArgsLink): Array<LGRecordActionLink> => {
     const allowedLinks = getRecordActionLinksAllowedForRole({
         role,
         hasRecordInStorage,
@@ -72,4 +72,4 @@ export function getUserRecordActionLinks({
     });
 
     return allowedLinks;
-}
+};

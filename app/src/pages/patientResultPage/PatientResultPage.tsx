@@ -11,16 +11,15 @@ import usePatient from '../../helpers/hooks/usePatient';
 import useTitle from '../../helpers/hooks/useTitle';
 import PatientSummary from '../../components/generic/patientSummary/PatientSummary';
 
-function PatientResultPage() {
+const PatientResultPage = (): React.JSX.Element => {
     const role = useRole();
     const patientDetails = usePatient();
     const userIsPCSE = role === REPOSITORY_ROLE.PCSE;
-    const userIsGPAdmin = role === REPOSITORY_ROLE.GP_ADMIN;
     const navigate = useNavigate();
     const [inputError, setInputError] = useState('');
     const { handleSubmit } = useForm();
 
-    const submit = () => {
+    const submit = (): void => {
         if (userIsPCSE) {
             // Make PDS and Dynamo document store search request to download documents from patient
             navigate(routes.ARF_OVERVIEW);
@@ -49,6 +48,7 @@ function PatientResultPage() {
         patientDetails?.superseded || patientDetails?.restricted || showDeceasedWarning;
     const pageHeader = 'Patient details';
     useTitle({ pageTitle: pageHeader });
+
     return (
         <div className="patient-results-paragraph">
             <BackButton toLocation={routes.SEARCH_PATIENT} />
@@ -110,6 +110,6 @@ function PatientResultPage() {
             </form>
         </div>
     );
-}
+};
 
 export default PatientResultPage;

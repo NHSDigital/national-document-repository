@@ -1,8 +1,9 @@
 import useTitle from '../../helpers/hooks/useTitle';
 
-function FeedbackConfirmationPage() {
+const FeedbackConfirmationPage = (): React.JSX.Element => {
     const pageHeader = 'We’ve received your feedback';
     useTitle({ pageTitle: 'Feedback sent' });
+
     return (
         <>
             <h1>{pageHeader}</h1>
@@ -10,6 +11,6 @@ function FeedbackConfirmationPage() {
             <p>You can now close this window.</p>
         </>
     );
-}
+};
 
 export default FeedbackConfirmationPage;

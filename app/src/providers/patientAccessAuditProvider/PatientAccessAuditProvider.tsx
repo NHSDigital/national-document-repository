@@ -14,11 +14,12 @@ export type PatientAccessAuditContext = [
 
 const Context = createContext<PatientAccessAuditContext | null>(null);
 
-const PatientAccessAuditProvider = ({ children, patientAccessAudit }: Props) => {
+const PatientAccessAuditProvider = ({ children, patientAccessAudit }: Props): React.JSX.Element => {
     const patientAccessAuditState: PatientAccessAuditContext = useState(patientAccessAudit ?? null);
 
     return <Context.Provider value={patientAccessAuditState}>{children}</Context.Provider>;
 };
 
 export default PatientAccessAuditProvider;
-export const usePatientAccessAuditContext = () => useContext(Context) as PatientAccessAuditContext;
+export const usePatientAccessAuditContext = (): PatientAccessAuditContext =>
+    useContext(Context) as PatientAccessAuditContext;

@@ -1,6 +1,4 @@
-import React from 'react';
-
-const ServiceDeskLink = () => {
+const ServiceDeskLink = (): React.JSX.Element => {
     return (
         <a
             href="https://digital.nhs.uk/about-nhs-digital/contact-us#nhs-digital-service-desks"

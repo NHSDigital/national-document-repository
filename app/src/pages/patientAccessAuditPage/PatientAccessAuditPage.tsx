@@ -3,9 +3,7 @@ import { Outlet, Route, Routes } from 'react-router-dom';
 import { getLastURLPath } from '../../helpers/utils/urlManipulations';
 import DeceasedPatientAccessAudit from '../../components/blocks/_patientAccessAudit/deceasedPatientAccessAudit/DeceasedPatientAccessAudit';
 
-type Props = {};
-
-const PatientAccessAuditPage = (props: Props) => {
+const PatientAccessAuditPage = (): React.JSX.Element => {
     return (
         <div>
             <Routes>

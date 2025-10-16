@@ -3,7 +3,7 @@ import { useSessionContext } from '../../../providers/sessionProvider/SessionPro
 import { Link } from 'react-router-dom';
 import { Tag } from 'nhsuk-react-components';
 
-function PhaseBanner() {
+const PhaseBanner = (): React.JSX.Element => {
     const [session] = useSessionContext();
     const { isLoggedIn } = session;
     const linkToFeedbackPage = isLoggedIn ? (
@@ -31,6 +31,6 @@ function PhaseBanner() {
             </div>
         </div>
     );
-}
+};
 
 export default PhaseBanner;

@@ -4,7 +4,7 @@ import { routes } from '../../types/generic/routes';
 import { Link, useNavigate } from 'react-router-dom';
 import useTitle from '../../helpers/hooks/useTitle';
 
-function PrivacyPage() {
+const PrivacyPage = (): React.JSX.Element => {
     const isLoggedIn = !!useRole();
     const navigate = useNavigate();
     const pageHeader = 'Privacy notice';
@@ -112,7 +112,7 @@ function PrivacyPage() {
                         <Link
                             data-testid="feedback-link"
                             to={'#'}
-                            onClick={(e) => {
+                            onClick={(e): void => {
                                 e.preventDefault();
                                 navigate(routes.FEEDBACK);
                             }}
@@ -158,6 +158,6 @@ function PrivacyPage() {
             </section>
         </>
     );
-}
+};
 
 export default PrivacyPage;

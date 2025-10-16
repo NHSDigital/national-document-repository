@@ -8,10 +8,11 @@ type Props = {
     children: ReactNode;
 };
 
-function RoleGuard({ children }: Props) {
+const RoleGuard = ({ children }: Props): React.JSX.Element => {
     const role = useRole();
     const navigate = useNavigate();
     const location = useLocation();
+
     useEffect(() => {
         let routeKey = location.pathname;
 
@@ -29,7 +30,8 @@ function RoleGuard({ children }: Props) {
             navigate(routes.UNAUTHORISED);
         }
     }, [role, location, navigate]);
+
     return <>{children}</>;
-}
+};
 
 export default RoleGuard;

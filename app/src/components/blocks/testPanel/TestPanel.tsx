@@ -1,16 +1,15 @@
-import React from 'react';
 import 'react-toggle/style.css';
 import { isLocal } from '../../../helpers/utils/isLocal';
 import { LocalFlags, useConfigContext } from '../../../providers/configProvider/ConfigProvider';
 import { REPOSITORY_ROLE } from '../../../types/generic/authRole';
 import TestToggle, { ToggleProps } from './TestToggle';
 
-function TestPanel() {
+const TestPanel = (): React.JSX.Element => {
     const [config, setConfig] = useConfigContext();
     const { recordUploaded, userRole, patientIsActive, uploading, patientIsDeceased } =
         config.mockLocal;
 
-    const updateLocalFlag = (key: keyof LocalFlags, value: boolean | REPOSITORY_ROLE) => {
+    const updateLocalFlag = (key: keyof LocalFlags, value: boolean | REPOSITORY_ROLE): void => {
         setConfig({
             mockLocal: {
                 ...config.mockLocal,
@@ -24,21 +23,21 @@ function TestPanel() {
         'gp-admin-toggle': {
             label: 'GP Admin',
             checked: userRole === REPOSITORY_ROLE.GP_ADMIN,
-            onChange: () => {
+            onChange: (): void => {
                 updateLocalFlag('userRole', REPOSITORY_ROLE.GP_ADMIN);
             },
         },
         'gp-clinical-toggle': {
             label: 'GP Clinical',
             checked: userRole === REPOSITORY_ROLE.GP_CLINICAL,
-            onChange: () => {
+            onChange: (): void => {
                 updateLocalFlag('userRole', REPOSITORY_ROLE.GP_CLINICAL);
             },
         },
         'pcse-toggle': {
             label: 'PCSE',
             checked: userRole === REPOSITORY_ROLE.PCSE,
-            onChange: () => {
+            onChange: (): void => {
                 updateLocalFlag('userRole', REPOSITORY_ROLE.PCSE);
             },
         },
@@ -48,28 +47,28 @@ function TestPanel() {
         'record-toggle': {
             label: 'Patient has a record',
             checked: !!recordUploaded,
-            onChange: () => {
+            onChange: (): void => {
                 updateLocalFlag('recordUploaded', !recordUploaded);
             },
         },
         'deceased-toggle': {
             label: 'Patient is deceased',
             checked: !!patientIsDeceased,
-            onChange: () => {
+            onChange: (): void => {
                 updateLocalFlag('patientIsDeceased', !patientIsDeceased);
             },
         },
         'uploading-toggle': {
             label: 'Documents upload is in progress by another user',
             checked: !!uploading,
-            onChange: () => {
+            onChange: (): void => {
                 updateLocalFlag('uploading', !uploading);
             },
         },
         'patient-active-toggle': {
             label: 'Patient is active (turn off to visit ARF workflow)',
             checked: !!patientIsActive,
-            onChange: () => {
+            onChange: (): void => {
                 updateLocalFlag('patientIsActive', !patientIsActive);
             },
         },
@@ -117,6 +116,6 @@ function TestPanel() {
             )}
         </div>
     );
-}
+};
 
 export default TestPanel;

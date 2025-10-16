@@ -1,6 +1,6 @@
 import PDFMerger from 'pdf-merger-js/browser';
 
-const getMergedPdfBlob = async (pdfFiles: File[]) => {
+const getMergedPdfBlob = async (pdfFiles: File[]): Promise<Blob> => {
     if (pdfFiles.length < 1) {
         throw Error('Cannot merge empty pdf array');
     }

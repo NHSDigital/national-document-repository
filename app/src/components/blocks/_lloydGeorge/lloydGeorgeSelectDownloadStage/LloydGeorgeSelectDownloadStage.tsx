@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import usePatient from '../../../../helpers/hooks/usePatient';
 import { Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import useTitle from '../../../../helpers/hooks/useTitle';
@@ -41,7 +41,7 @@ const SelectDownloadPageIndexView = ({
     searchResults,
     selectedDocuments,
     setSelectedDocuments,
-}: PageIndexViewProps) => (
+}: PageIndexViewProps): React.JSX.Element => (
     <>
         {submissionSearchState === SEARCH_AND_DOWNLOAD_STATE.SEARCH_PENDING && (
             <>
@@ -61,7 +61,10 @@ const SelectDownloadPageIndexView = ({
             )}
     </>
 );
-function LloydGeorgeSelectDownloadStage({ setDownloadStage, numberOfFiles }: Props) {
+const LloydGeorgeSelectDownloadStage = ({
+    setDownloadStage,
+    numberOfFiles,
+}: Props): React.JSX.Element => {
     const mounted = useRef(false);
     const navigate = useNavigate();
     const patientDetails = usePatient();
@@ -78,7 +81,7 @@ function LloydGeorgeSelectDownloadStage({ setDownloadStage, numberOfFiles }: Pro
     useTitle({ pageTitle: PageHeader });
 
     useEffect(() => {
-        const onPageLoad = async () => {
+        const onPageLoad = async (): Promise<void> => {
             setSubmissionSearchState(SEARCH_AND_DOWNLOAD_STATE.SEARCH_PENDING);
             if (!nhsNumber) {
                 navigate(routes.SEARCH_PATIENT);
@@ -167,6 +170,6 @@ function LloydGeorgeSelectDownloadStage({ setDownloadStage, numberOfFiles }: Pro
             <Outlet />
         </>
     );
-}
+};
 
 export default LloydGeorgeSelectDownloadStage;

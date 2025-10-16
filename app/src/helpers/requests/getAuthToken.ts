@@ -8,7 +8,7 @@ export type AuthTokenArgs = {
     state: string;
 };
 
-const getAuthToken = async ({ baseUrl, code, state }: AuthTokenArgs) => {
+const getAuthToken = async ({ baseUrl, code, state }: AuthTokenArgs): Promise<UserAuth> => {
     try {
         const { data } = await axios.get(`${baseUrl}${endpoints.AUTH}`, {
             params: { code, state },

@@ -7,7 +7,7 @@ type Args = {
     baseUrl: string;
     baseHeaders: AuthHeaders;
 };
-const sendEmail = async ({ formData, baseUrl, baseHeaders }: Args) => {
+const sendEmail = async ({ formData, baseUrl, baseHeaders }: Args): Promise<any> => {
     const gatewayUrl = baseUrl + endpoints.FEEDBACK;
 
     try {

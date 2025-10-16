@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from 'nhsuk-react-components';
 
 export type Props = {
@@ -8,7 +7,7 @@ export type Props = {
     dataTestId?: string;
 };
 
-const SpinnerButton = ({ id, status, disabled, dataTestId }: Props) => {
+const SpinnerButton = ({ id, status, disabled, dataTestId }: Props): React.JSX.Element => {
     return (
         <Button
             id={id}

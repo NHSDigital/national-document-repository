@@ -14,14 +14,14 @@ import { useConfigContext } from '../../providers/configProvider/ConfigProvider'
 import getFeatureFlags from '../../helpers/requests/getFeatureFlags';
 import { FeatureFlags, defaultFeatureFlags } from '../../types/generic/featureFlags';
 
-const AuthCallbackPage = () => {
+const AuthCallbackPage = (): React.JSX.Element => {
     const baseUrl = useBaseAPIUrl();
     const [, setSession] = useSessionContext();
     const [{ mockLocal }, setConfig] = useConfigContext();
     const navigate = useNavigate();
 
     useEffect(() => {
-        const handleError = (error: AxiosError) => {
+        const handleError = (error: AxiosError): void => {
             setSession({
                 auth: null,
                 isLoggedIn: false,
@@ -32,7 +32,7 @@ const AuthCallbackPage = () => {
                 navigate(routes.AUTH_ERROR);
             }
         };
-        const handleSuccess = (auth: UserAuth, featureFlags: FeatureFlags) => {
+        const handleSuccess = (auth: UserAuth, featureFlags: FeatureFlags): void => {
             const { GP_ADMIN, GP_CLINICAL, PCSE } = REPOSITORY_ROLE;
             setSession({
                 auth,
@@ -51,7 +51,7 @@ const AuthCallbackPage = () => {
             }
         };
 
-        const handleCallback = async (args: AuthTokenArgs) => {
+        const handleCallback = async (args: AuthTokenArgs): Promise<void> => {
             try {
                 const authData = await getAuthToken(args);
                 const jwtToken = authData.authorisation_token ?? '';

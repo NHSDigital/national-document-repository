@@ -31,7 +31,7 @@ export const uploadDocumentToS3 = async ({
     setDocuments,
     uploadSession,
     document,
-}: UploadDocumentsToS3Args) => {
+}: UploadDocumentsToS3Args): Promise<void> => {
     const documentMetadata: S3Upload = uploadSession[document.id];
     const formData = new FormData();
     const docFields: S3UploadFields = documentMetadata.fields;
@@ -40,9 +40,10 @@ export const uploadDocumentToS3 = async ({
     });
     formData.append('file', document.file);
     const s3url = documentMetadata.url;
+
     try {
         return await axios.post(s3url, formData, {
-            onUploadProgress: (progress) => {
+            onUploadProgress: (progress): void => {
                 const { loaded, total } = progress;
                 if (total) {
                     setSingleDocument(setDocuments, {
@@ -62,7 +63,7 @@ export const uploadDocumentToS3 = async ({
     }
 };
 
-export function generateFileName(patientDetails: PatientDetails | null): string {
+export const generateFileName = (patientDetails: PatientDetails | null): string => {
     if (!patientDetails) {
         throw new Error('Patient details are required to generate filename');
     }
@@ -71,7 +72,7 @@ export function generateFileName(patientDetails: PatientDetails | null): string 
     const givenName = patientDetails.givenName.join(' ').replace(/[,/\\?%*:|"<>]/g, '-');
     const filename = `1of1_Lloyd_George_Record_[${givenName} ${patientDetails.familyName.toUpperCase()}]_[${patientDetails.nhsNumber}]_[${formatDateWithDashes(new Date(patientDetails.birthDate))}].pdf`;
     return filename;
-}
+};
 
 const uploadDocuments = async ({
     nhsNumber,

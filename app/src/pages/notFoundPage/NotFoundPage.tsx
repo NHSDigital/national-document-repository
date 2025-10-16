@@ -1,11 +1,11 @@
-import React from 'react';
 import { routes } from '../../types/generic/routes';
 import { Link } from 'react-router-dom';
 import useTitle from '../../helpers/hooks/useTitle';
 
-const NotFoundPage = () => {
+const NotFoundPage = (): React.JSX.Element => {
     const pageHeader = 'Page not found';
     useTitle({ pageTitle: pageHeader });
+
     return (
         <>
             <h1>{pageHeader}</h1>
@@ -17,4 +17,5 @@ const NotFoundPage = () => {
         </>
     );
 };
+
 export default NotFoundPage;

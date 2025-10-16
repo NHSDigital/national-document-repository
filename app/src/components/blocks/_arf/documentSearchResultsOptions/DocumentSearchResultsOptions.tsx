@@ -22,7 +22,7 @@ interface DownloadLinkAttributes {
     filename: string;
 }
 
-const DocumentSearchResultsOptions = (props: Props) => {
+const DocumentSearchResultsOptions = (props: Props): React.JSX.Element => {
     const navigate = useNavigate();
     const baseUrl = useBaseAPIUrl();
     const baseHeaders = useBaseAPIHeaders();
@@ -54,7 +54,7 @@ const DocumentSearchResultsOptions = (props: Props) => {
         }
     }, [linkAttributes]);
 
-    const downloadAll = async () => {
+    const downloadAll = async (): Promise<void> => {
         props.updateDownloadState(SUBMISSION_STATE.PENDING);
         try {
             const preSignedUrl = await getPresignedUrlForZip({
@@ -80,7 +80,7 @@ const DocumentSearchResultsOptions = (props: Props) => {
         }
     };
 
-    const deleteAllDocuments = () => {
+    const deleteAllDocuments = (): void => {
         navigate(routeChildren.ARF_DELETE_CONFIRMATION);
     };
 

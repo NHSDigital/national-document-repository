@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { routes } from '../../../types/generic/routes';
 import { useSessionContext } from '../../../providers/sessionProvider/SessionProvider';
 
-const NavLinks = () => {
+const NavLinks = (): React.JSX.Element => {
     const navigate = useNavigate();
     const [session] = useSessionContext();
-    const nav = (e: ReactEvent<HTMLAnchorElement, MouseEvent>, link: string) => {
+    const nav = (e: ReactEvent<HTMLAnchorElement, MouseEvent>, link: string): void => {
         e.preventDefault();
         navigate(link);
     };
@@ -27,13 +27,15 @@ const NavLinks = () => {
                     key={l.href}
                     role="link"
                     data-testid={l.id}
-                    onClick={(e) => nav(e, l.href)}
+                    onClick={(e): void => nav(e, l.href)}
                 >
                     {l.label}
                 </Header.NavItem>
             ))}
         </Header.Nav>
-    ) : null;
+    ) : (
+        <></>
+    );
 };
 
 export default NavLinks;

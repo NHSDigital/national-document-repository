@@ -13,7 +13,7 @@ type GetFeatureFlagsResponse = {
     data: FeatureFlags;
 };
 
-const getFeatureFlags = async ({ baseUrl, baseHeaders }: Args) => {
+const getFeatureFlags = async ({ baseUrl, baseHeaders }: Args): Promise<FeatureFlags> => {
     const gatewayUrl = baseUrl + endpoints.FEATURE_FLAGS;
     try {
         const { data }: GetFeatureFlagsResponse = await axios.get(gatewayUrl, {

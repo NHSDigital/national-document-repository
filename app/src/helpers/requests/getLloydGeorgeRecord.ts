@@ -26,7 +26,7 @@ const ThreePendingErrorMessage = 'Failed to initiate record view';
 const UnexpectedResponseMessage =
     'Got unexpected response from server when trying to retrieve record';
 
-async function getLloydGeorgeRecord(args: Args): Promise<LloydGeorgeStitchResult> {
+const getLloydGeorgeRecord = async (args: Args): Promise<LloydGeorgeStitchResult> => {
     const postResponse = await requestStitchJob(args);
     let pendingCount = 0;
     while (pendingCount < 10) {
@@ -49,7 +49,7 @@ async function getLloydGeorgeRecord(args: Args): Promise<LloydGeorgeStitchResult
         }
     }
     throw new StitchRecordError(ThreePendingErrorMessage);
-}
+};
 
 export const requestStitchJob = async ({
     nhsNumber,

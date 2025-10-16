@@ -5,9 +5,7 @@ import { REPORT_TYPE } from '../../types/generic/reports';
 import { ReactComponent as RightCircleIcon } from '../../styles/right-chevron-circle.svg';
 import useConfig from '../../helpers/hooks/useConfig';
 
-type Props = {};
-
-const HomePage = (props: Props) => {
+const HomePage = (): React.JSX.Element => {
     useTitle({ pageTitle: 'Access and store digital patient documents' });
     const config = useConfig();
     const uploadEnabled =

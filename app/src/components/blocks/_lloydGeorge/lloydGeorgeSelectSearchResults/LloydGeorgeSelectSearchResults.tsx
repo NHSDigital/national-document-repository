@@ -31,8 +31,8 @@ const AvailableFilesTable = ({
     selectedDocuments,
     setSelectedDocuments,
     allowSelectDocument,
-}: AvailableFilesTableProps) => {
-    const toggleSelectAllFilesToDownload = () => {
+}: AvailableFilesTableProps): React.JSX.Element => {
+    const toggleSelectAllFilesToDownload = (): void => {
         if (selectedDocuments.length < searchResults.length) {
             const downloadableItems: string[] = [];
             searchResults.forEach((result) => {
@@ -44,7 +44,7 @@ const AvailableFilesTable = ({
         }
     };
 
-    const handleChangeCheckboxes = (e: React.FormEvent<HTMLInputElement>) => {
+    const handleChangeCheckboxes = (e: React.FormEvent<HTMLInputElement>): void => {
         const target = e.target as HTMLInputElement;
         const toggledDocumentId = target.value;
         if (target.checked) {
@@ -56,7 +56,7 @@ const AvailableFilesTable = ({
         }
     };
 
-    const getToggleButtonAriaDescription = () => {
+    const getToggleButtonAriaDescription = (): string => {
         if (selectedDocuments.length === searchResults.length) {
             return 'Toggle selection button, Click to deselect all files';
         } else {
@@ -64,12 +64,14 @@ const AvailableFilesTable = ({
         }
     };
 
-    const getToggleButtonStatusChange = () => {
+    const getToggleButtonStatusChange = (): string => {
         if (selectedDocuments.length === searchResults.length) {
             return 'All files are selected';
         } else if (selectedDocuments.length === 0) {
             return 'All files are deselected';
         }
+
+        return '';
     };
 
     return (
@@ -134,7 +136,7 @@ const AvailableFilesTable = ({
                                         checked={selectedDocuments.includes(result.id)}
                                         aria-checked={selectedDocuments.includes(result.id)}
                                         aria-label={`Select Filename ${result.fileName}`}
-                                        onChange={(e) => handleChangeCheckboxes(e)}
+                                        onChange={(e): void => handleChangeCheckboxes(e)}
                                     >
                                         <span className="nhsuk-u-visually-hidden" aria-hidden>
                                             {result.fileName}
@@ -174,8 +176,8 @@ const LloydGeorgeSelectSearchResults = ({
     setSubmissionSearchState,
     setSelectedDocuments,
     selectedDocuments,
-}: Props) => {
-    const sortByFileName = (a: SearchResult, b: SearchResult) => {
+}: Props): React.JSX.Element => {
+    const sortByFileName = (a: SearchResult, b: SearchResult): number => {
         const fileNumberOfA = parseInt(a.fileName.substring(0, a.fileName.indexOf('of')));
         const fileNumberOfB = parseInt(b.fileName.substring(0, b.fileName.indexOf('of')));
         if (fileNumberOfA && fileNumberOfB) {
@@ -193,7 +195,7 @@ const LloydGeorgeSelectSearchResults = ({
 
     const allowSelectDocument = searchResults.length > 1;
 
-    const handleClickSelectedDownload = () => {
+    const handleClickSelectedDownload = (): void => {
         if (selectedDocuments.length === searchResults.length) {
             handleClickDownloadAll();
         } else if (selectedDocuments.length) {
@@ -204,7 +206,7 @@ const LloydGeorgeSelectSearchResults = ({
             window.scrollTo(0, 0);
         }
     };
-    const handleClickDownloadAll = () => {
+    const handleClickDownloadAll = (): void => {
         setSelectedDocuments([]);
         setSubmissionSearchState(SEARCH_AND_DOWNLOAD_STATE.DOWNLOAD_SELECTED);
         navigate(routeChildren.LLOYD_GEORGE_DOWNLOAD_IN_PROGRESS);

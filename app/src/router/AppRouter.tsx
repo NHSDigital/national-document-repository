@@ -263,7 +263,7 @@ export const routeMap: Routes = {
     },
 };
 
-const createRoutesFromType = (routeType: ROUTE_TYPE) =>
+const createRoutesFromType = (routeType: ROUTE_TYPE): Array<React.JSX.Element> =>
     Object.entries(routeMap).reduce(
         (acc, [path, route]) =>
             route.type === routeType
@@ -272,7 +272,7 @@ const createRoutesFromType = (routeType: ROUTE_TYPE) =>
         [] as Array<React.JSX.Element>,
     );
 
-const AppRoutes = () => {
+const AppRoutes = (): React.JSX.Element => {
     const publicRoutes = createRoutesFromType(ROUTE_TYPE.PUBLIC);
     const privateRoutes = createRoutesFromType(ROUTE_TYPE.PRIVATE);
     const patientRoutes = createRoutesFromType(ROUTE_TYPE.PATIENT);
@@ -304,7 +304,7 @@ const AppRoutes = () => {
     );
 };
 
-const AppRouter = () => {
+const AppRouter = (): React.JSX.Element => {
     return (
         <Router>
             <Layout>

@@ -1,10 +1,8 @@
-import React from 'react';
-
 type Props = {
     status: string;
 };
 
-const Spinner = ({ status }: Props) => {
+const Spinner = ({ status }: Props): React.JSX.Element => {
     return (
         <div className="nhsuk-loader" aria-label={status}>
             <output className="nhsuk-loader__text">{status}</output>

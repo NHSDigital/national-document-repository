@@ -52,7 +52,7 @@ export const TEST_CASES_FOR_TWO_WORDS_FAMILY_NAME_AND_GIVEN_NAME = {
     ],
 };
 
-export function loadTestCases(testCaseJson: TestCaseJsonFormat): Array<PdsNameMatchingTestCase> {
+export const loadTestCases = (testCaseJson: TestCaseJsonFormat): Array<PdsNameMatchingTestCase> => {
     const patientDetails = buildPatientDetails({
         givenName: testCaseJson['pds_name']['given'],
         familyName: testCaseJson['pds_name']['family'],
@@ -71,9 +71,9 @@ export function loadTestCases(testCaseJson: TestCaseJsonFormat): Array<PdsNameMa
     }));
 
     return [...testCasesForAccept, ...testCasesForReject];
-}
+};
 
-export function buildLGUploadDocsFromFilenames(filenames: string[]): UploadDocument[] {
+export const buildLGUploadDocsFromFilenames = (filenames: string[]): UploadDocument[] => {
     const fileObjects = filenames.map(
         (filename) =>
             new File(['test'], filename, {
@@ -89,4 +89,4 @@ export function buildLGUploadDocsFromFilenames(filenames: string[]): UploadDocum
         docType: DOCUMENT_TYPE.LLOYD_GEORGE,
         attempts: 0,
     }));
-}
+};

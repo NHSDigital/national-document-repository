@@ -28,7 +28,7 @@ const ThreePendingErrorMessage = 'Failed to initiate download';
 const UnexpectedResponseMessage =
     'Got unexpected response from server when trying to download record';
 
-const getPresignedUrlForZip = async (args: Args) => {
+const getPresignedUrlForZip = async (args: Args): Promise<string> => {
     const { baseUrl, baseHeaders, nhsNumber } = args;
 
     const jobId = await requestJobId(args);

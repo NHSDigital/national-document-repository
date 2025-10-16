@@ -5,17 +5,19 @@ import Spinner from '../../components/generic/spinner/Spinner';
 import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
 import useTitle from '../../helpers/hooks/useTitle';
 
-const SessionExpiredErrorPage = () => {
+const SessionExpiredErrorPage = (): React.JSX.Element => {
     const baseAPIUrl = useBaseAPIUrl();
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: MouseEvent<HTMLAnchorElement>) => {
+    const handleLogin = (e: MouseEvent<HTMLAnchorElement>): void => {
         setIsLoading(true);
         e.preventDefault();
         window.location.replace(`${baseAPIUrl}${endpoints.LOGIN}`);
     };
+
     const pageHeader = 'We signed you out due to inactivity';
     useTitle({ pageTitle: pageHeader });
+
     return !isLoading ? (
         <>
             <h1>{pageHeader}</h1>
@@ -31,4 +33,5 @@ const SessionExpiredErrorPage = () => {
         <Spinner status="Signing in..." />
     );
 };
+
 export default SessionExpiredErrorPage;

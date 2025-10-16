@@ -6,11 +6,11 @@ type Props = {
     onLoaded?: () => void;
 };
 
-const PdfViewer = ({ fileUrl, customClasses, onLoaded }: Props) => {
+const PdfViewer = ({ fileUrl, customClasses, onLoaded }: Props): React.JSX.Element => {
     const loadedRef = useRef(false);
 
     useEffect(() => {
-        const test = async () => {
+        const docLoaded = async (): Promise<void> => {
             while (!document.querySelector('pdfjs-viewer-element')) {}
 
             if (!loadedRef.current) {
@@ -22,7 +22,7 @@ const PdfViewer = ({ fileUrl, customClasses, onLoaded }: Props) => {
             }
         };
 
-        test();
+        docLoaded();
     });
 
     return (

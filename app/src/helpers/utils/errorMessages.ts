@@ -1,16 +1,16 @@
 import { ErrorMessageListItem, ErrorMessageMap } from '../../types/pages/genericPageErrors';
 
-export function getMappedErrorMessage<T extends string>(
+export const getMappedErrorMessage = <T extends string>(
     error: ErrorMessageListItem<T>,
     messageMap: ErrorMessageMap<T>,
-): string {
+): string => {
     return messageMap[error.error].errorBox;
-}
+};
 
-export function groupErrorsByType<T extends string>(
+export const groupErrorsByType = <T extends string>(
     errors: ErrorMessageListItem<T>[],
     getMessage: (error: ErrorMessageListItem<T>) => string,
-): Partial<Record<T, { linkIds: string[]; errorMessage: string }>> {
+): Partial<Record<T, { linkIds: string[]; errorMessage: string }>> => {
     const result: Partial<Record<T, { linkIds: string[]; errorMessage: string }>> = {};
 
     errors.forEach((errorItem) => {
@@ -25,4 +25,4 @@ export function groupErrorsByType<T extends string>(
     });
 
     return result;
-}
+};

@@ -31,7 +31,11 @@ export type TConfigContext = [
 ];
 
 const ConfigContext = createContext<TConfigContext | null>(null);
-const ConfigProvider = ({ children, configOverride, setConfigOverride }: Props) => {
+const ConfigProvider = ({
+    children,
+    configOverride,
+    setConfigOverride,
+}: Props): React.JSX.Element => {
     const emptyConfig = useMemo(
         () => ({
             featureFlags: { ...defaultFeatureFlags, ...configOverride?.featureFlags },
@@ -76,4 +80,4 @@ const ConfigProvider = ({ children, configOverride, setConfigOverride }: Props) 
 };
 
 export default ConfigProvider;
-export const useConfigContext = () => useContext(ConfigContext) as TConfigContext;
+export const useConfigContext = (): TConfigContext => useContext(ConfigContext) as TConfigContext;

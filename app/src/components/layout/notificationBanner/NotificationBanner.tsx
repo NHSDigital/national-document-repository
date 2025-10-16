@@ -1,14 +1,20 @@
-import { LegacyRef, ReactNode } from 'react';
+import { ReactNode, Ref } from 'react';
 
 type Props = {
     title: string;
     children: ReactNode;
     className: string;
-    scrollToRef: LegacyRef<HTMLDivElement>;
+    scrollToRef: Ref<HTMLDivElement>;
     dataTestId: string;
 };
 
-const NotificationBanner = ({ title, children, className, scrollToRef, dataTestId }: Props) => {
+const NotificationBanner = ({
+    title,
+    children,
+    className,
+    scrollToRef,
+    dataTestId,
+}: Props): React.JSX.Element => {
     return (
         <div
             className={`govuk-notification-banner ${className}`}

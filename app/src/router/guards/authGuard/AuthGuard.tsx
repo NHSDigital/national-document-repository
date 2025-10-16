@@ -6,7 +6,7 @@ type Props = {
     children: ReactNode;
 };
 
-function AuthGuard({ children }: Props) {
+const AuthGuard = ({ children }: Props): React.JSX.Element => {
     const [session] = useSessionContext();
     const navigate = useNavigate();
 
@@ -16,6 +16,6 @@ function AuthGuard({ children }: Props) {
         }
     }, [session, navigate]);
     return <>{children}</>;
-}
+};
 
 export default AuthGuard;

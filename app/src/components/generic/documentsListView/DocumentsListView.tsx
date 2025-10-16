@@ -1,5 +1,5 @@
 import { Details } from 'nhsuk-react-components';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { GenericDocument } from '../../../types/generic/genericDocument';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
     ariaLabel: string;
 }
 
-const DocumentsListView = ({ documentsList, ariaLabel }: Props) => {
+const DocumentsListView = ({ documentsList, ariaLabel }: Props): React.JSX.Element => {
     const [isExpanded, setIsExpanded] = useState(true);
 
     return (
@@ -15,7 +15,7 @@ const DocumentsListView = ({ documentsList, ariaLabel }: Props) => {
             <Details.Summary
                 aria-label={ariaLabel}
                 data-testid={ariaLabel}
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={(): void => setIsExpanded(!isExpanded)}
             >
                 {isExpanded ? 'Hide files' : 'View files'}
             </Details.Summary>

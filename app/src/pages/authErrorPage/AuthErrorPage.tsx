@@ -6,17 +6,19 @@ import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
 import ServiceDeskLink from '../../components/generic/serviceDeskLink/ServiceDeskLink';
 import useTitle from '../../helpers/hooks/useTitle';
 
-const AuthErrorPage = () => {
+const AuthErrorPage = (): React.JSX.Element => {
     const baseAPIUrl = useBaseAPIUrl();
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: MouseEvent<HTMLAnchorElement>) => {
+    const handleLogin = (e: MouseEvent<HTMLAnchorElement>): void => {
         setIsLoading(true);
         e.preventDefault();
         window.location.replace(`${baseAPIUrl}${endpoints.LOGIN}`);
     };
+
     const pageHeader = 'You have been logged out';
     useTitle({ pageTitle: 'User logged out' });
+
     return !isLoading ? (
         <>
             <h1>{pageHeader}</h1>
@@ -35,4 +37,5 @@ const AuthErrorPage = () => {
         <Spinner status="Signing in..." />
     );
 };
+
 export default AuthErrorPage;

@@ -23,7 +23,7 @@ import { isMock } from '../../helpers/utils/isLocal';
 import useConfig from '../../helpers/hooks/useConfig';
 import { buildSearchResult } from '../../helpers/test/testBuilders';
 
-function DocumentSearchResultsPage() {
+const DocumentSearchResultsPage = (): React.JSX.Element => {
     const patientDetails = usePatient();
 
     const nhsNumber: string = patientDetails?.nhsNumber ?? '';
@@ -37,7 +37,7 @@ function DocumentSearchResultsPage() {
     const mounted = useRef(false);
 
     useEffect(() => {
-        const onPageLoad = async () => {
+        const onPageLoad = async (): Promise<void> => {
             setSubmissionState(SUBMISSION_STATE.PENDING);
 
             try {
@@ -101,7 +101,7 @@ function DocumentSearchResultsPage() {
                                 recordType="Lloyd George"
                                 numberOfFiles={searchResults.length}
                                 docType={DOCUMENT_TYPE.ALL}
-                                resetDocState={() => null}
+                                resetDocState={(): null => null}
                             />
                         }
                     />
@@ -111,7 +111,7 @@ function DocumentSearchResultsPage() {
             </div>
         </>
     );
-}
+};
 
 type PageIndexArgs = {
     submissionState: SUBMISSION_STATE;
@@ -127,7 +127,7 @@ const DocumentSearchResultsPageIndex = ({
     searchResults,
     nhsNumber,
     setDownloadState,
-}: PageIndexArgs) => {
+}: PageIndexArgs): React.JSX.Element => {
     const pageHeader = 'Manage this Lloyd George record';
     useTitle({ pageTitle: pageHeader });
 

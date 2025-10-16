@@ -302,7 +302,9 @@ const DocumentSelectOrderStage = ({
                                         <Table.Cell>
                                             <Link
                                                 to=""
-                                                onClick={() => viewPdfFile(document.file)}
+                                                onClick={(): void => {
+                                                    void viewPdfFile(document.file);
+                                                }}
                                                 aria-label="Preview - opens in a new tab"
                                                 data-testid={`document-preview-${document.id}`}
                                             >

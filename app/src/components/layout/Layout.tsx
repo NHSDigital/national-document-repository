@@ -12,7 +12,7 @@ type Props = {
     children: ReactNode;
 };
 
-function Layout({ children }: Props) {
+const Layout = ({ children }: Props): React.JSX.Element => {
     const layoutRef = useRef<HTMLDivElement | null>(null);
     const mainRef = useRef<HTMLDivElement | null>(null);
     const location = useLocation();
@@ -31,7 +31,7 @@ function Layout({ children }: Props) {
         document.documentElement.scrollTo(0, 0);
     }, [location.pathname]);
 
-    const focusMainContent = (e: MouseEvent<HTMLAnchorElement>) => {
+    const focusMainContent = (e: MouseEvent<HTMLAnchorElement>): void => {
         /**
          * Note: This function relies on the `document` object.
          * In case if we migrate to SSR approach in the future, we will need to review the logic here.
@@ -74,6 +74,6 @@ function Layout({ children }: Props) {
             <Footer />
         </div>
     );
-}
+};
 
 export default Layout;

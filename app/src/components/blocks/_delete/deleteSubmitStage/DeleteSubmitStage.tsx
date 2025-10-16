@@ -46,7 +46,11 @@ type IndexViewProps = {
     resetDocState: () => void;
 };
 
-const DeleteSubmitStageIndexView = ({ docType, recordType, resetDocState }: IndexViewProps) => {
+const DeleteSubmitStageIndexView = ({
+    docType,
+    recordType,
+    resetDocState,
+}: IndexViewProps): React.JSX.Element => {
     const patientDetails = usePatient();
     const role = useRole();
     const { register, handleSubmit } = useForm();
@@ -62,8 +66,8 @@ const DeleteSubmitStageIndexView = ({ docType, recordType, resetDocState }: Inde
         'Select whether you want to permanently delete these patient files';
     const userIsGP = role === REPOSITORY_ROLE.GP_ADMIN || role === REPOSITORY_ROLE.GP_CLINICAL;
 
-    const handleYesOption = async () => {
-        const onSuccess = () => {
+    const handleYesOption = async (): Promise<void> => {
+        const onSuccess = (): void => {
             resetDocState();
             setDeletionStage(SUBMISSION_STATE.SUCCEEDED);
             if (userIsGP) {
@@ -99,7 +103,7 @@ const DeleteSubmitStageIndexView = ({ docType, recordType, resetDocState }: Inde
         }
     };
 
-    const handleNoOption = () => {
+    const handleNoOption = (): void => {
         if (role === REPOSITORY_ROLE.GP_ADMIN) {
             navigate(routes.LLOYD_GEORGE);
         } else if (role === REPOSITORY_ROLE.PCSE) {
@@ -107,7 +111,7 @@ const DeleteSubmitStageIndexView = ({ docType, recordType, resetDocState }: Inde
         }
     };
 
-    const submit = async (fieldValues: FieldValues) => {
+    const submit = async (fieldValues: FieldValues): Promise<void> => {
         const allowedRoles = [REPOSITORY_ROLE.GP_ADMIN, REPOSITORY_ROLE.PCSE];
         if (role && allowedRoles.includes(role)) {
             if (fieldValues.deleteDocs === DELETE_DOCUMENTS_OPTION.YES) {
@@ -224,13 +228,13 @@ const DeleteSubmitStageIndexView = ({ docType, recordType, resetDocState }: Inde
     );
 };
 
-function DeleteSubmitStage({
+const DeleteSubmitStage = ({
     docType,
     numberOfFiles,
     setDownloadStage,
     recordType,
     resetDocState,
-}: Props) {
+}: Props): React.JSX.Element => {
     const pageTitle = `You are removing the ${recordType} record of:`;
     useTitle({ pageTitle });
 
@@ -271,5 +275,5 @@ function DeleteSubmitStage({
             <Outlet />
         </>
     );
-}
+};
 export default DeleteSubmitStage;

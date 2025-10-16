@@ -7,7 +7,7 @@ export type Args = {
     baseHeaders: AuthHeaders;
 };
 
-const logout = async ({ baseUrl, baseHeaders }: Args) => {
+const logout = async ({ baseUrl, baseHeaders }: Args): Promise<void> => {
     const gatewayUrl = baseUrl + endpoints.LOGOUT;
     try {
         await axios.get(gatewayUrl, {

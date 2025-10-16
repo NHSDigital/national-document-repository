@@ -25,7 +25,10 @@ type DownloadLinkAttributes = {
     filename: string;
 };
 
-function LloydGeorgeDownloadStage({ selectedDocuments, numberOfFiles }: Props) {
+const LloydGeorgeDownloadStage = ({
+    selectedDocuments,
+    numberOfFiles,
+}: Props): React.JSX.Element => {
     const timeToComplete = 600;
     const [progress, setProgress] = useState(0);
     const baseUrl = useBaseAPIUrl();
@@ -71,7 +74,7 @@ function LloydGeorgeDownloadStage({ selectedDocuments, numberOfFiles }: Props) {
     }, [linkAttributes, navigate]);
 
     useEffect(() => {
-        const onFail = (error: AxiosError) => {
+        const onFail = (error: AxiosError): void => {
             if (isMock(error) && !!mockLocal.recordUploaded) {
                 if (typeof window !== 'undefined') {
                     const { protocol, host } = window.location;
@@ -86,7 +89,7 @@ function LloydGeorgeDownloadStage({ selectedDocuments, numberOfFiles }: Props) {
                 navigate(routes.SERVER_ERROR + errorToParams(error));
             }
         };
-        const onPageLoad = async () => {
+        const onPageLoad = async (): Promise<void> => {
             progressTimer.stop();
             window.clearInterval(intervalTimer);
             if (!nhsNumber) {
@@ -167,7 +170,7 @@ function LloydGeorgeDownloadStage({ selectedDocuments, numberOfFiles }: Props) {
                             <Link
                                 to="#"
                                 data-testid="cancel-download-link"
-                                onClick={(e) => {
+                                onClick={(e): void => {
                                     e.preventDefault();
                                     handlePageExit();
                                     navigate(routes.LLOYD_GEORGE);
@@ -181,6 +184,6 @@ function LloydGeorgeDownloadStage({ selectedDocuments, numberOfFiles }: Props) {
             </Card>
         </div>
     );
-}
+};
 
 export default LloydGeorgeDownloadStage;

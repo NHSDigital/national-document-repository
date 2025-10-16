@@ -21,7 +21,7 @@ const getDocumentSearchResults = async ({
     baseUrl,
     baseHeaders,
     docType = DOCUMENT_TYPE.ALL,
-}: Args) => {
+}: Args): Promise<Array<SearchResult>> => {
     const gatewayUrl = baseUrl + endpoints.DOCUMENT_SEARCH;
 
     try {

@@ -1,4 +1,3 @@
-import React from 'react';
 import Toggle from 'react-toggle';
 
 export type ToggleProps = {
@@ -8,7 +7,7 @@ export type ToggleProps = {
     onChange: () => void;
 };
 
-function TestToggle({ id, checked, onChange, label }: ToggleProps) {
+const TestToggle = ({ id, checked, onChange, label }: ToggleProps): React.JSX.Element => {
     return (
         <div className="test-toggle-div">
             <Toggle id={id} checked={checked} onChange={onChange} />
@@ -17,6 +16,6 @@ function TestToggle({ id, checked, onChange, label }: ToggleProps) {
             </label>
         </div>
     );
-}
+};
 
 export default TestToggle;

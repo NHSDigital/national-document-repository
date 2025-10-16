@@ -21,10 +21,10 @@ type ErrorMessagesProps<T extends string> = {
     groupErrorsFn?: GroupErrors<T>;
 };
 
-function ErrorMessages<T extends string>({
+const ErrorMessages = <T extends string>({
     errorMessageList,
     groupErrorsFn,
-}: Readonly<ErrorMessagesProps<T>>): JSX.Element {
+}: Readonly<ErrorMessagesProps<T>>): JSX.Element => {
     if (!groupErrorsFn) return <></>;
 
     const groupedErrors = groupErrorsFn(errorMessageList);
@@ -51,7 +51,7 @@ function ErrorMessages<T extends string>({
             })}
         </>
     );
-}
+};
 
 const ErrorBox = <T extends string>({
     errorBoxSummaryId,

@@ -22,7 +22,7 @@ import useBaseAPIHeaders from '../../helpers/hooks/useBaseAPIHeaders';
 import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
 import { getFormattedDatetime } from '../../helpers/utils/formatDatetime';
 
-function LloydGeorgeRecordPage() {
+const LloydGeorgeRecordPage = (): React.JSX.Element => {
     const [downloadStage, setDownloadStage] = useState(DOWNLOAD_STAGE.INITIAL);
     const [stage, setStage] = useState(LG_RECORD_STAGE.RECORD);
     const role = useRole();
@@ -38,13 +38,13 @@ function LloydGeorgeRecordPage() {
 
     const showMenu = role === REPOSITORY_ROLE.GP_ADMIN && hasRecordInStorage;
 
-    const resetDocState = () => {
+    const resetDocState = (): void => {
         setNumberOfFiles(0);
         setLastUpdated('');
         setDownloadStage(DOWNLOAD_STAGE.INITIAL);
     };
 
-    const getPdfObjectUrl = async (cloudFrontUrl: string) => {
+    const getPdfObjectUrl = async (cloudFrontUrl: string): Promise<void> => {
         const { data } = await axios.get(cloudFrontUrl, {
             responseType: 'blob',
         });
@@ -55,14 +55,14 @@ function LloydGeorgeRecordPage() {
         setDownloadStage(DOWNLOAD_STAGE.SUCCEEDED);
     };
 
-    const refreshRecord = async () => {
-        const onSuccess = (filesCount: number, updatedDate: string, presignedUrl: string) => {
+    const refreshRecord = async (): Promise<void> => {
+        const onSuccess = (filesCount: number, updatedDate: string, presignedUrl: string): void => {
             setNumberOfFiles(filesCount);
             setLastUpdated(getFormattedDatetime(new Date(updatedDate)));
             getPdfObjectUrl(presignedUrl);
         };
 
-        const onError = (e: AxiosError) => {
+        const onError = (e: AxiosError): void => {
             const error = e as AxiosError;
             const errorResponse = (error.response?.data as ErrorResponse) ?? {};
 
@@ -149,6 +149,6 @@ function LloydGeorgeRecordPage() {
             <Outlet />
         </>
     );
-}
+};
 
 export default LloydGeorgeRecordPage;

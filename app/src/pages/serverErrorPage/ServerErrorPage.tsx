@@ -1,13 +1,12 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ButtonLink } from 'nhsuk-react-components';
-import React from 'react';
 import errorCodes from '../../helpers/utils/errorCodes';
 import { unixTimestamp } from '../../helpers/utils/createTimestamp';
 import useTitle from '../../helpers/hooks/useTitle';
 
 type ServerError = [errorCode: string | null, interactionId: string | null];
 
-const ServerErrorPage = () => {
+const ServerErrorPage = (): React.JSX.Element => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const encodedError: string | null = searchParams.get('encodedError') ?? null;
@@ -32,7 +31,7 @@ const ServerErrorPage = () => {
             </p>
             <ButtonLink
                 href="#"
-                onClick={(e) => {
+                onClick={(e): void => {
                     e.preventDefault();
                     const errorUrl = window.location.href;
                     // Navigate back two paces incase the previous page has an error in the prefetch

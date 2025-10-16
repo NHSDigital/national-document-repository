@@ -14,14 +14,18 @@ export type Props = {
     searchResults?: Array<SearchResult>;
 };
 
-function LloydGeorgeDownloadComplete({ numberOfFiles, selectedDocuments, searchResults }: Props) {
+const LloydGeorgeDownloadComplete = ({
+    numberOfFiles,
+    selectedDocuments,
+    searchResults,
+}: Props): React.JSX.Element => {
     const navigate = useNavigate();
 
     const selectedFilesDownload = !!selectedDocuments?.length;
     const pageHeader = 'Download complete';
     useTitle({ pageTitle: pageHeader });
 
-    const handleReturnButtonClick = () => {
+    const handleReturnButtonClick = (): void => {
         navigate(routes.LLOYD_GEORGE);
     };
 
@@ -35,7 +39,7 @@ function LloydGeorgeDownloadComplete({ numberOfFiles, selectedDocuments, searchR
             };
         }) as GenericDocument[];
 
-    const getCardHeader = () => {
+    const getCardHeader = (): React.JSX.Element => {
         if (selectedFilesDownload) {
             return (
                 <div data-testid="downloaded-files-card-header">
@@ -110,6 +114,6 @@ function LloydGeorgeDownloadComplete({ numberOfFiles, selectedDocuments, searchR
             </Button>
         </div>
     );
-}
+};
 
 export default LloydGeorgeDownloadComplete;

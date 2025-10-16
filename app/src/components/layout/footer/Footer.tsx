@@ -1,4 +1,3 @@
-import React from 'react';
 import { Footer as NHSFooter } from 'nhsuk-react-components';
 import { routes } from '../../../types/generic/routes';
 
@@ -8,7 +7,7 @@ const serviceUpdatesLink =
 const helpandGuidanceLink =
     'https://digital.nhs.uk/services/access-and-store-digital-patient-documents/help-and-guidance';
 
-function Footer() {
+const Footer = (): React.JSX.Element => {
     return (
         <NHSFooter>
             <NHSFooter.List>
@@ -45,6 +44,6 @@ function Footer() {
             </NHSFooter.Copyright>
         </NHSFooter>
     );
-}
+};
 
 export default Footer;

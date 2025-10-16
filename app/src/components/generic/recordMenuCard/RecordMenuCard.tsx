@@ -16,12 +16,12 @@ type SubSectionProps = {
     setStage: Dispatch<SetStateAction<LG_RECORD_STAGE>>;
 };
 
-function RecordMenuCard({
+const RecordMenuCard = ({
     recordLinks,
     setStage,
     showMenu,
     className = 'lloydgeorge_record-stage_links',
-}: Props) {
+}: Props): React.JSX.Element => {
     const updateActions = recordLinks.filter((link) => link.type === RECORD_ACTION.UPDATE);
     const downloadActions = recordLinks.filter((link) => link.type === RECORD_ACTION.DOWNLOAD);
 
@@ -54,9 +54,9 @@ function RecordMenuCard({
             )}
         </div>
     );
-}
+};
 
-const LinkSection = ({ actionLinks, setStage }: SubSectionProps) => {
+const LinkSection = ({ actionLinks, setStage }: SubSectionProps): React.JSX.Element => {
     return (
         <>
             {actionLinks.map((link) => (
@@ -72,14 +72,14 @@ type LinkItemProps = {
     onClick: (() => void) | undefined;
 };
 
-const LinkItem = ({ link, setStage, onClick }: LinkItemProps) => {
+const LinkItem = ({ link, setStage, onClick }: LinkItemProps): React.JSX.Element => {
     const navigate = useNavigate();
 
     if (link.href || link.stage) {
         return (
             <Link
                 to="#placeholder"
-                onClick={(e) => {
+                onClick={(e): void => {
                     e.preventDefault();
                     if (onClick) {
                         onClick();

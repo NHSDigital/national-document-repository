@@ -1,8 +1,8 @@
-import { useConfigContext } from '../../providers/configProvider/ConfigProvider';
+import { GlobalConfig, useConfigContext } from '../../providers/configProvider/ConfigProvider';
 
-function useConfig() {
+const useConfig = (): GlobalConfig => {
     const [config] = useConfigContext();
     return config;
-}
+};
 
 export default useConfig;

@@ -6,7 +6,7 @@ interface Props {
     className?: string;
 }
 
-const ReducedPatientInfo = ({ className }: Props) => {
+const ReducedPatientInfo = ({ className }: Props): React.JSX.Element => {
     const patientDetails = usePatient();
     const nhsNumber: string = patientDetails?.nhsNumber ?? '';
     const formattedNhsNumber = formatNhsNumber(nhsNumber);

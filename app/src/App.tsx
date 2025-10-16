@@ -7,6 +7,7 @@ import { AwsRum, AwsRumConfig } from 'aws-rum-web';
 import { NdrTokenData } from './types/generic/ndrTokenData';
 import { decodeJwtToken } from './helpers/utils/jwtDecoder';
 import PatientAccessAuditProvider from './providers/patientAccessAuditProvider/PatientAccessAuditProvider';
+import { JSX } from 'react';
 
 const cypress =
     import.meta.env.VITE_MONITOR_ACCOUNT_ID === 'not provided yet' &&
@@ -58,7 +59,7 @@ if (import.meta.env.VITE_ENVIRONMENT === 'development' && !cypress) {
     }
 }
 
-function App() {
+const App = (): JSX.Element => {
     return (
         <ConfigProvider>
             <SessionProvider>
@@ -70,5 +71,5 @@ function App() {
             </SessionProvider>
         </ConfigProvider>
     );
-}
+};
 export default App;

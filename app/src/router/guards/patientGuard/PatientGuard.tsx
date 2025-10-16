@@ -7,7 +7,7 @@ type Props = {
     children: ReactNode;
 };
 
-function PatientGuard({ children }: Props) {
+const PatientGuard = ({ children }: Props): React.JSX.Element => {
     const patient = usePatient();
     const navigate = useNavigate();
     useEffect(() => {
@@ -16,6 +16,6 @@ function PatientGuard({ children }: Props) {
         }
     }, [patient, navigate]);
     return <>{children}</>;
-}
+};
 
 export default PatientGuard;

@@ -16,21 +16,21 @@ export type Props = {
     showMenu?: boolean;
 };
 
-function RecordCard({
+const RecordCard = ({
     heading,
     fullScreenHandler,
     detailsElement,
     isFullScreen,
     pdfObjectUrl,
     recordLinks = [],
-    setStage = () => {},
+    setStage = (): void => {},
     showMenu = false,
-}: Props) {
-    const Record = () => {
-        return pdfObjectUrl ? <PdfViewer fileUrl={pdfObjectUrl} /> : null;
+}: Props): React.JSX.Element => {
+    const Record = (): React.JSX.Element => {
+        return pdfObjectUrl ? <PdfViewer fileUrl={pdfObjectUrl} /> : <></>;
     };
 
-    const RecordLayout = ({ children }: { children: ReactNode }) => {
+    const RecordLayout = ({ children }: { children: ReactNode }): React.JSX.Element => {
         if (isFullScreen) {
             return (
                 <>
@@ -56,7 +56,7 @@ function RecordCard({
                             <button
                                 className="lloydgeorge_record-stage_pdf-content-button link-button clickable full-screen"
                                 data-testid="full-screen-btn"
-                                onClick={() => {
+                                onClick={(): void => {
                                     fullScreenHandler(true);
                                 }}
                             >
@@ -82,6 +82,6 @@ function RecordCard({
             <Record />
         </RecordLayout>
     );
-}
+};
 
 export default RecordCard;

@@ -8,7 +8,7 @@ import { getLastURLPath } from '../../helpers/utils/urlManipulations';
 import DownloadReportSelectStage from '../../components/blocks/_downloadReport/downloadReportSelectStage/DownloadReportSelectStage';
 import DownloadReportCompleteStage from '../../components/blocks/_downloadReport/downloadReportCompleteStage/DownloadReportCompleteStage';
 
-const RedirectToHomePage = () => {
+const RedirectToHomePage = (): React.JSX.Element => {
     const navigate = useNavigate();
     useEffect(() => {
         navigate(routes.HOME);

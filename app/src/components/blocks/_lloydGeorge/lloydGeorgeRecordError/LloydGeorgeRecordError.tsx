@@ -13,7 +13,7 @@ type Props = {
     downloadStage: DOWNLOAD_STAGE;
 };
 
-function LloydGeorgeRecordError({ downloadStage }: Readonly<Props>) {
+const LloydGeorgeRecordError = ({ downloadStage }: Readonly<Props>): React.JSX.Element => {
     const role = useRole();
     const navigate = useNavigate();
     const { featureFlags } = useConfig();
@@ -42,7 +42,7 @@ function LloydGeorgeRecordError({ downloadStage }: Readonly<Props>) {
                     <Link
                         to="#"
                         data-testid="download-instead-link"
-                        onClick={(e) => {
+                        onClick={(e): void => {
                             e.preventDefault();
                             role === REPOSITORY_ROLE.GP_CLINICAL
                                 ? navigate(routes.UNAUTHORISED)
@@ -67,7 +67,7 @@ function LloydGeorgeRecordError({ downloadStage }: Readonly<Props>) {
                         className="lloydgeorge_record-stage_pdf-content-no_record-upload"
                         data-testid="upload-patient-record-button"
                         href="#"
-                        onClick={(e: MouseEvent<HTMLAnchorElement>) => {
+                        onClick={(e: MouseEvent<HTMLAnchorElement>): void => {
                             e.preventDefault();
 
                             navigate(routes.DOCUMENT_UPLOAD);
@@ -92,6 +92,6 @@ function LloydGeorgeRecordError({ downloadStage }: Readonly<Props>) {
         );
     }
     return <ServiceError message="An error has occurred when creating the Lloyd George preview." />;
-}
+};
 
 export default LloydGeorgeRecordError;

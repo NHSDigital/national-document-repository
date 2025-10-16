@@ -1,10 +1,8 @@
-import React from 'react';
-
 export type Props = {
     lastUpdated: string;
 };
 
-function LloydGeorgeRecordDetails({ lastUpdated }: Props) {
+const LloydGeorgeRecordDetails = ({ lastUpdated }: Props): React.JSX.Element => {
     return (
         <div className="lloydgeorge_record-details">
             <div className="lloydgeorge_record-details_details">
@@ -14,6 +12,6 @@ function LloydGeorgeRecordDetails({ lastUpdated }: Props) {
             </div>
         </div>
     );
-}
+};
 
 export default LloydGeorgeRecordDetails;

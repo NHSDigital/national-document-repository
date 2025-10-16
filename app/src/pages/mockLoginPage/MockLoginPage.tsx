@@ -1,5 +1,5 @@
 import { FormGroup, Form, Button } from 'nhsuk-react-components';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { routes } from '../../types/generic/routes';
 
@@ -9,14 +9,14 @@ type LoginFormData = {
     repositoryRole: string;
 };
 
-const MockLoginPage = () => {
+const MockLoginPage = (): React.JSX.Element => {
     const [key, setKey] = useState('');
     const [odsCode, setOdsCode] = useState('');
     const [repositoryRole, setRepositoryRole] = useState('gp_admin');
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
 
         const formData: LoginFormData = { key, odsCode, repositoryRole };
@@ -49,7 +49,7 @@ const MockLoginPage = () => {
                                         name="key"
                                         type="password"
                                         value={key}
-                                        onChange={(e) => setKey(e.target.value)}
+                                        onChange={(e): void => setKey(e.target.value)}
                                         required
                                     />
                                 </div>
@@ -67,7 +67,7 @@ const MockLoginPage = () => {
                                         name="odsCode"
                                         type="text"
                                         value={odsCode}
-                                        onChange={(e) => setOdsCode(e.target.value)}
+                                        onChange={(e): void => setOdsCode(e.target.value)}
                                         required
                                     />
                                 </div>
@@ -85,7 +85,7 @@ const MockLoginPage = () => {
                                         id="repositoryRole"
                                         name="repositoryRole"
                                         value={repositoryRole}
-                                        onChange={(e) => setRepositoryRole(e.target.value)}
+                                        onChange={(e): void => setRepositoryRole(e.target.value)}
                                         required
                                     >
                                         <option value="gp_admin">GP Admin</option>
