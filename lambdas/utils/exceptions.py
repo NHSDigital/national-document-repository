@@ -158,3 +158,7 @@ class InvalidFileNameException(Exception):
 
 class MetadataPreprocessingException(Exception):
     pass
+
+
+class TransactionConflictException(Exception):
+    pass
