@@ -21,9 +21,10 @@ on:
         required: true
 
 permissions:
-  pull-requests: write
+  actions: read   # Required for anchore/sbom-action
+  contents: write # Required for anchore/sbom-action
   id-token: write # This is required for requesting the JWT
-  contents: read # This is required for actions/checkout
+  pull-requests: write
 
 jobs:
   react_build_and_deploy_docker_image:
@@ -36,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          repository: 'nhsconnect/national-document-repository'
+          repository: 'NHSDigital/national-document-repository'
           ref: ${{ inputs.build_branch }}
           fetch-depth: '0'
 
@@ -115,6 +116,22 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA" >> $GITHUB_OUTPUT
+
+      - uses: anchore/sbom-action@v0
+        if: ${{ inputs.environment == 'development' }}
+        with:
+          image: ${{ steps.login-ecr.outputs.registry }}/ndr-${{ inputs.sandbox }}-app:${{ github.sha }}
+          format: cyclonedx-json
+          output-file: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
+
+      - uses: anchore/scan-action@v7
+        if: ${{ inputs.environment == 'development' }}
+        with:
+          sbom: sbom-image-${{ github.event.repository.name }}-${{ inputs.build_branch }}.cdx.json
+          fail-build: true
+          severity-cutoff: low
+          only-fixed: true
+          output-format: table
 
       # Looks like the ECS does not check for image updates, as such we need to force a new task definition to run the new image
       # We will always use the "latest" image tag so we do not need to modify the task-definition

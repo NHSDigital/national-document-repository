@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import {
     UploadDocument,
     DOCUMENT_TYPE,
@@ -38,15 +38,20 @@ describe('DocumentUploadCompleteStage', () => {
     });
 
     describe('Rendering', () => {
-        it('renders without documents', () => {
-            render(
-                <DocumentUploadLloydGeorgePreview
-                    documents={documents}
-                    setMergedPdfBlob={mockSetMergedPdfBlob}
-                />,
+        it('renders without documents', async () => {
+            vi.mocked(getMergedPdfBlob).mockResolvedValue(
+                new Blob([''], { type: 'application/pdf' }),
             );
 
-            // When no documents are provided, nothing should render
+            await act(async () => {
+                render(
+                    <DocumentUploadLloydGeorgePreview
+                        documents={documents}
+                        setMergedPdfBlob={mockSetMergedPdfBlob}
+                    />,
+                );
+            });
+
             expect(screen.queryByTestId('pdf-viewer')).not.toBeInTheDocument();
         });
 
@@ -55,17 +60,19 @@ describe('DocumentUploadCompleteStage', () => {
             const mockBlob = new Blob(['test pdf content'], { type: 'application/pdf' });
             vi.mocked(getMergedPdfBlob).mockResolvedValue(mockBlob);
 
-            render(
-                <DocumentUploadLloydGeorgePreview
-                    documents={testDocuments}
-                    setMergedPdfBlob={mockSetMergedPdfBlob}
-                />,
-            );
+            await act(async () => {
+                render(
+                    <DocumentUploadLloydGeorgePreview
+                        documents={testDocuments}
+                        setMergedPdfBlob={mockSetMergedPdfBlob}
+                    />,
+                );
+            });
 
-            // Wait for the PDF merger to complete
+            expect(await screen.findByTestId('pdf-viewer')).toBeInTheDocument();
+
             await waitFor(() => {
                 expect(mockSetMergedPdfBlob).toHaveBeenCalledWith(mockBlob);
-                expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
             });
         });
     });

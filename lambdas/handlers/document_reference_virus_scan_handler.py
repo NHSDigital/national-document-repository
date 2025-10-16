@@ -14,8 +14,10 @@ logger = LoggingService(__name__)
 @ensure_environment_variables(
     names=[
         "LLOYD_GEORGE_DYNAMODB_NAME",
+        "PDM_DYNAMODB_NAME",
         "STAGING_STORE_BUCKET_NAME",
         "LLOYD_GEORGE_BUCKET_NAME",
+        "PDM_BUCKET_NAME",
         "VIRUS_SCAN_STUB",
     ]
 )

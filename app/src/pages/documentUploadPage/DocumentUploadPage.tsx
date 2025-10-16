@@ -37,6 +37,7 @@ import DocumentUploadCompleteStage from '../../components/blocks/_documentUpload
 import DocumentUploadRemoveFilesStage from '../../components/blocks/_documentUpload/documentUploadRemoveFilesStage/DocumentUploadRemoveFilesStage';
 import useConfig from '../../helpers/hooks/useConfig';
 import DocumentUploadInfectedStage from '../../components/blocks/_documentUpload/documentUploadInfectedStage/DocumentUploadInfectedStage';
+import DocumentSelectFileErrorsPage from '../../components/blocks/_documentUpload/documentSelectFileErrorsPage/DocumentSelectFileErrorsPage';
 
 const DocumentUploadPage = (): React.JSX.Element => {
     const patientDetails = usePatient();
@@ -52,6 +53,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
     const [mergedPdfBlob, setMergedPdfBlob] = useState<Blob>();
     const config = useConfig();
     const interval = useRef<number>(0);
+    const filesErrorPageRef = useRef(false);
 
     const UPDATE_DOCUMENT_STATE_FREQUENCY_MILLISECONDS = 5000;
     const MAX_POLLING_TIME = 120000;
@@ -307,6 +309,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
                             documents={documents}
                             setDocuments={setDocuments}
                             documentType={DOCUMENT_TYPE.LLOYD_GEORGE}
+                            filesErrorRef={filesErrorPageRef}
                         />
                     }
                 />
@@ -347,6 +350,10 @@ const DocumentUploadPage = (): React.JSX.Element => {
                 <Route
                     path={getLastURLPath(routeChildren.DOCUMENT_UPLOAD_INFECTED) + '/*'}
                     element={<DocumentUploadInfectedStage />}
+                />
+                <Route
+                    path={getLastURLPath(routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS) + '/*'}
+                    element={<DocumentSelectFileErrorsPage documents={documents} />}
                 />
             </Routes>
 

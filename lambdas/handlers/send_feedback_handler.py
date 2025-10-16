@@ -78,8 +78,6 @@ def lambda_handler(event, context):
         test_feedback_service = SendTestFeedbackService()
         test_feedback_service.process_feedback(feedback)
 
-
-
     return ApiGatewayResponse(
         200, "Feedback email processed", "POST"
     ).create_api_gateway_response()
@@ -88,4 +86,3 @@ def lambda_handler(event, context):
 def is_itoc_test_feedback(ods_code: str) -> bool:
     ods_codes = os.environ["ITOC_TESTING_ODS_CODES"].split(",")
     return ods_code in ods_codes
-

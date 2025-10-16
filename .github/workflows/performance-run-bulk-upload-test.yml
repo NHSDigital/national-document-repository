@@ -28,6 +28,11 @@ on:
         required: true
         type: "string"
         default: "1"
+      use_bulk_upload_metadata_processor:
+        description: "Use BulkUploadMetadataProcessor Lambda"
+        required: true
+        type: "boolean"
+        default: false
 
 jobs:
   bulk_upload:
@@ -38,5 +43,6 @@ jobs:
       num_patients: "${{ inputs.num_patients }}"
       file_count: "${{ inputs.file_count }}"
       file_size: "${{ inputs.file_size }}"
+      use_bulk_upload_metadata_processor: "${{ inputs.use_bulk_upload_metadata_processor }}"
     secrets:
       AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
