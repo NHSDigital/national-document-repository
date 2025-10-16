@@ -17,7 +17,10 @@ class MigrationDynamoDBSegmentService:
     def segment(self, id: str, total_segments: int) -> dict:
         try:
             segments = list(range(0, total_segments))
-            random.shuffle(segments)
+
+            rng = random.Random()  
+            rng.shuffle(segments)
+
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=f"stepfunctionconfig-{id}.json",

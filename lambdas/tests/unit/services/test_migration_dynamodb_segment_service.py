@@ -24,19 +24,22 @@ def service(mock_env_bucket_name, mock_s3_client):
 
 
 @pytest.fixture
-def mock_random_shuffle(mocker):
-    """Mocks random.shuffle to make tests predictable"""
-    return mocker.patch("services.migration_dynamodb_segment_service.random.shuffle")
+def mock_random(mocker):
+    """Mocks random.Random to make tests predictable"""
+    mock_random_class = mocker.patch("services.migration_dynamodb_segment_service.random.Random")
+    mock_instance = mocker.MagicMock()
+    mock_random_class.return_value = mock_instance
+    return mock_instance
 
 
 # Success test cases
-def test_segment_success(service, mock_s3_client, mock_random_shuffle):
+def test_segment_success(service, mock_s3_client, mock_random):
     """Test successful segment operation"""
     test_id = "test-execution-123"
     total_segments = 4
     
     # Mock shuffle to do nothing (keep original order for predictable testing)
-    mock_random_shuffle.side_effect = lambda x: None
+    mock_random.shuffle.side_effect = lambda x: None
     
     expected_segments = [0, 1, 2, 3]
     expected_key = "stepfunctionconfig-test-execution-123.json"
@@ -63,10 +66,10 @@ def test_segment_success(service, mock_s3_client, mock_random_shuffle):
     (10, list(range(10))),
     (100, list(range(100)))
 ])
-def test_segment_various_sizes(service, mock_s3_client, mock_random_shuffle, total_segments, expected_segments):
+def test_segment_various_sizes(service, mock_s3_client, mock_random, total_segments, expected_segments):
     """Test with various segment sizes"""
     test_id = "size-test"
-    mock_random_shuffle.side_effect = lambda x: None
+    mock_random.shuffle.side_effect = lambda x: None
     
     result = service.segment(test_id, total_segments)
     
@@ -82,16 +85,16 @@ def test_segment_various_sizes(service, mock_s3_client, mock_random_shuffle, tot
     assert result['key'] == "stepfunctionconfig-size-test.json"
 
 
-def test_segment_shuffle_is_called(service, mock_s3_client, mock_random_shuffle):
-    """Test that random.shuffle is called on the segments"""
+def test_segment_shuffle_is_called(service, mock_s3_client, mock_random):
+    """Test that Random.shuffle is called on the segments"""
     test_id = "shuffle-test"
     total_segments = 5
     
     service.segment(test_id, total_segments)
     
     # Verify shuffle was called with the segments list
-    mock_random_shuffle.assert_called_once()
-    shuffle_arg = mock_random_shuffle.call_args[0][0]
+    mock_random.shuffle.assert_called_once()
+    shuffle_arg = mock_random.shuffle.call_args[0][0]
     assert shuffle_arg == [0, 1, 2, 3, 4]
 
 
@@ -100,10 +103,10 @@ def test_segment_shuffle_is_called(service, mock_s3_client, mock_random_shuffle)
     ("test-执行-123", "stepfunctionconfig-test-执行-123.json"),
     ("", "stepfunctionconfig-.json")
 ])
-def test_segment_special_characters_in_id(service, mock_s3_client, mock_random_shuffle, test_id, expected_key):
+def test_segment_special_characters_in_id(service, mock_s3_client, mock_random, test_id, expected_key):
     """Test with various special characters in execution ID"""
     total_segments = 2
-    mock_random_shuffle.side_effect = lambda x: None
+    mock_random.shuffle.side_effect = lambda x: None
     
     result = service.segment(test_id, total_segments)
     
@@ -117,7 +120,7 @@ def test_segment_special_characters_in_id(service, mock_s3_client, mock_random_s
     (NoCredentialsError(), NoCredentialsError),
     (Exception("Generic error"), Exception)
 ])
-def test_segment_error_handling(service, mock_s3_client, mock_random_shuffle, exception, exception_type):
+def test_segment_error_handling(service, mock_s3_client, mock_random, exception, exception_type):
     """Test that various exceptions are re-raised"""
     test_id = "error-test"
     total_segments = 3
@@ -128,7 +131,7 @@ def test_segment_error_handling(service, mock_s3_client, mock_random_shuffle, ex
         service.segment(test_id, total_segments)
 
 
-def test_segment_logging_on_error(service, mock_s3_client, mock_random_shuffle, mocker):
+def test_segment_logging_on_error(service, mock_s3_client, mock_random, mocker):
     """Test that errors are properly logged with extras"""
     mock_logger = mocker.patch("services.migration_dynamodb_segment_service.logger")
     
@@ -162,13 +165,13 @@ def test_segment_environment_variable_missing(mocker):
         MigrationDynamoDBSegmentService()
 
 
-def test_segment_body_encoding_and_json(service, mock_s3_client, mock_random_shuffle):
+def test_segment_body_encoding_and_json(service, mock_s3_client, mock_random):
     """Test that the body is properly JSON formatted"""
     test_id = "encoding-test"
     total_segments = 3
     
     # Mock shuffle to reverse the list for predictable testing
-    mock_random_shuffle.side_effect = lambda x: x.reverse()
+    mock_random.shuffle.side_effect = lambda x: x.reverse()
     
     service.segment(test_id, total_segments)
     
@@ -181,12 +184,12 @@ def test_segment_body_encoding_and_json(service, mock_s3_client, mock_random_shu
     assert parsed == [2, 1, 0]  # Should be reversed
 
 
-def test_segment_put_object_parameters(service, mock_s3_client, mock_random_shuffle):
+def test_segment_put_object_parameters(service, mock_s3_client, mock_random):
     """Test that put_object is called with exactly the right parameters"""
     test_id = "param-test"
     total_segments = 3
     
-    mock_random_shuffle.side_effect = lambda x: None
+    mock_random.shuffle.side_effect = lambda x: None
     
     service.segment(test_id, total_segments)
     
@@ -209,12 +212,12 @@ def test_segment_creates_s3_client(mock_env_bucket_name, mocker):
     mock_boto3_client.assert_called_once_with("s3")
 
 
-def test_segment_zero_segments_edge_case(service, mock_s3_client, mock_random_shuffle):
+def test_segment_zero_segments_edge_case(service, mock_s3_client, mock_random):
     """Test with zero segments (edge case)"""
     test_id = "zero-test"
     total_segments = 0
     
-    mock_random_shuffle.side_effect = lambda x: None
+    mock_random.shuffle.side_effect = lambda x: None
     
     result = service.segment(test_id, total_segments)
     
@@ -232,7 +235,7 @@ def test_segment_zero_segments_edge_case(service, mock_s3_client, mock_random_sh
 
 
 def test_segment_actual_shuffle_behavior(service, mock_s3_client):
-    """Test that segments are actually shuffled (without mocking shuffle)"""
+    """Test that segments are actually shuffled (without mocking Random)"""
     test_id = "actual-shuffle"
     total_segments = 10
     
