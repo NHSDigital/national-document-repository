@@ -11,7 +11,6 @@ from services.document_service import DocumentService
 from enums.snomed_codes import SnomedCodes
 from enums.lambda_error import LambdaError
 from utils.lambda_exceptions import UpdateFhirDocumentReferenceException
-from botocore.exceptions import ClientError
 from models.fhir.R4.fhir_document_reference import Attachment
 from models.fhir.R4.fhir_document_reference import DocumentReferenceInfo
 
@@ -35,44 +34,69 @@ class PutFhirDocumentReferenceService:
         self.document_service = DocumentService()
 
     def process_fhir_document_reference(self, fhir_document: str) -> str:
-        validated_fhir_doc = self._validate_update_document_reference_request(fhir_document)
-        return self._update_document_references(validated_fhir_doc)
-
-    def _update_document_references(self, validated_fhir_doc: FhirDocumentReference):
         try:
-            # Extract NHS number from the FHIR document
-            nhs_number = self.document_service.extract_nhs_number_from_fhir(validated_fhir_doc)
-        except DocumentServiceException:
+            validated_fhir_doc = FhirDocumentReference.model_validate_json(fhir_document)
+        except ValidationError as e:
+            logger.error(f"FHIR document validation error: {str(e)}")
             raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdateDocNoParse)
-
-        try:
-            patient_details = self.document_service.check_nhs_number_with_pds(nhs_number)
-        except DocumentServiceException:
-            raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdatePatientSearchInvalid)
 
         try:
             # Extract document type
             doc_type = self.document_service.determine_document_type(validated_fhir_doc)
         except DocumentServiceException:
+            logger.error("Could not determine document type")
             raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdateDocInvalidType)
 
         # Determine which DynamoDB table to use based on the document type
         dynamo_table = self.document_service.get_dynamo_table_for_doc_type(doc_type)
 
-        # Check if binary content is included
-        binary_content = validated_fhir_doc.content[0].attachment.data
-
         try:
             current_doc = self.document_service.get_document_reference(validated_fhir_doc.id, dynamo_table)
         except DocumentServiceException:
-            raise UpdateFhirDocumentReferenceException(404, LambdaError.DocumentReferenceNotFound)
+            logger.error("No document found for the given document ID.")
+            raise UpdateFhirDocumentReferenceException(
+                404, LambdaError.DocumentReferenceNotFound
+            )
 
+        if not current_doc.doc_status == "final":
+            logger.error("Document is not the latest version.")
+            raise UpdateFhirDocumentReferenceException(
+                400, LambdaError.UpdateDocNotLatestVersion
+            )
+        
+        try:
+            put_nhs_number = self.document_service.extract_nhs_number_from_fhir(validated_fhir_doc)
+        except DocumentServiceException:
+            logger.error("Could not find NHS number in request fhir document reference")
+            raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdateDocNoParse)
 
+        if current_doc.nhs_number != put_nhs_number:
+            logger.error("NHS numbers do not match.")
+            raise UpdateFhirDocumentReferenceException(
+                400, LambdaError.UpdateDocNHSNumberMismatch
+            )
+        
+        if validated_fhir_doc.meta is None:
+            logger.error("Missing version number")
+            raise UpdateFhirDocumentReferenceException(400, LambdaError.DocumentReferenceMissingParameters)
+        
+        if current_doc.version != validated_fhir_doc.meta.versionId:
+            logger.error("Version does not match current version.")
+            raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdateDocVersionMismatch)
+        
+        try:
+            patient_details = self.document_service.check_nhs_number_with_pds(put_nhs_number)
+        except DocumentServiceException:
+            raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdatePatientSearchInvalid)
+        
+        # Check if binary content is included
+        binary_content = validated_fhir_doc.content[0].attachment.data
+        
         new_doc_version = int(current_doc.version) + 1
 
         # Create a document reference model
         document_reference = self.document_service.create_document_reference(
-            nhs_number,
+            put_nhs_number,
             doc_type,
             validated_fhir_doc,
             patient_details.general_practice_ods,
@@ -103,51 +127,6 @@ class PutFhirDocumentReferenceService:
         except (ValidationError, InvalidNhsNumberException) as e:
             logger.error(f"FHIR document validation error: {str(e)}")
             raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdateDocNoParse)
-
-    def _validate_update_document_reference_request(self, updated_doc: str) -> FhirDocumentReference:
-        try:
-            validated_fhir_doc = FhirDocumentReference.model_validate_json(updated_doc)
-        except ValidationError as e:
-            logger.error(f"FHIR document validation error: {str(e)}")
-            raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdateDocNoParse)
-
-        # Extract document type
-        doc_type = self.document_service.determine_document_type(validated_fhir_doc)
-
-        # Determine which DynamoDB table to use based on the document type
-        dynamo_table = self.document_service.get_dynamo_table_for_doc_type(doc_type)
-
-        current_doc = self.document_service.get_document_reference(validated_fhir_doc.id, dynamo_table)
-
-        if not current_doc:
-            logger.error("No document found for the given document ID.")
-            raise UpdateFhirDocumentReferenceException(
-                404, LambdaError.DocumentReferenceNotFound
-            )
-
-        if not current_doc.doc_status == "final":
-            logger.error("Document is not the latest version.")
-            raise UpdateFhirDocumentReferenceException(
-                400, LambdaError.UpdateDocNotLatestVersion
-            )
-        
-        put_nhs_number = self.document_service.extract_nhs_number_from_fhir(validated_fhir_doc)
-
-        if current_doc.nhs_number != put_nhs_number:
-            logger.error("NHS numbers do not match.")
-            raise UpdateFhirDocumentReferenceException(
-                400, LambdaError.UpdateDocNHSNumberMismatch
-            )
-        
-        if validated_fhir_doc.meta is None:
-            logger.error("Missing version number")
-            raise UpdateFhirDocumentReferenceException(400, LambdaError.DocumentReferenceMissingParameters)
-        
-        if current_doc.version != validated_fhir_doc.meta.versionId:
-            logger.error("Version does not match current version.")
-            raise UpdateFhirDocumentReferenceException(400, LambdaError.UpdateDocVersionMismatch)
-        
-        return validated_fhir_doc
 
     def _create_fhir_response(
         self,

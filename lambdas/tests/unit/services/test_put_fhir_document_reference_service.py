@@ -153,7 +153,7 @@ def test_validation_error(mock_service):
     assert excinfo.value.error == LambdaError.UpdateDocNoParse
 
 
-def test_pds_error(mock_service, valid_fhir_doc_json, mocker, valid_doc_ref, valid_nhs_number):
+def test_pds_error(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):
     """Test handling of PDS error."""
 
     mock_service.document_service.check_nhs_number_with_pds.side_effect = DocumentServiceException()
@@ -256,20 +256,20 @@ def test_process_fhir_document_reference_with_none(mock_service):
     assert excinfo.value.error == LambdaError.UpdateDocNoParse
 
 
-def test_validate_update_document_reference_request_with_non_final_document(mock_service, valid_fhir_doc_json, valid_doc_ref):
-    """Test _validate_update_document_reference_request errors when document to edit is not final version"""
+def test_process_fhir_document_reference_non_final_document_error(mock_service, valid_fhir_doc_json, valid_doc_ref):
+    """Test process_fhir_document_reference errors when document to edit is not final version"""
     valid_doc_ref.doc_status = "deprecated"
     mock_service.document_service.get_document_reference.return_value = valid_doc_ref
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._validate_update_document_reference_request(valid_fhir_doc_json)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.UpdateDocNotLatestVersion
 
 
-def test_validate_update_document_reference_request_mismatched_version(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):
-    """Test _validate_update_document_reference_request errors when document to edit is not final version"""
+def test_process_fhir_document_reference_request_mismatched_version_error(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):
+    """Test process_fhir_document_reference errors when document to edit is not final version"""
     valid_doc_ref.version = "10"
     valid_doc_ref.doc_status = "final"
     valid_doc_ref.nhs_number = valid_nhs_number
@@ -277,28 +277,28 @@ def test_validate_update_document_reference_request_mismatched_version(mock_serv
     mock_service.document_service.extract_nhs_number_from_fhir.return_value = valid_nhs_number
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._validate_update_document_reference_request(valid_fhir_doc_json)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.UpdateDocVersionMismatch
 
 
-def test_validate_update_document_reference_mismatched_nhs_number(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):
-    """Test _validate_update_document_reference_request error when the NHS number doesn't match"""
+def test_process_fhir_document_reference_mismatched_nhs_number_error(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):
+    """Test process_fhir_document_reference error when the NHS number doesn't match"""
     valid_doc_ref.doc_status = "final"
     valid_doc_ref.nhs_number = "1"
     mock_service.document_service.get_document_reference.return_value = valid_doc_ref
     mock_service.document_service.extract_nhs_number_from_fhir.return_value = valid_nhs_number
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._validate_update_document_reference_request(valid_fhir_doc_json)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.UpdateDocNHSNumberMismatch
 
 
-def test_validate_update_document_reference_missing_meta_field(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):
-    """Test _validate_update_document_reference_request error when meta field is missing"""
+def test_process_fhir_document_reference_missing_meta_field_error(mock_service, valid_fhir_doc_json, valid_doc_ref, valid_nhs_number):
+    """Test process_fhir_document_reference error when meta field is missing"""
     doc = json.loads(valid_fhir_doc_json)
     doc["meta"] = None
     valid_fhir_doc_json = json.dumps(doc)
@@ -307,63 +307,86 @@ def test_validate_update_document_reference_missing_meta_field(mock_service, val
     mock_service.document_service.extract_nhs_number_from_fhir.return_value = valid_nhs_number
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._validate_update_document_reference_request(valid_fhir_doc_json)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.DocumentReferenceMissingParameters
 
 
-def test_nhs_number_extraction_error(mock_service, valid_fhir_doc_object):
+def test_nhs_number_extraction_error(mock_service, valid_fhir_doc_json):
     """Test handling errors from extract_nhs_number_from_fhir"""
+    document = create_test_doc_store_refs()[0]
+    mock_service.document_service.get_document_reference.return_value = document
+    
     mock_service.document_service.extract_nhs_number_from_fhir.side_effect = DocumentServiceException()
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._update_document_references(valid_fhir_doc_object)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.UpdateDocNoParse
 
 
-def test_determine_document_type_error(mock_service, valid_fhir_doc_object):
+def test_determine_document_type_error(mock_service, valid_fhir_doc_json):
     """Test handling errors from determine_document_type"""
     mock_service.document_service.determine_document_type.side_effect = DocumentServiceException()
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._update_document_references(valid_fhir_doc_object)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
+    
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.error == LambdaError.UpdateDocInvalidType
+
+def test_determine_document_type_error(mock_service, valid_fhir_doc_json):
+    """Test handling errors from determine_document_type"""
+    mock_service.document_service.determine_document_type.side_effect = DocumentServiceException()
+
+    with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
     
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.UpdateDocInvalidType
 
 
-def test_get_document_reference_error(mock_service, valid_fhir_doc_object):
-    """Test handling of errors from get_document_reference"""#
+def test_get_document_reference_error(mock_service, valid_fhir_doc_json):
+    """Test handling of errors from get_document_reference"""
     mock_service.document_service.get_document_reference.side_effect = DocumentServiceException()
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._update_document_references(valid_fhir_doc_object)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
     
     assert excinfo.value.status_code == 404
     assert excinfo.value.error == LambdaError.DocumentReferenceNotFound
 
 
-def test_save_document_reference_to_dynamo_error(mock_service, valid_fhir_doc_object):
+def test_save_document_reference_to_dynamo_error(mock_service, valid_fhir_doc_json, valid_nhs_number):
     """test handling errors from save_document_reference_to_dynamo"""
+    document = create_test_doc_store_refs()[0]
+    document.nhs_number = valid_nhs_number
+    mock_service.document_service.get_document_reference.return_value = document
+    mock_service.document_service.extract_nhs_number_from_fhir.return_value = valid_nhs_number
+
     mock_service.document_service.save_document_reference_to_dynamo.side_effect = DocumentServiceException()
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._update_document_references(valid_fhir_doc_object)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 500
     assert excinfo.value.error == LambdaError.UpdateDocUploadInternalError
 
 
-def test_create_fhir_response_validation_error(mocker, mock_service, valid_fhir_doc_object):
+def test_create_fhir_response_validation_error(mocker, mock_service, valid_fhir_doc_json, valid_nhs_number):
     """test handling errors from _create_fhir_response"""
+    document = create_test_doc_store_refs()[0]
+    document.nhs_number = valid_nhs_number
+    mock_service.document_service.get_document_reference.return_value = document
+    mock_service.document_service.extract_nhs_number_from_fhir.return_value = valid_nhs_number
+
     mock_service._create_fhir_response = mocker.patch("services.put_fhir_document_reference_service.PutFhirDocumentReferenceService._create_fhir_response")
     mock_service._create_fhir_response.side_effect = ValidationError("", [])
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._update_document_references(valid_fhir_doc_object)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.UpdateDocNoParse
@@ -371,10 +394,10 @@ def test_create_fhir_response_validation_error(mocker, mock_service, valid_fhir_
 
 def test_document_reference_not_found_error(mock_service, valid_fhir_doc_json):
     """test handling current document reference not found"""
-    mock_service.document_service.get_document_reference.return_value = None
+    mock_service.document_service.get_document_reference.side_effect = DocumentServiceException()
 
     with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service._validate_update_document_reference_request(valid_fhir_doc_json)
+        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
 
     assert excinfo.value.status_code == 404
     assert excinfo.value.error == LambdaError.DocumentReferenceNotFound
