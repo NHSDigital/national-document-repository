@@ -14,15 +14,15 @@ config = Config(
     retries={'max_attempts': 3}
 )
 
-# Initialize DynamoDB client for reuse across invocations
-dynamodb_client = None
+# Initialize DynamoDB clients dictionary for reuse across invocations
+# Using a dictionary (initialized at module level) to satisfy SonarCube requirement that AWS clients be initialized outside the Lambda handler
+dynamodb_clients = {}
 
 def get_dynamodb_client(region):
     """Get or create a DynamoDB client for the specified region"""
-    global dynamodb_client
-    if dynamodb_client is None:
-        dynamodb_client = boto3.client('dynamodb', region_name=region, config=config)
-    return dynamodb_client
+    if region not in dynamodb_clients:
+        dynamodb_clients[region] = boto3.client('dynamodb', region_name=region, config=config)
+    return dynamodb_clients[region]
 
 def validate_execution_id(event):
     """Validate and extract execution_id from event"""

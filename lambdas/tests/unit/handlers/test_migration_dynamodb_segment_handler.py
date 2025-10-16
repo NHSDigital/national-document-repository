@@ -375,14 +375,14 @@ class TestGetDynamoDBClient:
     """Test cases for the get_dynamodb_client function"""
     
     def test_get_dynamodb_client_creates_new_client(self, mocker):
-        """Test that a new client is created when none exists"""
+        """Test that a new client is created when none exists for a region"""
         mock_boto_client = mocker.patch("handlers.migration_dynamodb_segment_handler.boto3.client")
         mock_client = mocker.MagicMock()
         mock_boto_client.return_value = mock_client
         
-        # Clear the cached client
+        # Clear the cached clients dictionary
         import handlers.migration_dynamodb_segment_handler
-        handlers.migration_dynamodb_segment_handler.dynamodb_client = None
+        handlers.migration_dynamodb_segment_handler.dynamodb_clients = {}
         
         result = get_dynamodb_client("us-east-1")
         
@@ -390,23 +390,45 @@ class TestGetDynamoDBClient:
         mock_boto_client.assert_called_once_with('dynamodb', region_name='us-east-1', config=mocker.ANY)
     
     def test_get_dynamodb_client_returns_cached_client(self, mocker):
-        """Test that cached client is returned on subsequent calls"""
+        """Test that cached client is returned on subsequent calls for the same region"""
         mock_boto_client = mocker.patch("handlers.migration_dynamodb_segment_handler.boto3.client")
         mock_client = mocker.MagicMock()
         mock_boto_client.return_value = mock_client
         
-        # Clear the cached client
+        # Clear the cached clients dictionary
         import handlers.migration_dynamodb_segment_handler
-        handlers.migration_dynamodb_segment_handler.dynamodb_client = None
+        handlers.migration_dynamodb_segment_handler.dynamodb_clients = {}
         
         # First call creates the client
         result1 = get_dynamodb_client("us-east-1")
-        # Second call should return cached client
-        result2 = get_dynamodb_client("us-west-2")
+        # Second call with same region should return cached client
+        result2 = get_dynamodb_client("us-east-1")
         
         assert result1 == result2
-        # boto3.client should only be called once
+        # boto3.client should only be called once for the same region
         mock_boto_client.assert_called_once()
+    
+    def test_get_dynamodb_client_creates_separate_clients_per_region(self, mocker):
+        """Test that separate clients are created for different regions"""
+        mock_boto_client = mocker.patch("handlers.migration_dynamodb_segment_handler.boto3.client")
+        mock_client_us_east = mocker.MagicMock()
+        mock_client_eu_west = mocker.MagicMock()
+        mock_boto_client.side_effect = [mock_client_us_east, mock_client_eu_west]
+        
+        # Clear the cached clients dictionary
+        import handlers.migration_dynamodb_segment_handler
+        handlers.migration_dynamodb_segment_handler.dynamodb_clients = {}
+        
+        # Get client for us-east-1
+        result1 = get_dynamodb_client("us-east-1")
+        # Get client for eu-west-2
+        result2 = get_dynamodb_client("eu-west-2")
+        
+        assert result1 == mock_client_us_east
+        assert result2 == mock_client_eu_west
+        assert mock_boto_client.call_count == 2
+        mock_boto_client.assert_any_call('dynamodb', region_name='us-east-1', config=mocker.ANY)
+        mock_boto_client.assert_any_call('dynamodb', region_name='eu-west-2', config=mocker.ANY)
 
 # Integration tests
 class TestIntegration:
