@@ -189,7 +189,9 @@ def build_test_staging_metadata(file_names: list[str], nhs_number: str = "900000
     for file_name in file_names:
         source_file_path = f"/{nhs_number}/{file_name}"
         files.append(
-            sample_metadata_model.model_copy(update={"file_path": source_file_path})
+            sample_metadata_model.model_copy(
+                update={"file_path": source_file_path, "scan_date": "2022-09-03"}
+            )
         )
     return StagingMetadata(files=files, nhs_number=nhs_number)
 

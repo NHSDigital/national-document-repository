@@ -105,3 +105,25 @@ def generate_date_folder_name(date: str) -> str:
 def format_cloudfront_url(presign_url: str, cloudfront_domain: str) -> str:
     formatted_url = f"https://{cloudfront_domain}/{presign_url}"
     return formatted_url
+
+
+def parse_date(date_string: str) -> datetime | None:
+    if not date_string:
+        return None
+
+    SUPPORTED_FORMATS = [
+        "%d/%m/%Y",
+        "%Y-%m-%d",
+        "%d-%m-%Y",
+        "%b %d, %Y",
+        "%d-%b-%Y",
+        "%d-%B-%Y",
+    ]
+
+    for fmt in SUPPORTED_FORMATS:
+        try:
+            date_object = datetime.strptime(date_string, fmt)
+            return date_object
+        except ValueError:
+            continue
+    return None

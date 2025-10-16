@@ -27,7 +27,7 @@ from utils.unicode_utils import (
     name_ends_with,
     name_starts_with,
 )
-from utils.utilities import get_pds_service
+from utils.utilities import get_pds_service, parse_date
 
 logger = LoggingService(__name__)
 
@@ -386,3 +386,10 @@ def allowed_to_ingest_ods_code(patient_ods_code: str) -> bool:
         return True
 
     return patient_ods_code.upper() in allowed_ods_codes
+
+
+def validate_scan_date(scan_date: str):
+    if formatted_date := parse_date(scan_date):
+        return formatted_date.strftime("%Y-%m-%d")
+    else:
+        raise LGInvalidFilesException("Invalid scan date format")

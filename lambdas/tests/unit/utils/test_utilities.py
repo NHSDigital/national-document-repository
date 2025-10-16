@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from services.mock_pds_service import MockPdsApiService
 from services.pds_api_service import PdsApiService
@@ -8,6 +10,7 @@ from utils.utilities import (
     format_cloudfront_url,
     get_file_key_from_s3_url,
     get_pds_service,
+    parse_date,
     redact_id_to_last_4_chars,
     validate_nhs_number,
 )
@@ -111,3 +114,24 @@ def test_format_cloudfront_url_valid():
     cloudfront_domain = "d12345.cloudfront.net"
     expected_url = "https://d12345.cloudfront.net/path/to/resource"
     assert format_cloudfront_url(presign_url, cloudfront_domain) == expected_url
+
+
+@pytest.mark.parametrize(
+    "input_date, expected_date",
+    [
+        ("25/12/2023", datetime(2023, 12, 25)),
+        ("2023-12-25", datetime(2023, 12, 25)),
+        ("25-12-2023", datetime(2023, 12, 25)),
+        ("Dec 25, 2023", datetime(2023, 12, 25)),
+        ("25-Dec-2023", datetime(2023, 12, 25)),
+        ("24-NOV-2023", datetime(2023, 11, 24)),
+        ("12/12/2024 12:12", None),
+        ("25.12.2023", None),
+        ("", None),
+        ("test_text", None),
+        (None, None),
+    ],
+)
+def test_parse_date_returns_correct_date_for_valid_formats(input_date, expected_date):
+    result = parse_date(input_date)
+    assert result == expected_date

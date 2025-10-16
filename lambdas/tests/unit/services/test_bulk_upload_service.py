@@ -57,10 +57,10 @@ from utils.lloyd_george_validator import LGInvalidFilesException
 
 @pytest.fixture
 def repo_under_test(set_env, mocker):
+    mocker.patch("services.bulk_upload_service.BulkUploadDynamoRepository")
+    mocker.patch("services.bulk_upload_service.BulkUploadSqsRepository")
+    mocker.patch("services.bulk_upload_service.BulkUploadS3Repository")
     service = BulkUploadService(strict_mode=True)
-    mocker.patch.object(service, "dynamo_repository")
-    mocker.patch.object(service, "sqs_repository")
-    mocker.patch.object(service, "bulk_upload_s3_repository")
     yield service
 
 
@@ -889,25 +889,29 @@ def test_convert_to_document_reference(set_env, mock_uuid, repo_under_test):
 
 
 @freeze_time("2024-01-01 12:00:00")
-def test_convert_to_document_reference_missing_scan_date(
-    set_env, mock_uuid, repo_under_test
+def test_reject_document_reference_if_missing_scan_date(
+    set_env, mock_uuid, repo_under_test, mocker
 ):
     TEST_STAGING_METADATA.retries = 0
-    repo_under_test.bulk_upload_s3_repository.lg_bucket_name = "test_lg_s3_bucket"
-    expected = TEST_DOCUMENT_REFERENCE
-    expected.document_scan_creation = None
-    TEST_FILE_METADATA.scan_date = ""
-
-    actual = repo_under_test.convert_to_document_reference(
-        file_metadata=TEST_FILE_METADATA,
-        nhs_number=TEST_STAGING_METADATA.nhs_number,
-        current_gp_ods=TEST_CURRENT_GP_ODS,
+    modify_test_sqs_message = json.loads(TEST_SQS_MESSAGE.get("body"))
+    modify_test_sqs_message["files"][0]["SCAN-DATE"] = ""
+    TEST_STAGING_METADATA.files[0].scan_date = ""
+    mock_report_upload_failure = mocker.patch.object(
+        repo_under_test.dynamo_repository, "write_report_upload_to_dynamo"
     )
 
-    assert actual == expected
+    repo_under_test.handle_sqs_message(
+        message={"body": json.dumps(modify_test_sqs_message)}
+    )
 
-    TEST_FILE_METADATA.scan_date = "03/09/2022"
-    TEST_DOCUMENT_REFERENCE.document_scan_creation = "2022-09-03"
+    repo_under_test.dynamo_repository.write_report_upload_to_dynamo.assert_called()
+
+    mock_report_upload_failure.assert_called_with(
+        TEST_STAGING_METADATA, UploadStatus.FAILED, "Invalid scan date format", ""
+    )
+    repo_under_test.sqs_repository.send_message_to_pdf_stitching_queue.assert_not_called()
+
+    TEST_STAGING_METADATA.files[0].scan_date = "2022-09-03"
 
 
 def test_raise_client_error_from_ssm_with_pds_service(
