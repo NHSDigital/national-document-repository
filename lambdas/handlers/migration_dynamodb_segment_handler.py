@@ -1,4 +1,6 @@
 import logging
+import boto3
+from botocore.exceptions import ClientError
 
 from services.migration_dynamodb_segment_service import MigrationDynamoDBSegmentService
 
@@ -33,14 +35,72 @@ def validate_total_segments(event):
     
     return total_segments
 
+def validate_table_arn(event):
+    """Validate and extract table information from DynamoDB table ARN"""
+    if 'tableArn' not in event:
+        raise ValueError("Invalid or missing 'tableArn' in event")
+    
+    table_arn = event['tableArn']
+    if not isinstance(table_arn, str) or table_arn.strip() == "":
+        raise ValueError("Invalid or missing 'tableArn' in event")
+    
+    # Validate ARN format: arn:aws:dynamodb:region:account-id:table/table-name
+    if not table_arn.startswith('arn:aws:dynamodb:'):
+        raise ValueError("Invalid DynamoDB table ARN format - must start with 'arn:aws:dynamodb:'")
+    
+    if ':table/' not in table_arn:
+        raise ValueError("Invalid DynamoDB table ARN format - missing ':table/' component")
+    
+    try:
+        table_name = table_arn.split(':table/')[-1]
+        if not table_name:
+            raise ValueError("Invalid DynamoDB table ARN format - table name is empty")
+        
+        # Extract region for validation
+        arn_parts = table_arn.split(':')
+        if len(arn_parts) < 6:
+            raise ValueError("Invalid DynamoDB table ARN format - insufficient components")
+        
+        region = arn_parts[3]
+        if not region:
+            raise ValueError("Invalid DynamoDB table ARN format - region is empty")
+            
+        return table_name, region
+        
+    except (IndexError, ValueError) as e:
+        raise ValueError(f"Invalid DynamoDB table ARN format: {e}")
+
+def validate_table_exists(table_name, region):
+    """Validate that the DynamoDB table exists and is accessible"""
+    try:
+        client = boto3.client('dynamodb', region_name=region)
+        response = client.describe_table(TableName=table_name)
+        table_status = response['Table']['TableStatus']
+        
+        if table_status not in ['ACTIVE', 'UPDATING']:
+            raise ValueError(f"DynamoDB table '{table_name}' is not in ACTIVE status. Current status: {table_status}")
+        
+        return True
+        
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+        if error_code == 'ResourceNotFoundException':
+            raise ValueError(f"DynamoDB table '{table_name}' does not exist in region '{region}'")
+        elif error_code == 'AccessDeniedException':
+            raise ValueError(f"Access denied to DynamoDB table '{table_name}'. Check IAM permissions")
+        else:
+            raise ValueError(f"Failed to validate DynamoDB table '{table_name}': {e}")
+
 def lambda_handler(event, context):
     total_segments = None
     execution_id = None
     
     try:
+        table_name, region = validate_table_arn(event)
+        validate_table_exists(table_name, region)
         execution_id = validate_execution_id(event)
         total_segments = validate_total_segments(event)
-        
+
         return MigrationDynamoDBSegmentService().segment(execution_id, total_segments)
         
     except Exception as e:
