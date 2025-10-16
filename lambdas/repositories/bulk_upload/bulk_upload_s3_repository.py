@@ -3,7 +3,7 @@ import os
 from botocore.exceptions import ClientError
 from enums.virus_scan_result import SCAN_RESULT_TAG_KEY, VirusScanResult
 from models.document_reference import DocumentReference
-from models.staging_metadata import StagingMetadata
+from models.staging_metadata import StagingSqsMetadata
 from services.base.s3_service import S3Service
 from utils.audit_logging_setup import LoggingService
 from utils.exceptions import (
@@ -28,7 +28,7 @@ class BulkUploadS3Repository:
         self.dest_bucket_files_in_transaction = []
 
     def check_virus_result(
-        self, staging_metadata: StagingMetadata, file_path_cache: dict
+        self, staging_metadata: StagingSqsMetadata, file_path_cache: dict
     ):
         for file_metadata in staging_metadata.files:
             file_path = file_metadata.file_path
