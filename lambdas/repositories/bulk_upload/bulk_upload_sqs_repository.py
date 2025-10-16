@@ -2,7 +2,7 @@ import os
 import uuid
 
 from models.sqs.pdf_stitching_sqs_message import PdfStitchingSqsMessage
-from models.staging_metadata import StagingMetadata
+from models.staging_metadata import StagingSqsMetadata
 from services.base.sqs_service import SQSService
 from utils.audit_logging_setup import LoggingService
 from utils.request_context import request_context
@@ -16,7 +16,7 @@ class BulkUploadSqsRepository:
         self.invalid_queue_url = os.environ["INVALID_SQS_QUEUE_URL"]
         self.metadata_queue_url = os.environ["METADATA_SQS_QUEUE_URL"]
 
-    def put_staging_metadata_back_to_queue(self, staging_metadata: StagingMetadata):
+    def put_staging_metadata_back_to_queue(self, staging_metadata: StagingSqsMetadata):
         request_context.patient_nhs_no = staging_metadata.nhs_number
         setattr(staging_metadata, "retries", (staging_metadata.retries + 1))
         _logger.info("Returning message to sqs queue...")
