@@ -117,19 +117,25 @@ class BulkUploadMetadataProcessorService:
         ]
 
     def process_metadata_row(
-        self, row: dict, patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]]
+            self, row: dict, patients: dict[tuple[str, str], list[BulkUploadQueueMetadata]]
     ) -> None:
-        file_metadata = MetadataFile.model_validate(row)
-        nhs_number, ods_code = self.extract_patient_info(file_metadata)
-
         try:
-            correct_file_name = self.validate_and_correct_filename(file_metadata)
-        except InvalidFileNameException as error:
-            self.handle_invalid_filename(file_metadata, error, nhs_number)
-            return
+            file_metadata = MetadataFile.model_validate(row)
+            nhs_number, ods_code = self.extract_patient_info(file_metadata)
 
-        sqs_metadata = self.convert_to_sqs_metadata(file_metadata, correct_file_name)
-        patients[(nhs_number, ods_code)].append(sqs_metadata)
+            correct_file_name = self.validate_and_correct_filename(file_metadata)
+
+            sqs_metadata = self.convert_to_sqs_metadata(file_metadata, correct_file_name)
+            patients[(nhs_number, ods_code)].append(sqs_metadata)
+
+        except (pydantic.ValidationError, InvalidFileNameException) as e:
+            logger.error(f"Failed to process row: {row} — {e}")
+            nhs_number = row.get("NHS-NO", "0000000000")
+            file_metadata = MetadataFile.model_construct(**row)
+            error = e if isinstance(e, InvalidFileNameException) else InvalidFileNameException(
+                f"Metadata validation failed: {e}")
+
+            self.handle_invalid_filename(file_metadata, error, nhs_number)
 
     @staticmethod
     def convert_to_sqs_metadata(
