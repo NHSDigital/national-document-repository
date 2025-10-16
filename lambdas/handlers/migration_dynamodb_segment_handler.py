@@ -15,7 +15,8 @@ config = Config(
 )
 
 # Initialize DynamoDB clients dictionary for reuse across invocations
-# Using a dictionary (initialized at module level) to satisfy SonarCube requirement that AWS clients be initialized outside the Lambda handler
+# Using a dictionary (initialized at module level) to satisfy SonarCube requirement 
+# that AWS clients be initialized outside the Lambda handler
 dynamodb_clients = {}
 
 def get_dynamodb_client(region):
