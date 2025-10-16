@@ -1,4 +1,4 @@
-import random
+import secrets
 import boto3
 import json
 import logging
@@ -13,13 +13,20 @@ class MigrationDynamoDBSegmentService:
         self.bucket_name = os.environ.get("MIGRATION_SEGMENT_BUCKET_NAME")
         if not self.bucket_name:
             raise ValueError("MIGRATION_SEGMENT_BUCKET_NAME environment variable is required")
+    
+    ## this is necessary because random.shuffle is not cryptographically secure and will be flagged by security scanners
+    def _secure_shuffle(self, seq):
+        """Cryptographically secure shuffle using secrets module"""
+        seq = list(seq)
+        for i in range(len(seq) - 1, 0, -1):
+            j = secrets.randbelow(i + 1)
+            seq[i], seq[j] = seq[j], seq[i]
+        return seq
         
     def segment(self, id: str, total_segments: int) -> dict:
         try:
             segments = list(range(0, total_segments))
-
-            rng = random.Random()  
-            rng.shuffle(segments)
+            segments = self._secure_shuffle(segments)
 
             self.s3_client.put_object(
                 Bucket=self.bucket_name,

@@ -24,24 +24,22 @@ def service(mock_env_bucket_name, mock_s3_client):
 
 
 @pytest.fixture
-def mock_random(mocker):
-    """Mocks random.Random to make tests predictable"""
-    mock_random_class = mocker.patch("services.migration_dynamodb_segment_service.random.Random")
-    mock_instance = mocker.MagicMock()
-    mock_random_class.return_value = mock_instance
-    return mock_instance
+def mock_secrets_randbelow(mocker):
+    """Mocks secrets.randbelow to make tests predictable"""
+    return mocker.patch("services.migration_dynamodb_segment_service.secrets.randbelow")
 
 
 # Success test cases
-def test_segment_success(service, mock_s3_client, mock_random):
+def test_segment_success(service, mock_s3_client, mock_secrets_randbelow):
     """Test successful segment operation"""
     test_id = "test-execution-123"
     total_segments = 4
     
-    # Mock shuffle to do nothing (keep original order for predictable testing)
-    mock_random.shuffle.side_effect = lambda x: None
+    # Mock randbelow to return predictable values (always 0)
+    # Fisher-Yates with j=0: rotates array left, moving first element to end
+    mock_secrets_randbelow.side_effect = lambda x: 0
     
-    expected_segments = [0, 1, 2, 3]
+    expected_segments = [1, 2, 3, 0]  # Rotation when always swapping with index 0
     expected_key = "stepfunctionconfig-test-execution-123.json"
     expected_body = json.dumps(expected_segments)
     
@@ -63,13 +61,13 @@ def test_segment_success(service, mock_s3_client, mock_random):
 
 @pytest.mark.parametrize("total_segments,expected_segments", [
     (1, [0]),
-    (10, list(range(10))),
-    (100, list(range(100)))
+    (10, list(range(1, 10)) + [0]),  # Rotation: [1,2,3,4,5,6,7,8,9,0]
+    (100, list(range(1, 100)) + [0])  # Rotation: [1,2,...,99,0]
 ])
-def test_segment_various_sizes(service, mock_s3_client, mock_random, total_segments, expected_segments):
+def test_segment_various_sizes(service, mock_s3_client, mock_secrets_randbelow, total_segments, expected_segments):
     """Test with various segment sizes"""
     test_id = "size-test"
-    mock_random.shuffle.side_effect = lambda x: None
+    mock_secrets_randbelow.side_effect = lambda x: 0
     
     result = service.segment(test_id, total_segments)
     
@@ -85,17 +83,17 @@ def test_segment_various_sizes(service, mock_s3_client, mock_random, total_segme
     assert result['key'] == "stepfunctionconfig-size-test.json"
 
 
-def test_segment_shuffle_is_called(service, mock_s3_client, mock_random):
-    """Test that Random.shuffle is called on the segments"""
+def test_segment_shuffle_is_called(service, mock_s3_client, mock_secrets_randbelow):
+    """Test that secure_shuffle is called via secrets.randbelow"""
     test_id = "shuffle-test"
     total_segments = 5
     
+    mock_secrets_randbelow.side_effect = lambda x: 0
+    
     service.segment(test_id, total_segments)
     
-    # Verify shuffle was called with the segments list
-    mock_random.shuffle.assert_called_once()
-    shuffle_arg = mock_random.shuffle.call_args[0][0]
-    assert shuffle_arg == [0, 1, 2, 3, 4]
+    # Verify randbelow was called during shuffle (once per element except the last)
+    assert mock_secrets_randbelow.call_count == total_segments - 1
 
 
 @pytest.mark.parametrize("test_id,expected_key", [
@@ -103,10 +101,10 @@ def test_segment_shuffle_is_called(service, mock_s3_client, mock_random):
     ("test-执行-123", "stepfunctionconfig-test-执行-123.json"),
     ("", "stepfunctionconfig-.json")
 ])
-def test_segment_special_characters_in_id(service, mock_s3_client, mock_random, test_id, expected_key):
+def test_segment_special_characters_in_id(service, mock_s3_client, mock_secrets_randbelow, test_id, expected_key):
     """Test with various special characters in execution ID"""
     total_segments = 2
-    mock_random.shuffle.side_effect = lambda x: None
+    mock_secrets_randbelow.side_effect = lambda x: 0
     
     result = service.segment(test_id, total_segments)
     
@@ -120,7 +118,7 @@ def test_segment_special_characters_in_id(service, mock_s3_client, mock_random, 
     (NoCredentialsError(), NoCredentialsError),
     (Exception("Generic error"), Exception)
 ])
-def test_segment_error_handling(service, mock_s3_client, mock_random, exception, exception_type):
+def test_segment_error_handling(service, mock_s3_client, mock_secrets_randbelow, exception, exception_type):
     """Test that various exceptions are re-raised"""
     test_id = "error-test"
     total_segments = 3
@@ -131,7 +129,7 @@ def test_segment_error_handling(service, mock_s3_client, mock_random, exception,
         service.segment(test_id, total_segments)
 
 
-def test_segment_logging_on_error(service, mock_s3_client, mock_random, mocker):
+def test_segment_logging_on_error(service, mock_s3_client, mock_secrets_randbelow, mocker):
     """Test that errors are properly logged with extras"""
     mock_logger = mocker.patch("services.migration_dynamodb_segment_service.logger")
     
@@ -165,13 +163,16 @@ def test_segment_environment_variable_missing(mocker):
         MigrationDynamoDBSegmentService()
 
 
-def test_segment_body_encoding_and_json(service, mock_s3_client, mock_random):
+def test_segment_body_encoding_and_json(service, mock_s3_client, mock_secrets_randbelow):
     """Test that the body is properly JSON formatted"""
     test_id = "encoding-test"
     total_segments = 3
     
-    # Mock shuffle to reverse the list for predictable testing
-    mock_random.shuffle.side_effect = lambda x: x.reverse()
+    # Mock randbelow to always return 0
+    # Start [0,1,2]
+    # i=2: j=0, swap seq[2] with seq[0] -> [2,1,0]
+    # i=1: j=0, swap seq[1] with seq[0] -> [1,2,0]
+    mock_secrets_randbelow.side_effect = lambda x: 0
     
     service.segment(test_id, total_segments)
     
@@ -181,15 +182,15 @@ def test_segment_body_encoding_and_json(service, mock_s3_client, mock_random):
     # Verify it's a string and valid JSON
     assert isinstance(body_arg, str)
     parsed = json.loads(body_arg)
-    assert parsed == [2, 1, 0]  # Should be reversed
+    assert parsed == [1, 2, 0]  # Result when always swapping with index 0
 
 
-def test_segment_put_object_parameters(service, mock_s3_client, mock_random):
+def test_segment_put_object_parameters(service, mock_s3_client, mock_secrets_randbelow):
     """Test that put_object is called with exactly the right parameters"""
     test_id = "param-test"
     total_segments = 3
     
-    mock_random.shuffle.side_effect = lambda x: None
+    mock_secrets_randbelow.side_effect = lambda x: 0
     
     service.segment(test_id, total_segments)
     
@@ -212,12 +213,10 @@ def test_segment_creates_s3_client(mock_env_bucket_name, mocker):
     mock_boto3_client.assert_called_once_with("s3")
 
 
-def test_segment_zero_segments_edge_case(service, mock_s3_client, mock_random):
+def test_segment_zero_segments_edge_case(service, mock_s3_client, mock_secrets_randbelow):
     """Test with zero segments (edge case)"""
     test_id = "zero-test"
     total_segments = 0
-    
-    mock_random.shuffle.side_effect = lambda x: None
     
     result = service.segment(test_id, total_segments)
     
@@ -232,10 +231,12 @@ def test_segment_zero_segments_edge_case(service, mock_s3_client, mock_random):
     )
     
     assert result['bucket'] == 'test-bucket'
+    # secrets.randbelow should not be called for empty list
+    mock_secrets_randbelow.assert_not_called()
 
 
 def test_segment_actual_shuffle_behavior(service, mock_s3_client):
-    """Test that segments are actually shuffled (without mocking Random)"""
+    """Test that segments are actually shuffled (without mocking secrets)"""
     test_id = "actual-shuffle"
     total_segments = 10
     
@@ -251,3 +252,27 @@ def test_segment_actual_shuffle_behavior(service, mock_s3_client):
     # At least one result should be different from sorted order
     sorted_segments = list(range(10))
     assert any(result != sorted_segments for result in results), "Shuffle should produce different orders"
+
+
+def test_secure_shuffle_method(service):
+    """Test the _secure_shuffle method directly"""
+    input_list = [0, 1, 2, 3, 4]
+    result = service._secure_shuffle(input_list)
+    
+    # Should return a list
+    assert isinstance(result, list)
+    # Should contain same elements
+    assert sorted(result) == sorted(input_list)
+    # Should be same length
+    assert len(result) == len(input_list)
+
+
+def test_secure_shuffle_does_not_modify_original(service):
+    """Test that _secure_shuffle doesn't modify the original list"""
+    original = [0, 1, 2, 3, 4]
+    original_copy = original.copy()
+    
+    service._secure_shuffle(original)
+    
+    # Original should be unchanged
+    assert original == original_copy
