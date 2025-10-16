@@ -84,54 +84,64 @@ const DocumentSelectStage = ({
         }
 
         if (fileArray) {
-            void updateFileList(fileArray.filter(validateFileType));
+            void updateFileList(fileArray);
         }
     };
 
     const onInput = (e: FileInputEvent): void => {
         fileInputAreaRef.current?.scrollIntoView({ behavior: 'smooth' });
-        const fileArray = Array.from(e.target.files ?? new FileList()).filter(validateFileType);
+        const fileArray = Array.from(e.target.files ?? new FileList());
 
         void updateFileList(fileArray);
     };
 
     const updateFileList = async (fileArray: File[]): Promise<void> => {
-        const documentMap = fileArray
-            .filter((f) => !documents.some((d) => d.file.name === f.name))
-            .map(async (file) => {
-                const document: UploadDocument = {
-                    id: uuidv4(),
-                    file,
-                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
-                    progress: 0,
-                    docType: documentType,
-                    attempts: 0,
-                    numPages: 0,
-                    validated: false,
-                };
+        const documentMap = fileArray.map(async (file) => {
+            const document: UploadDocument = {
+                id: uuidv4(),
+                file,
+                state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                progress: 0,
+                docType: documentType,
+                attempts: 0,
+                numPages: 0,
+                validated: false,
+            };
 
-                const buffer = await file.arrayBuffer();
-
-                try {
-                    const pdf = await getDocument(buffer).promise;
-                    await pdf.getPage(1);
-                    document.numPages = pdf.numPages;
-                    await pdf.destroy();
-                } catch (e) {
-                    const error = e as Error;
-                    document.state = DOCUMENT_UPLOAD_STATE.FAILED;
-
-                    if (error.message === PDF_PARSING_ERROR_TYPE.INVALID_PDF_STRUCTURE) {
-                        document.error = UPLOAD_FILE_ERROR_TYPE.invalidPdf;
-                    } else if (error.message === PDF_PARSING_ERROR_TYPE.PASSWORD_MISSING) {
-                        document.error = UPLOAD_FILE_ERROR_TYPE.passwordProtected;
-                    } else if (error.message === PDF_PARSING_ERROR_TYPE.EMPTY_PDF) {
-                        document.error = UPLOAD_FILE_ERROR_TYPE.emptyPdf;
-                    }
-                }
-
+            if (!validateFileType(file)) {
+                document.state = DOCUMENT_UPLOAD_STATE.FAILED;
+                document.error = UPLOAD_FILE_ERROR_TYPE.invalidFileType;
                 return document;
-            });
+            }
+
+            if (documents.some((d) => d.file.name === document.file.name)) {
+                document.state = DOCUMENT_UPLOAD_STATE.FAILED;
+                document.error = UPLOAD_FILE_ERROR_TYPE.duplicateFileName;
+                return document;
+            }
+
+            const buffer = await file.arrayBuffer();
+
+            try {
+                const pdf = await getDocument(buffer).promise;
+                await pdf.getPage(1);
+                document.numPages = pdf.numPages;
+                await pdf.destroy();
+            } catch (e) {
+                const error = e as Error;
+                document.state = DOCUMENT_UPLOAD_STATE.FAILED;
+
+                if (error.message === PDF_PARSING_ERROR_TYPE.INVALID_PDF_STRUCTURE) {
+                    document.error = UPLOAD_FILE_ERROR_TYPE.invalidPdf;
+                } else if (error.message === PDF_PARSING_ERROR_TYPE.PASSWORD_MISSING) {
+                    document.error = UPLOAD_FILE_ERROR_TYPE.passwordProtected;
+                } else if (error.message === PDF_PARSING_ERROR_TYPE.EMPTY_PDF) {
+                    document.error = UPLOAD_FILE_ERROR_TYPE.emptyPdf;
+                }
+            }
+
+            return document;
+        });
 
         const docs = await Promise.all(documentMap);
 
