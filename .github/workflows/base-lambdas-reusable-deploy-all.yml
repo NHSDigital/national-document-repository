@@ -557,6 +557,20 @@ jobs:
     secrets:
       AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
 
+  deploy_migration_dynamodb_segment_lambda:
+    name: Deploy migration dynamodb segment lambda
+    uses: ./.github/workflows/base-lambdas-reusable-deploy.yml
+    with:
+      environment: ${{ inputs.environment}}
+      python_version: ${{ inputs.python_version }}
+      build_branch: ${{ inputs.build_branch}}
+      sandbox: ${{ inputs.sandbox }}
+      lambda_handler_name: migration_dynamodb_segment_handler
+      lambda_aws_name: MigrationDynamodbSegment
+      lambda_layer_names: 'core_lambda_layer'
+    secrets:
+      AWS_ASSUME_ROLE: ${{ secrets.AWS_ASSUME_ROLE }}
+
   deploy_fhir_document_reference_upload_lambda:
     name: Deploy Upload Document References FHIR Lambda
     if: inputs.environment == 'development' || inputs.environment == 'test'
