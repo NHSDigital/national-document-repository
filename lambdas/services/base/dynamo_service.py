@@ -1,4 +1,5 @@
 import time
+from typing import Iterator
 from typing import Optional
 
 import boto3
@@ -37,14 +38,14 @@ class DynamoDBService:
             raise e
 
     def query_table_by_index(
-        self,
-        table_name,
-        index_name,
-        search_key,
-        search_condition: str,
-        requested_fields: list[str] = None,
-        query_filter: Attr | ConditionBase = None,
-        exclusive_start_key: dict = None,
+            self,
+            table_name,
+            index_name,
+            search_key,
+            search_condition: str,
+            requested_fields: list[str] = None,
+            query_filter: Attr | ConditionBase = None,
+            exclusive_start_key: dict = None,
     ):
         try:
             table = self.get_table(table_name)
@@ -77,7 +78,7 @@ class DynamoDBService:
             raise e
 
     def query_with_pagination(
-        self, table_name: str, search_key: str, search_condition: str
+            self, table_name: str, search_key: str, search_condition: str
     ):
 
         try:
@@ -133,12 +134,12 @@ class DynamoDBService:
             raise e
 
     def update_item(
-        self,
-        table_name: str,
-        key_pair: dict[str, str],
-        updated_fields: dict,
-        condition_expression: str = None,
-        expression_attribute_values: dict = None,
+            self,
+            table_name: str,
+            key_pair: dict[str, str],
+            updated_fields: dict,
+            condition_expression: str = None,
+            expression_attribute_values: dict = None,
     ):
         table = self.get_table(table_name)
         updated_field_names = list(updated_fields.keys())
@@ -177,10 +178,10 @@ class DynamoDBService:
             raise e
 
     def scan_table(
-        self,
-        table_name: str,
-        exclusive_start_key: dict = None,
-        filter_expression: str = None,
+            self,
+            table_name: str,
+            exclusive_start_key: dict = None,
+            filter_expression: str = None,
     ):
         try:
             table = self.get_table(table_name)
@@ -199,10 +200,10 @@ class DynamoDBService:
             raise e
 
     def scan_whole_table(
-        self,
-        table_name: str,
-        project_expression: Optional[str] = None,
-        filter_expression: Optional[str] = None,
+            self,
+            table_name: str,
+            project_expression: Optional[str] = None,
+            filter_expression: Optional[str] = None,
     ) -> list[dict]:
         try:
             table = self.get_table(table_name)
@@ -265,7 +266,7 @@ class DynamoDBService:
                     )
                     request_items = unprocessed_keys
                     retries += 1
-                    time.sleep((2**retries) * 0.1)
+                    time.sleep((2 ** retries) * 0.1)
                 else:
                     break
 
@@ -283,4 +284,39 @@ class DynamoDBService:
             logger.error(
                 str(e), {"Result": f"Unable to retrieve item from table: {table_name}"}
             )
+            raise e
+
+    def stream_whole_table(
+            self,
+            table_name: str,
+            filter_expression: Optional[str] = None,
+            projection_expression: Optional[str] = None,
+    ) -> Iterator[dict]:
+        """
+        Streams all items from a DynamoDB table using pagination.
+        Yields one item at a time instead of loading everything into memory.
+        """
+        try:
+            table = self.get_table(table_name)
+            scan_kwargs = {}
+
+            if filter_expression:
+                scan_kwargs["FilterExpression"] = filter_expression
+            if projection_expression:
+                scan_kwargs["ProjectionExpression"] = projection_expression
+
+            response = table.scan(**scan_kwargs)
+
+            for item in response.get("Items", []):
+                yield item
+
+            while "LastEvaluatedKey" in response:
+                response = table.scan(
+                    ExclusiveStartKey=response["LastEvaluatedKey"], **scan_kwargs
+                )
+                for item in response.get("Items", []):
+                    yield item
+
+        except ClientError as e:
+            logger.error(str(e), {"Result": f"Unable to stream table: {table_name}"})
             raise e

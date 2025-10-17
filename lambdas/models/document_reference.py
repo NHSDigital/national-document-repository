@@ -170,3 +170,12 @@ class DocumentReference(BaseModel):
 
     def set_uploaded_to_true(self):
         self.uploaded = True
+
+    def infer_doc_status(self) -> str | None:
+        if self.deleted:
+            return "deprecated"
+        if self.uploaded:
+            return "final"
+        if self.uploading:
+            return "preliminary"
+        return None
