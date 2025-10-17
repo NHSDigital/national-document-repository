@@ -479,6 +479,31 @@ describe('DocumentSelectOrderStage', () => {
 
             await waitFor(() => {
                 expect(mockNavigate).toHaveBeenCalledWith({
+                    pathname: '/patient/document-upload/in-progress',
+                    search: 'journey=update',
+                });
+            });
+        });
+
+        it('navigates with journey param when continue button is clicked with multiple docs', async () => {
+            const user = userEvent.setup();
+            documents.push({
+                docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                id: '2',
+                file: buildLgFile(2),
+                attempts: 0,
+                state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                numPages: 3,
+                position: 2,
+            });
+
+            renderSut(documents);
+
+            const continueButton = screen.getByRole('button', { name: 'Continue' });
+            await user.click(continueButton);
+
+            await waitFor(() => {
+                expect(mockNavigate).toHaveBeenCalledWith({
                     pathname: '/patient/document-upload/confirmation',
                     search: 'journey=update',
                 });

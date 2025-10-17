@@ -184,10 +184,13 @@ const DocumentSelectOrderStage = ({
 
     const submitDocuments = (): void => {
         updateDocumentPositions();
-        if (documents.length !== 1) {
+        if (documents.length === 1) {
+            console.log(`Navigating to select order screen in ${journey} journey: length ${documents.length}`);
+            console.log('Documents:', documents);
             navigate.withParams(routeChildren.DOCUMENT_UPLOAD_UPLOADING);
             return;
         }
+        console.log(`Navigating to select order screen in ${journey} journey: length ${documents.length}`);
         navigate.withParams(routeChildren.DOCUMENT_UPLOAD_CONFIRMATION);
     };
 
