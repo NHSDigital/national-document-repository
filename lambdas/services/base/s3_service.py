@@ -183,6 +183,9 @@ class S3Service:
         response = self.client.head_object(Bucket=s3_bucket_name, Key=object_key)
         return response.get("ContentLength", 0)
 
+    def get_head_object(self, bucket: str, key: str):
+        return self.client.head_object(Bucket=bucket, Key=key)
+
     def get_object_stream(self, bucket: str, key: str):
         response = self.client.get_object(Bucket=bucket, Key=key)
         return response.get("Body")
