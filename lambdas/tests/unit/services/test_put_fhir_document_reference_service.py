@@ -337,16 +337,6 @@ def test_determine_document_type_error(mock_service, valid_fhir_doc_json):
     assert excinfo.value.status_code == 400
     assert excinfo.value.error == LambdaError.UpdateDocInvalidType
 
-def test_determine_document_type_error(mock_service, valid_fhir_doc_json):
-    """Test handling errors from determine_document_type"""
-    mock_service.document_service.determine_document_type.side_effect = DocumentServiceException()
-
-    with pytest.raises(UpdateFhirDocumentReferenceException) as excinfo:
-        mock_service.process_fhir_document_reference(valid_fhir_doc_json)
-    
-    assert excinfo.value.status_code == 400
-    assert excinfo.value.error == LambdaError.UpdateDocInvalidType
-
 
 def test_get_document_reference_error(mock_service, valid_fhir_doc_json):
     """Test handling of errors from get_document_reference"""
