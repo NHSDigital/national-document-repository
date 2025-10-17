@@ -73,6 +73,9 @@ describe('DocumentUploadCompleteStage', () => {
     });
 
     it('should navigate to search when clicking the search link', async () => {
+        delete (globalThis as any).location;
+        globalThis.location = { search: '?journey=update' } as any;
+
         renderApp(documents);
 
         await userEvent.click(screen.getByTestId('search-patient-link'));

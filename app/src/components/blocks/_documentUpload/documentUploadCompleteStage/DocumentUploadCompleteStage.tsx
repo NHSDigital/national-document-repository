@@ -1,4 +1,4 @@
-import { ButtonLink } from 'nhsuk-react-components';
+import { Button } from 'nhsuk-react-components';
 import { routes } from '../../../../types/generic/routes';
 import { Link, useNavigate } from 'react-router-dom';
 import useTitle from '../../../../helpers/hooks/useTitle';
@@ -12,6 +12,7 @@ import {
 } from '../../../../types/pages/UploadDocumentsPage/types';
 import { useEffect } from 'react';
 import { allDocsHaveState } from '../../../../helpers/utils/uploadDocumentHelpers';
+import { getJourney } from '../../../../helpers/utils/urlManipulations';
 
 type Props = {
     documents: UploadDocument[];
@@ -24,6 +25,7 @@ const DocumentUploadCompleteStage = ({ documents }: Props): React.JSX.Element =>
     const formattedNhsNumber = formatNhsNumber(nhsNumber);
     const dob: string = getFormattedDateFromString(patientDetails?.birthDate);
     const patientName = getFormattedPatientFullName(patientDetails);
+    const journey = getJourney();
 
     useTitle({ pageTitle: 'Record upload complete' });
 
@@ -42,7 +44,15 @@ const DocumentUploadCompleteStage = ({ documents }: Props): React.JSX.Element =>
             <div className="nhsuk-panel" data-testid="upload-complete-card">
                 <h1 className="nhsuk-panel__title">Upload complete</h1>
                 <div className="nhsuk-panel__body">
-                    You have successfully uploaded a digital Lloyd George record for:
+                    {journey === 'update' && (
+                        <p>
+                            You have successfully added additional files to the digital Lloyd George
+                            record for:
+                        </p>
+                    )}
+                    {journey === 'new' && (
+                        <p>You have successfully uploaded a digital Lloyd George record for:</p>
+                    )}
                 </div>
                 <br />
                 <div className="nhsuk-panel__body">
@@ -55,20 +65,24 @@ const DocumentUploadCompleteStage = ({ documents }: Props): React.JSX.Element =>
             </div>
 
             <h2>What happens next</h2>
-            <p>
-                You can now view this patient's record within this service by{' '}
-                <Link
-                    to=""
-                    onClick={(e): void => {
-                        e.preventDefault();
-                        navigate(routes.SEARCH_PATIENT, { replace: true });
-                    }}
-                    data-testid="search-patient-link"
-                >
-                    searching using their NHS number
-                </Link>
-                {'.'}
-            </p>
+
+            {journey === 'update' && (
+                <p>
+                    You can now view the updated Lloyd George record for this patient in this
+                    service by{' '}
+                    <Link
+                        to=""
+                        onClick={(e): void => {
+                            e.preventDefault();
+                            navigate(routes.SEARCH_PATIENT, { replace: true });
+                        }}
+                        data-testid="search-patient-link"
+                    >
+                        searching using their NHS number
+                    </Link>
+                    {'.'}
+                </p>
+            )}
 
             <p>
                 If you think you've made a mistake, contact the Patient Record Management team at{' '}
@@ -93,17 +107,15 @@ const DocumentUploadCompleteStage = ({ documents }: Props): React.JSX.Element =>
                 {'.'}
             </p>
 
-            <ButtonLink
+            <Button
                 data-testid="home-btn"
-                role="button"
-                href="#"
-                onClick={(e): void => {
-                    e.preventDefault();
+                type="button"
+                onClick={(): void => {
                     navigate(routes.HOME, { replace: true });
                 }}
             >
                 Go to home
-            </ButtonLink>
+            </Button>
         </div>
     );
 };

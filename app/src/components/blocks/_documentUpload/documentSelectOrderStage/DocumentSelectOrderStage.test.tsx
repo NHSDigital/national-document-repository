@@ -85,7 +85,6 @@ describe('DocumentSelectOrderStage', () => {
             renderSut(documents);
 
             expect(screen.getByText('Filename')).toBeInTheDocument();
-            expect(screen.getByText('Pages')).toBeInTheDocument();
             expect(screen.getByText('Position')).toBeInTheDocument();
             expect(screen.getByText('View file')).toBeInTheDocument();
             expect(screen.getByText('Remove file')).toBeInTheDocument();
@@ -95,7 +94,6 @@ describe('DocumentSelectOrderStage', () => {
             renderSut(documents);
 
             expect(screen.getByText('testFile1.pdf')).toBeInTheDocument();
-            expect(screen.getByText('5')).toBeInTheDocument();
             expect(screen.getByText('View')).toBeInTheDocument();
             expect(screen.getByText('Remove')).toBeInTheDocument();
         });
@@ -464,7 +462,330 @@ describe('DocumentSelectOrderStage', () => {
             });
         });
     });
+
+    describe('Update Journey', () => {
+        beforeEach(() => {
+            delete (globalThis as any).location;
+            globalThis.location = { search: '?journey=update' } as any;
+        });
+
+        it('navigates with journey param when continue button is clicked', async () => {
+            const user = userEvent.setup();
+
+            renderSut(documents);
+
+            const continueButton = screen.getByRole('button', { name: 'Continue' });
+            await user.click(continueButton);
+
+            await waitFor(() => {
+                expect(mockNavigate).toHaveBeenCalledWith({
+                    pathname: '/patient/document-upload/in-progress',
+                    search: 'journey=update',
+                });
+            });
+        });
+
+        it('navigates with journey param when continue button is clicked with multiple docs', async () => {
+            const user = userEvent.setup();
+            documents.push({
+                docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                id: '2',
+                file: buildLgFile(2),
+                attempts: 0,
+                state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                numPages: 3,
+                position: 2,
+            });
+
+            renderSut(documents);
+
+            const continueButton = screen.getByRole('button', { name: 'Continue' });
+            await user.click(continueButton);
+
+            await waitFor(() => {
+                expect(mockNavigate).toHaveBeenCalledWith({
+                    pathname: '/patient/document-upload/confirmation',
+                    search: 'journey=update',
+                });
+            });
+        });
+
+        it('displays update journey specific instructions', () => {
+            renderSut(documents);
+
+            expect(
+                screen.getByText(
+                    "When you upload your files, they will be added to the end of the patient's existing Lloyd George record.",
+                ),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText('you cannot change the order of the existing files'),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText(
+                    "change the order number to put the files you've added in the order you want",
+                ),
+            ).toBeInTheDocument();
+        });
+
+        it('does not display standard journey instructions in update journey', () => {
+            renderSut(documents);
+
+            expect(
+                screen.queryByText(
+                    'When you upload your files, they will be combined into a single PDF document.',
+                ),
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByText(
+                    'put your files in the order you need them to appear in the final document by changing the position number',
+                ),
+            ).not.toBeInTheDocument();
+        });
+
+        it('shows existing Lloyd George record row when existingDocuments are provided', () => {
+            const existingDocs = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: 'existing-1',
+                    file: buildLgFile(99),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 10,
+                    position: 1,
+                },
+            ];
+
+            renderSutWithExistingDocs(documents, existingDocs);
+
+            expect(screen.getByText('Existing Lloyd George record')).toBeInTheDocument();
+        });
+
+        it('existing Lloyd George record has position 1 and cannot be repositioned or removed', () => {
+            const existingDocs = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: 'existing-1',
+                    file: buildLgFile(99),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 10,
+                    position: 1,
+                },
+            ];
+
+            renderSutWithExistingDocs(documents, existingDocs);
+
+            const rows = screen.getAllByRole('row');
+            const existingRow = rows.find((row) =>
+                row.textContent?.includes('Existing Lloyd George record'),
+            );
+
+            expect(existingRow).toBeInTheDocument();
+            expect(existingRow?.textContent).toContain('1');
+            expect(existingRow?.textContent).toContain('-'); // Shows dash for remove column
+        });
+
+        it('positions new documents starting from position 2 when existing documents are present', () => {
+            const existingDocs = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: 'existing-1',
+                    file: buildLgFile(99),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 10,
+                    position: 1,
+                },
+            ];
+
+            const newDocuments = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: '1',
+                    file: buildLgFile(1),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 5,
+                    position: 2,
+                },
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: '2',
+                    file: buildLgFile(2),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 3,
+                    position: 3,
+                },
+            ];
+
+            renderSutWithExistingDocs(newDocuments, existingDocs);
+
+            // Check that dropdowns have options starting from 2
+            const firstDocSelect: HTMLSelectElement = screen.getByTestId('1');
+            const options = Array.from(firstDocSelect.options).map((opt) => opt.value);
+
+            expect(options).toEqual(['2', '3']);
+        });
+
+        it('shows appropriate message when all new documents are removed in update journey', () => {
+            const existingDocs = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: 'existing-1',
+                    file: buildLgFile(99),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 10,
+                    position: 1,
+                },
+            ];
+
+            renderSutWithExistingDocs([], existingDocs);
+
+            expect(screen.getByText(/You have removed all additional files/)).toBeInTheDocument();
+            expect(screen.getByText('choose files')).toBeInTheDocument();
+        });
+
+        it('adjusts positions correctly when removing a new document in update journey', async () => {
+            const user = userEvent.setup();
+            const existingDocs = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: 'existing-1',
+                    file: buildLgFile(99),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 10,
+                    position: 1,
+                },
+            ];
+
+            const newDocuments = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: '1',
+                    file: buildLgFile(1),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 5,
+                    position: 2,
+                },
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: '2',
+                    file: buildLgFile(2),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 3,
+                    position: 3,
+                },
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: '3',
+                    file: buildLgFile(3),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 2,
+                    position: 4,
+                },
+            ];
+
+            renderSutWithExistingDocs(newDocuments, existingDocs);
+
+            // Remove the middle document (position 3)
+            const removeButton = screen.getByRole('button', {
+                name: /Remove testFile2.pdf from selection/,
+            });
+            await user.click(removeButton);
+
+            // Verify that positions are adjusted correctly (existing doc stays at 1, new docs at 2 and 3)
+            expect(mockSetDocuments).toHaveBeenCalledWith([
+                expect.objectContaining({
+                    id: '1',
+                    position: 2, // Should remain unchanged
+                }),
+                expect.objectContaining({
+                    id: '3',
+                    position: 3, // Should be adjusted from 4 to 3
+                }),
+            ]);
+        });
+
+        it('validates duplicate positions including offset from existing documents', async () => {
+            const user = userEvent.setup();
+            const existingDocs = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: 'existing-1',
+                    file: buildLgFile(99),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 10,
+                    position: 1,
+                },
+            ];
+
+            const newDocuments = [
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: '1',
+                    file: buildLgFile(1),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 5,
+                    position: 2,
+                },
+                {
+                    docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                    id: '2',
+                    file: buildLgFile(2),
+                    attempts: 0,
+                    state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                    numPages: 3,
+                    position: 3,
+                },
+            ];
+
+            renderSutWithExistingDocs(newDocuments, existingDocs);
+
+            // Set both documents to the same position (2)
+            const firstDocSelect = screen.getByTestId('1');
+            const secondDocSelect = screen.getByTestId('2');
+
+            await user.selectOptions(firstDocSelect, '2');
+            await user.selectOptions(secondDocSelect, '2');
+
+            const continueButton = screen.getByRole('button', { name: 'Continue' });
+            await user.click(continueButton);
+
+            await waitFor(() => {
+                expect(screen.getByText('There is a problem')).toBeInTheDocument();
+            });
+            const errorMessages = screen.getAllByText(
+                fileUploadErrorMessages.duplicatePositionError.inline,
+            );
+            expect(errorMessages.length).toBeGreaterThan(0);
+        });
+    });
 });
+
+function renderSutWithExistingDocs(
+    documents: UploadDocument[],
+    existingDocuments: UploadDocument[],
+): void {
+    render(
+        <MemoryRouter>
+            <DocumentSelectOrderStage
+                documents={documents}
+                setDocuments={mockSetDocuments}
+                setMergedPdfBlob={mockSetMergedPdfBlob}
+                existingDocuments={existingDocuments}
+            />
+        </MemoryRouter>,
+    );
+}
 
 function renderSut(documents: UploadDocument[]): void {
     render(
@@ -473,6 +794,7 @@ function renderSut(documents: UploadDocument[]): void {
                 documents={documents}
                 setDocuments={mockSetDocuments}
                 setMergedPdfBlob={mockSetMergedPdfBlob}
+                existingDocuments={[]}
             />
         </MemoryRouter>,
     );

@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routes } from '../../../../types/generic/routes';
 import { allDocsHaveState } from '../../../../helpers/utils/uploadDocumentHelpers';
+import { getJourney } from '../../../../helpers/utils/urlManipulations';
 
 type Props = {
     documents: UploadDocument[];
@@ -16,7 +17,10 @@ type Props = {
 };
 
 const DocumentUploadingStage = ({ documents, startUpload }: Props): React.JSX.Element => {
-    const pageHeader = 'Your documents are uploading';
+    const journey = getJourney();
+    const pageHeader =
+        journey === 'update' ? 'Uploading additional files' : 'Your documents are uploading';
+
     useTitle({ pageTitle: 'Uploading documents' });
     const navigate = useNavigate();
     const uploadStartedRef = useRef<boolean>(false);
@@ -47,7 +51,9 @@ const DocumentUploadingStage = ({ documents, startUpload }: Props): React.JSX.El
                     {documents.some((doc) => doc.docType === DOCUMENT_TYPE.LLOYD_GEORGE) && (
                         <span>
                             Your Lloyd George files will be combined into one document when the
-                            upload is complete.
+                            upload is complete.{' '}
+                            {journey === 'update' &&
+                                'your files will be added to the existing Lloyd George record when upload is complete.'}
                         </span>
                     )}
                 </p>

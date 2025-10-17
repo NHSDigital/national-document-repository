@@ -1,4 +1,4 @@
-import { render, waitFor, screen } from '@testing-library/react';
+import { render, waitFor, screen, RenderResult } from '@testing-library/react';
 import DocumentUploadConfirmStage from './DocumentUploadConfirmStage';
 import { formatNhsNumber } from '../../../../helpers/utils/formatNhsNumber';
 import { getFormattedDate } from '../../../../helpers/utils/formatDate';
@@ -59,7 +59,10 @@ describe('DocumentUploadCompleteStage', () => {
         userEvent.click(await screen.findByTestId('confirm-button'));
 
         await waitFor(() => {
-            expect(mockedUseNavigate).toHaveBeenCalledWith(routeChildren.DOCUMENT_UPLOAD_UPLOADING);
+            expect(mockedUseNavigate).toHaveBeenCalledWith({
+                pathname: routeChildren.DOCUMENT_UPLOAD_UPLOADING,
+                search: '',
+            });
         });
     });
 
@@ -89,7 +92,10 @@ describe('DocumentUploadCompleteStage', () => {
             userEvent.click(await screen.findByTestId('change-files-button'));
 
             await waitFor(() => {
-                expect(mockedUseNavigate).toHaveBeenCalledWith(routes.DOCUMENT_UPLOAD);
+                expect(mockedUseNavigate).toHaveBeenCalledWith({
+                    pathname: routes.DOCUMENT_UPLOAD,
+                    search: '',
+                });
             });
         });
 
@@ -115,7 +121,78 @@ describe('DocumentUploadCompleteStage', () => {
         });
     });
 
-    const renderApp = (history: MemoryHistory, docsLength: number) => {
+    describe('Update Journey', () => {
+        beforeEach(() => {
+            delete (globalThis as any).location;
+            globalThis.location = { search: '?journey=update' } as any;
+
+            history = createMemoryHistory({
+                initialEntries: ['/?journey=update'],
+                initialIndex: 0,
+            });
+        });
+
+        it('renders correct text for update journey', async () => {
+            renderApp(history, 1);
+
+            await waitFor(async () => {
+                expect(
+                    screen.getByText(
+                        'Files will be added to the existing Lloyd George record to create a single PDF document.',
+                    ),
+                ).toBeInTheDocument();
+            });
+        });
+
+        it('should navigate with journey param when change files is clicked', async () => {
+            renderApp(history, 1);
+
+            userEvent.click(await screen.findByTestId('change-files-button'));
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith({
+                    pathname: routes.DOCUMENT_UPLOAD,
+                    search: 'journey=update',
+                });
+            });
+        });
+
+        it('should navigate with journey param when confirm button is clicked', async () => {
+            renderApp(history, 1);
+
+            userEvent.click(await screen.findByTestId('confirm-button'));
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith({
+                    pathname: routeChildren.DOCUMENT_UPLOAD_UPLOADING,
+                    search: 'journey=update',
+                });
+            });
+        });
+
+        it('should still render all page elements correctly', async () => {
+            renderApp(history, 1);
+
+            await waitFor(async () => {
+                expect(screen.getByText('Check your files before uploading')).toBeInTheDocument();
+                expect(screen.getByTestId('go-back-link')).toBeInTheDocument();
+                expect(screen.getByTestId('change-files-button')).toBeInTheDocument();
+                expect(screen.getByTestId('confirm-button')).toBeInTheDocument();
+                expect(screen.getByText('Files to be uploaded')).toBeInTheDocument();
+            });
+        });
+
+        it('should render pagination when doc count is high enough in update journey', async () => {
+            renderApp(history, 15);
+
+            await waitFor(async () => {
+                expect(await screen.findByTestId('page-1-button')).toBeInTheDocument();
+                expect(await screen.findByTestId('page-2-button')).toBeInTheDocument();
+            });
+        });
+    });
+
+    const renderApp = (history: MemoryHistory, docsLength: number): RenderResult => {
         const documents: UploadDocument[] = [];
         for (let i = 1; i <= docsLength; i++) {
             documents.push({

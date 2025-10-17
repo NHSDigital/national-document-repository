@@ -1,56 +1,83 @@
+import { AxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
+import DocumentSelectFileErrorsPage from '../../components/blocks/_documentUpload/documentSelectFileErrorsPage/DocumentSelectFileErrorsPage';
+import DocumentSelectOrderStage from '../../components/blocks/_documentUpload/documentSelectOrderStage/DocumentSelectOrderStage';
+import DocumentSelectStage from '../../components/blocks/_documentUpload/documentSelectStage/DocumentSelectStage';
+import DocumentUploadCompleteStage from '../../components/blocks/_documentUpload/documentUploadCompleteStage/DocumentUploadCompleteStage';
+import DocumentUploadConfirmStage from '../../components/blocks/_documentUpload/documentUploadConfirmStage/DocumentUploadConfirmStage';
+import DocumentUploadInfectedStage from '../../components/blocks/_documentUpload/documentUploadInfectedStage/DocumentUploadInfectedStage';
+import DocumentUploadingStage from '../../components/blocks/_documentUpload/documentUploadingStage/DocumentUploadingStage';
+import DocumentUploadRemoveFilesStage from '../../components/blocks/_documentUpload/documentUploadRemoveFilesStage/DocumentUploadRemoveFilesStage';
+import useBaseAPIHeaders from '../../helpers/hooks/useBaseAPIHeaders';
+import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
+import useConfig from '../../helpers/hooks/useConfig';
+import usePatient from '../../helpers/hooks/usePatient';
+import uploadDocuments, {
+    generateFileName,
+    getDocumentStatus,
+    uploadDocumentToS3,
+} from '../../helpers/requests/uploadDocuments';
+import { errorCodeToParams, errorToParams } from '../../helpers/utils/errorToParams';
+import { isLocal, isMock } from '../../helpers/utils/isLocal';
+import {
+    markDocumentsAsUploading,
+    setSingleDocument,
+} from '../../helpers/utils/uploadDocumentHelpers';
+import {
+    getJourney,
+    getLastURLPath,
+    JourneyType,
+    useEnhancedNavigate,
+} from '../../helpers/utils/urlManipulations';
+import { routeChildren, routes } from '../../types/generic/routes';
+import {
+    DocumentStatusResult,
+    S3UploadFields,
+    UploadSession,
+} from '../../types/generic/uploadResult';
 import {
     DOCUMENT_STATUS,
     DOCUMENT_TYPE,
     DOCUMENT_UPLOAD_STATE,
     UploadDocument,
 } from '../../types/pages/UploadDocumentsPage/types';
-import {
-    DocumentStatusResult,
-    S3UploadFields,
-    UploadSession,
-} from '../../types/generic/uploadResult';
-import uploadDocuments, {
-    generateFileName,
-    getDocumentStatus,
-    uploadDocumentToS3,
-} from '../../helpers/requests/uploadDocuments';
-import usePatient from '../../helpers/hooks/usePatient';
-import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
-import useBaseAPIHeaders from '../../helpers/hooks/useBaseAPIHeaders';
-import { AxiosError } from 'axios';
-import { isLocal, isMock } from '../../helpers/utils/isLocal';
-import { routeChildren, routes } from '../../types/generic/routes';
-import { Outlet, Route, Routes, useNavigate } from 'react-router-dom';
-import { errorCodeToParams, errorToParams } from '../../helpers/utils/errorToParams';
-import { getLastURLPath } from '../../helpers/utils/urlManipulations';
-import {
-    markDocumentsAsUploading,
-    setSingleDocument,
-} from '../../helpers/utils/uploadDocumentHelpers';
-import DocumentSelectStage from '../../components/blocks/_documentUpload/documentSelectStage/DocumentSelectStage';
-import DocumentSelectOrderStage from '../../components/blocks/_documentUpload/documentSelectOrderStage/DocumentSelectOrderStage';
-import DocumentUploadConfirmStage from '../../components/blocks/_documentUpload/documentUploadConfirmStage/DocumentUploadConfirmStage';
-import DocumentUploadingStage from '../../components/blocks/_documentUpload/documentUploadingStage/DocumentUploadingStage';
-import { v4 as uuidv4 } from 'uuid';
-import DocumentUploadCompleteStage from '../../components/blocks/_documentUpload/documentUploadCompleteStage/DocumentUploadCompleteStage';
-import DocumentUploadRemoveFilesStage from '../../components/blocks/_documentUpload/documentUploadRemoveFilesStage/DocumentUploadRemoveFilesStage';
-import useConfig from '../../helpers/hooks/useConfig';
-import DocumentUploadInfectedStage from '../../components/blocks/_documentUpload/documentUploadInfectedStage/DocumentUploadInfectedStage';
-import DocumentSelectFileErrorsPage from '../../components/blocks/_documentUpload/documentSelectFileErrorsPage/DocumentSelectFileErrorsPage';
+
+type LocationState = {
+    journey?: JourneyType;
+    existingDocuments?: [
+        {
+            docType: DOCUMENT_TYPE | null;
+            blob: Blob | null;
+            fileName: string | null;
+        },
+    ];
+};
+
+type LocationParams<T> = {
+    pathname: string;
+    state: T | undefined;
+    search: string;
+    hash: string;
+    key: string;
+};
 
 const DocumentUploadPage = (): React.JSX.Element => {
     const patientDetails = usePatient();
     const nhsNumber: string = patientDetails?.nhsNumber ?? '';
     const baseUrl = useBaseAPIUrl();
+    const location: LocationParams<LocationState> = useLocation();
     const baseHeaders = useBaseAPIHeaders();
     const [documents, setDocuments] = useState<Array<UploadDocument>>([]);
+    const [existingDocuments, setExistingDocuments] = useState<Array<UploadDocument>>([]);
     const [uploadSession, setUploadSession] = useState<UploadSession | null>(null);
     const completeRef = useRef(false);
     const virusReference = useRef(false);
-    const navigate = useNavigate();
+    const navigate = useEnhancedNavigate();
     const [intervalTimer, setIntervalTimer] = useState(0);
     const [mergedPdfBlob, setMergedPdfBlob] = useState<Blob>();
+    const [journey] = useState<JourneyType>(getJourney());
     const config = useConfig();
     const interval = useRef<number>(0);
     const filesErrorPageRef = useRef(false);
@@ -59,6 +86,37 @@ const DocumentUploadPage = (): React.JSX.Element => {
     const MAX_POLLING_TIME = 120000;
 
     useEffect(() => {
+        const journeyParam = getJourney();
+        if (journeyParam === 'update' && !location.state?.existingDocuments?.[0]?.blob) {
+            // No existing documents found for update journey
+            navigate(routes.SERVER_ERROR);
+            return;
+        }
+
+        const newDocuments: Array<UploadDocument> =
+            location.state?.existingDocuments?.map(
+                (doc) =>
+                    ({
+                        id: uuidv4(),
+                        file: new File([doc.blob!], doc.fileName!, { type: 'application/pdf' }),
+                        state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                        docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                        progress: 0,
+                    }) as UploadDocument,
+            ) ?? [];
+
+        setExistingDocuments(newDocuments);
+    }, []);
+
+    useEffect(() => {
+        const journeyParam = getJourney();
+
+        if (journeyParam === 'update' && journey !== journeyParam) {
+            globalThis.clearInterval(intervalTimer);
+            navigate(routes.SERVER_ERROR);
+            return;
+        }
+
         if (interval.current * UPDATE_DOCUMENT_STATE_FREQUENCY_MILLISECONDS > MAX_POLLING_TIME) {
             window.clearInterval(intervalTimer);
             navigate(routes.SERVER_ERROR);
@@ -81,7 +139,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
         } else if (allFinished && !completeRef.current) {
             completeRef.current = true;
             window.clearInterval(intervalTimer);
-            navigate(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
+            navigate.withParams(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
         }
     }, [
         baseHeaders,
@@ -206,7 +264,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
                     })),
                 );
                 window.clearInterval(intervalTimer);
-                navigate(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
+                navigate.withParams(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
             } else {
                 navigate(routes.SERVER_ERROR + errorToParams(error));
             }
@@ -320,6 +378,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
                             documents={documents}
                             setDocuments={setDocuments}
                             setMergedPdfBlob={setMergedPdfBlob}
+                            existingDocuments={existingDocuments}
                         />
                     }
                 />
