@@ -64,7 +64,7 @@ def create_upload_payload(pdm_record):
 def test_create_document_base64(test_data):
     pdm_record = {}
     pdm_record["ods"] = "H81109"
-    pdm_record["nhs_number"] = "9449303304"
+    pdm_record["nhs_number"] = "9912003071"
     sample_pdf_path = os.path.join(os.path.dirname(__file__), "files", "dummy.pdf")
     with open(sample_pdf_path, "rb") as f:
         pdm_record["data"] = base64.b64encode(f.read()).decode("utf-8")

@@ -18,7 +18,7 @@ def test_small_file(test_data):
     test_data.append(pdm_record)
 
     pdm_record["id"] = str(uuid.uuid4())
-    pdm_record["nhs_number"] = "9449305943"
+    pdm_record["nhs_number"] = "9912003071"
     pdm_record["data"] = io.BytesIO(b"Sample PDF Content")
 
     pdm_data_helper.create_metadata(pdm_record)
@@ -40,7 +40,7 @@ def test_large_file(test_data):
     test_data.append(pdm_record)
 
     pdm_record["id"] = str(uuid.uuid4())
-    pdm_record["nhs_number"] = "9449305943"
+    pdm_record["nhs_number"] = "9912003071"
     pdm_record["data"] = io.BytesIO(b"A" * (10 * 1024 * 1024))
     pdm_record["size"] = 10 * 1024 * 1024 * 1024
 
@@ -83,7 +83,7 @@ def test_preliminary_file(test_data):
     test_data.append(pdm_record)
 
     pdm_record["id"] = str(uuid.uuid4())
-    pdm_record["nhs_number"] = "9449305943"
+    pdm_record["nhs_number"] = "9912003071"
     pdm_record["data"] = io.BytesIO(b"Sample PDF Content")
     pdm_record["doc_status"] = "preliminary"
 

@@ -13,7 +13,7 @@ def test_search_patient_details(test_data):
     test_data.append(pdm_record)
 
     pdm_record["id"] = str(uuid.uuid4())
-    pdm_record["nhs_number"] = "9449305943"
+    pdm_record["nhs_number"] = "9912003071"
     pdm_record["data"] = io.BytesIO(b"Sample PDF Content")
 
     pdm_data_helper.create_metadata(pdm_record)
@@ -36,7 +36,7 @@ def test_multiple_cancelled_search_patient_details(test_data):
     test_data.append(pdm_record)
 
     pdm_record["id"] = str(uuid.uuid4())
-    pdm_record["nhs_number"] = "9449305943"
+    pdm_record["nhs_number"] = "9912003071"
     pdm_record["data"] = io.BytesIO(b"Sample PDF Content")
     pdm_record["doc_status"] = "cancelled"
 
@@ -47,7 +47,7 @@ def test_multiple_cancelled_search_patient_details(test_data):
     test_data.append(second_pdm_record)
 
     second_pdm_record["id"] = str(uuid.uuid4())
-    second_pdm_record["nhs_number"] = "9449305943"
+    second_pdm_record["nhs_number"] = "9912003071"
     second_pdm_record["data"] = io.BytesIO(b"Sample PDF Content")
     second_pdm_record["doc_status"] = "cancelled"
 
@@ -67,7 +67,7 @@ def test_multiple_cancelled_search_patient_details(test_data):
 
 def test_no_records():
     pdm_record = {}
-    pdm_record["nhs_number"] = "9449305943"
+    pdm_record["nhs_number"] = "9912003071"
 
     url = f"https://{MTLS_ENDPOINT}/DocumentReference?subject:identifier=https://fhir.nhs.uk/Id/nhs-number|{pdm_record['nhs_number']}"
     headers = {
