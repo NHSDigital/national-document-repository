@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional
 
+from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
 from enums.snomed_codes import SnomedCode, SnomedCodes
 from models.document_reference import DocumentReference as NdrDocumentReference
 from models.fhir.R4.base_models import (
@@ -11,6 +12,8 @@ from models.fhir.R4.base_models import (
     Reference,
 )
 from pydantic import BaseModel, Field
+
+from utils.ods_utils import PCSE_ODS_CODE
 
 # Constants
 FHIR_BASE_URL = "https://fhir.nhs.uk/Id"
@@ -224,6 +227,8 @@ class DocumentReferenceInfo(BaseModel):
         Returns:
             DocumentReference: A FHIR DocumentReference resource
         """
+        if document.custodian in PatientOdsInactiveStatus.list():
+            document.custodian = PCSE_ODS_CODE
 
         return DocumentReference(
             resourceType="DocumentReference",

@@ -163,11 +163,7 @@ class PostFhirDocumentReferenceService:
 
         custodian = fhir_doc.custodian.identifier.value if fhir_doc.custodian else None
         if not custodian:
-            custodian = (
-                current_gp_ods
-                if current_gp_ods not in PatientOdsInactiveStatus.list()
-                else PCSE_ODS_CODE
-            )
+            custodian = current_gp_ods
 
         sub_folder = (
             "user_upload"
