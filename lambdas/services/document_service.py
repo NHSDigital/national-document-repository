@@ -1,4 +1,7 @@
 import os
+import io
+import binascii
+import base64
 from datetime import datetime, timezone
 
 from boto3.dynamodb.conditions import Attr, ConditionBase
@@ -15,15 +18,34 @@ from utils.exceptions import (
     DocumentServiceException,
     FileUploadInProgress,
     NoAvailableDocument,
+    InvalidResourceIdException,
+    PatientNotFoundException,
+    PdsErrorException,
 )
+from botocore.exceptions import ClientError
+from enums.snomed_codes import SnomedCode, SnomedCodes
+from models.fhir.R4.fhir_document_reference import (
+    DocumentReference as FhirDocumentReference,
+)
+from utils.utilities import create_reference_id, get_pds_service, validate_nhs_number
+from enums.patient_ods_inactive_status import PatientOdsInactiveStatus
+from utils.ods_utils import PCSE_ODS_CODE
+from models.fhir.R4.fhir_document_reference import SNOMED_URL
+from utils.common_query_filters import CurrentStatusFile
+from models.pds_models import PatientDetails
 
 logger = LoggingService(__name__)
 
 
 class DocumentService:
     def __init__(self):
-        self.s3_service = S3Service()
+        presigned_aws_role_arn = os.getenv("PRESIGNED_ASSUME_ROLE")
+        self.s3_service = S3Service(custom_aws_role=presigned_aws_role_arn)
         self.dynamo_service = DynamoDBService()
+
+        self.lg_dynamo_table = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
+        self.arf_dynamo_table = os.getenv("DOCUMENT_STORE_DYNAMODB_NAME")
+        self.staging_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
 
     def fetch_available_document_references_by_type(
         self,
@@ -208,3 +230,153 @@ class DocumentService:
 
         found_docs = [DocumentReference.model_validate(item) for item in response]
         return found_docs
+
+    def store_binary_in_s3(
+        self, document_reference: DocumentReference, binary_content: bytes
+    ) -> None:
+        """Store binary content in S3"""
+        try:
+            binary_file = io.BytesIO(base64.b64decode(binary_content, validate=True))
+            self.s3_service.upload_file_obj(
+                file_obj=binary_file,
+                s3_bucket_name=document_reference.s3_bucket_name,
+                file_key=document_reference.s3_file_key,
+            )
+            logger.info(
+                f"Successfully stored binary content in S3: {document_reference.s3_file_key}"
+            )
+        except (binascii.Error, ValueError) as e:
+            logger.error(f"Failed to decode base64: {str(e)}")
+            raise DocumentServiceException(f"Failed to decode base64: {str(e)}")
+        except MemoryError as e:
+            logger.error(f"File too large to process: {str(e)}")
+            raise DocumentServiceException(f"File too large to process: {str(e)}")
+        except ClientError as e:
+            logger.error(f"Failed to store binary in S3: {str(e)}")
+            raise DocumentServiceException(f"Failed to store binary in S3: {str(e)}")
+        except (OSError, IOError) as e:
+            logger.error(f"I/O error when processing binary content: {str(e)}")
+            raise DocumentServiceException(f"I/O error when processing binary content: {str(e)}")
+
+    def create_s3_presigned_url(self, document_reference: DocumentReference) -> str:
+        """Create a pre-signed URL for uploading a file"""
+        try:
+            response = self.s3_service.create_put_presigned_url(
+                document_reference.s3_bucket_name, document_reference.s3_file_key
+            )
+            logger.info(
+                f"Successfully created pre-signed URL for {document_reference.s3_file_key}"
+            )
+            return response
+        except ClientError as e:
+            logger.error(f"Failed to create pre-signed URL: {str(e)}")
+            raise DocumentServiceException(f"Failed to create pre-signed URL: {str(e)}")
+    
+    def create_document_reference(
+        self,
+        nhs_number: str,
+        doc_type: SnomedCode,
+        fhir_doc: FhirDocumentReference,
+        current_gp_ods: str,
+        version: str
+    ) -> DocumentReference:
+        """Create a document reference model"""
+        document_id = create_reference_id()
+
+        custodian = fhir_doc.custodian.identifier.value if fhir_doc.custodian else None
+        if not custodian:
+            custodian = (
+                current_gp_ods
+                if current_gp_ods not in PatientOdsInactiveStatus.list()
+                else PCSE_ODS_CODE
+            )
+        document_reference = DocumentReference(
+            id=document_id,
+            nhs_number=nhs_number,
+            current_gp_ods=current_gp_ods,
+            custodian=custodian,
+            s3_bucket_name=self.staging_bucket_name,
+            author=fhir_doc.author[0].identifier.value,
+            content_type=fhir_doc.content[0].attachment.contentType,
+            file_name=fhir_doc.content[0].attachment.title,
+            document_snomed_code_type=doc_type.code,
+            doc_status="preliminary",
+            status="current",
+            sub_folder="user_upload",
+            version=version,
+        )
+
+        return document_reference
+    
+    def get_document_reference(self, document_id: str, table) -> DocumentReference:
+        documents = self.fetch_documents_from_table(
+            table=table,
+            search_condition=document_id,
+            search_key="ID",
+            query_filter=CurrentStatusFile,
+        )
+        if len(documents) > 0:
+            logger.info("Document found for given id")
+            return documents[0]
+        else:
+            raise DocumentServiceException(f"Did not find any documents for document ID {document_id}")
+
+    def extract_nhs_number_from_fhir(self, fhir_doc: FhirDocumentReference) -> str:
+        """Extract NHS number from FHIR document"""
+        # Extract NHS number from subject.identifier where the system identifier is NHS number
+        if (
+            fhir_doc.subject
+            and fhir_doc.subject.identifier
+            and fhir_doc.subject.identifier.system
+            == "https://fhir.nhs.uk/Id/nhs-number"
+        ):
+            return fhir_doc.subject.identifier.value
+
+        raise DocumentServiceException("NHS number not found in FHIR document reference")
+
+    def determine_document_type(self, fhir_doc: FhirDocumentReference) -> SnomedCode:
+        """Determine the document type based on SNOMED code in the FHIR document"""
+        if fhir_doc.type and fhir_doc.type.coding:
+            for coding in fhir_doc.type.coding:
+                if coding.system == SNOMED_URL:
+                    if coding.code == SnomedCodes.LLOYD_GEORGE.value.code:
+                        return SnomedCodes.LLOYD_GEORGE.value
+                else:
+                    logger.error(f"SNOMED code {coding.code} - {coding.display} is not supported")
+                    raise DocumentServiceException(f"SNOMED code {coding.code} - {coding.display} is not supported")
+        logger.error("SNOMED code not found in FHIR document")
+        raise DocumentServiceException("SNOMED code not found in FHIR document")
+
+    def get_dynamo_table_for_doc_type(self, doc_type: SnomedCode) -> str:
+        """Get the appropriate DynamoDB table name based on a document type"""
+        if doc_type == SnomedCodes.LLOYD_GEORGE.value:
+            return self.lg_dynamo_table
+        else:
+            return self.arf_dynamo_table
+
+    def save_document_reference_to_dynamo(
+        self, table_name: str, document_reference: DocumentReference
+    ) -> None:
+        """Save document reference to DynamoDB"""
+        try:
+            self.dynamo_service.create_item(
+                table_name,
+                document_reference.model_dump(exclude_none=True, by_alias=True),
+            )
+            logger.info(f"Successfully created document reference in {table_name}")
+        except ClientError as e:
+            logger.error(f"Failed to create document reference: {str(e)}")
+            raise DocumentServiceException(f"Failed to create document reference: {str(e)}")
+        
+    def check_nhs_number_with_pds(self, nhs_number: str) -> PatientDetails:
+        try:
+            validate_nhs_number(nhs_number)
+            pds_service = get_pds_service()
+            return pds_service.fetch_patient_details(nhs_number)
+        except (
+            PatientNotFoundException,
+            InvalidResourceIdException,
+            PdsErrorException,
+        ) as e:
+            logger.error(f"Error occurred when fetching patient details: {str(e)}")
+            raise DocumentServiceException(f"Error occurred when fetching patient details: {str(e)}")

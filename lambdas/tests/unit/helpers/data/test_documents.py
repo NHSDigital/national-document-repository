@@ -11,6 +11,8 @@ from tests.unit.conftest import (
     TEST_UUID,
 )
 from tests.unit.helpers.data.dynamo.dynamo_responses import MOCK_SEARCH_RESPONSE
+from enums.snomed_codes import SnomedCodes
+import json
 
 
 def create_test_doc_store_refs():
@@ -120,3 +122,54 @@ def create_test_doc_refs_as_dict(
         doc_ref.model_dump(by_alias=True, exclude_none=True)
         for doc_ref in test_doc_refs
     ]
+
+def create_valid_fhir_doc_json(nhs_number: str = "9000000009"):
+    return json.dumps(
+        {
+            "resourceType": "DocumentReference",
+            "docStatus": "final",
+            "status": "current",
+            "subject": {
+                "identifier": {
+                    "system": "https://fhir.nhs.uk/Id/nhs-number",
+                    "value": nhs_number,
+                }
+            },
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": SnomedCodes.LLOYD_GEORGE.value.code,
+                        "display": SnomedCodes.LLOYD_GEORGE.value.display_name,
+                    }
+                ]
+            },
+            "custodian": {
+                "identifier": {
+                    "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                    "value": "A12345",
+                }
+            },
+            "author": [
+                {
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                        "value": "A12345",
+                    }
+                }
+            ],
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "application/pdf",
+                        "language": "en-GB",
+                        "title": "test-file.pdf",
+                        "creation": "2023-01-01T12:00:00Z",
+                    }
+                }
+            ],
+            "meta": {
+                "versionId": "1"
+            }
+        }
+    )

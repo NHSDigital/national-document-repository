@@ -108,6 +108,68 @@ class LambdaError(Enum):
     }
 
     """
+        Errrors for UpdateDocumentRefException
+    """
+    UpdateDocNoBody = {"err_code": "UDR_4001", "message": "Missing event body"}
+    UpdateDocPayload = {"err_code": "UDR_4002", "message": "Invalid json in body"}
+    UpdateDocProps = {
+        "err_code": "UDR_4003",
+        "message": "Request body missing some properties",
+    }
+    UpdateDocFiles = {"err_code": "UDR_4004", "message": "Invalid files or id"}
+    UpdateDocNoParse = {
+        "err_code": "UDR_4005",
+        "message": "Failed to parse document upload request data",
+        "fhir_coding": UKCoreSpineError.VALIDATION_ERROR,
+    }
+    UpdateDocNoType = {
+        "err_code": "UDR_4006",
+        "message": "Failed to parse document upload request data due to missing document type",
+        "fhir_coding": UKCoreSpineError.MISSING_VALUE,
+    }
+    UpdateDocInvalidType = {
+        "err_code": "UDR_4007",
+        "message": "Failed to parse document upload request data due to invalid document type",
+        "fhir_coding": UKCoreSpineError.INVALID_VALUE,
+    }
+    UpdateDocRecordAlreadyInPlace = {
+        "err_code": "UDR_4008",
+        "message": "The patient already has a full set of record.",
+    }
+    UpdateDocRefOdsCodeNotAllowed = {
+        "err_code": "UDR_4009",
+        "message": "ODS code does not match any of the allowed.",
+    }
+    UpdateDocPresign = {
+        "err_code": "UDR_5001",
+        "message": "An error occurred when creating pre-signed url for document reference",
+    }
+    UpdateDocUploadInternalError = {
+        "err_code": "UDR_5002",
+        "message": "An error occurred when creating pre-signed url for document reference",
+    }
+    UpdatePatientSearchInvalid = {
+        "err_code": "UDR_5003",
+        "message": "Failed to validate patient",
+        "fhir_coding": UKCoreSpineError.VALIDATION_ERROR,
+    }
+    UpdateDocVersionMismatch = {
+        "err_code": "UDR_5004",
+        "message": "Document reference version did not match current document version",
+        "fhir_coding": FhirIssueCoding.CONFLICT,
+    }
+    UpdateDocNHSNumberMismatch = {
+        "err_code": "UDR_5005",
+        "message": "NHS number did not match",
+        "fhir_coding": FhirIssueCoding.INVARIANT
+    }
+    UpdateDocNotLatestVersion = {
+        "err_code": "UDR_5006",
+        "message": "Document is no the latest version",
+        "fhir_coding": FhirIssueCoding.INVARIANT
+    }
+
+    """
        Errors for InvalidDocTypeException
     """
     DocTypeDB = {
