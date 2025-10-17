@@ -82,16 +82,16 @@ class VersionMigration:
         """
         update_items = {}
 
-        if (custodian_update_items := self.get_update_custodian_items(entry)):
+        if custodian_update_items := self.get_update_custodian_items(entry):
             update_items.update(custodian_update_items)
 
-        if (status_update_items := self.get_update_status_items(entry)):
+        if status_update_items := self.get_update_status_items(entry):
             update_items.update(status_update_items)
 
-        if (snomed_code_update_items := self.get_update_document_snomed_code_type_items(entry)):
+        if snomed_code_update_items := self.get_update_document_snomed_code_type_items(entry):
             update_items.update(snomed_code_update_items)
 
-        if (doc_status_update_items := self.get_update_doc_status_items(entry)):
+        if doc_status_update_items := self.get_update_doc_status_items(entry):
             update_items.update(doc_status_update_items)
 
         return update_items if update_items else None
