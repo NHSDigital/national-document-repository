@@ -8,6 +8,7 @@ import { routes } from '../../../../types/generic/routes';
 import { Button } from 'nhsuk-react-components';
 import useTitle from '../../../../helpers/hooks/useTitle';
 import LinkButton from '../../../generic/linkButton/LinkButton';
+import { useEnhancedNavigate } from '../../../../helpers/utils/urlManipulations';
 
 type Props = {
     documents: UploadDocument[];
@@ -16,7 +17,7 @@ type Props = {
 };
 
 const DocumentUploadRemoveFilesStage = ({ documents, setDocuments, documentType }: Props) => {
-    const navigate = useNavigate();
+    const navigate = useEnhancedNavigate();
 
     const pageTitle = 'Are you sure you want to remove all selected files?';
     useTitle({ pageTitle });
@@ -31,7 +32,7 @@ const DocumentUploadRemoveFilesStage = ({ documents, setDocuments, documentType 
                 data-testid="remove-files-button"
                 onClick={() => {
                     setDocuments(documents.filter((doc) => doc.docType !== documentType));
-                    navigate(routes.DOCUMENT_UPLOAD);
+                    navigate.withParams(routes.DOCUMENT_UPLOAD);
                 }}
             >
                 Yes, remove all files

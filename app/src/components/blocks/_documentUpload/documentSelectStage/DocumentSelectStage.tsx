@@ -229,6 +229,10 @@ const DocumentSelectStage = ({
             return 'Choose Lloyd George files to upload';
         } else if (documentType === DOCUMENT_TYPE.LLOYD_GEORGE && journey === 'update') {
             return 'Add Lloyd George files to this record';
+        } else if (documentType === DOCUMENT_TYPE.ALL && journey === 'new') {
+            return 'Choose files to upload';
+        } else if (documentType === DOCUMENT_TYPE.ALL && journey === 'update') {
+            return 'Add files to this record';
         }
 
         return 'Choose Lloyd George files to upload';

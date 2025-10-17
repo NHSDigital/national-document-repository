@@ -172,14 +172,14 @@ describe('<LloydGeorgeViewRecordStage />', () => {
             },
         );
 
-        it('renders cannot upload content when upload is enabled and patient already has a record', () => {
+        it('renders Add Files button when upload is enabled and patient already has a record', () => {
             mockUseConfig.mockReturnValueOnce(
                 buildConfig({}, { uploadLloydGeorgeWorkflowEnabled: true }),
             );
 
             renderComponent({ downloadStage: DOWNLOAD_STAGE.SUCCEEDED });
 
-            expect(screen.getByText('Uploading files')).toBeInTheDocument();
+            expect(screen.getByTestId('add-files-btn')).toBeInTheDocument();
         });
 
         it('does not render cannot upload content when upload is disabled and patient already has a record', () => {

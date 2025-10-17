@@ -69,9 +69,9 @@ describe('DocumentSelectStage', () => {
 
     describe('file handling', () => {
         let lgDocumentOne: File, lgDocumentTwo: File;
-        beforeEach(async () => {
-            lgDocumentOne = await buildLgFile(1);
-            lgDocumentTwo = await buildLgFile(2);
+        beforeEach(() => {
+            lgDocumentOne = buildLgFile(1);
+            lgDocumentTwo = buildLgFile(2);
         });
 
         it('can upload PDF file using drag and drop and button', async () => {
@@ -166,7 +166,7 @@ describe('DocumentSelectStage', () => {
 
             await waitFor(() => {
                 expect(mockedUseNavigate).toHaveBeenCalledWith(
-                    routeChildren.DOCUMENT_UPLOAD_REMOVE_ALL,
+                    { pathname: routeChildren.DOCUMENT_UPLOAD_REMOVE_ALL, search: '' },
                 );
             });
         });
@@ -208,6 +208,216 @@ describe('DocumentSelectStage', () => {
                 });
             },
         );
+    });
+
+    describe('Update Journey', () => {
+        beforeEach(() => {
+            // Mock globalThis.location.search to include the journey param
+            delete (globalThis as any).location;
+            globalThis.location = { search: '?journey=update' } as any;
+        });
+
+        it('should render correct title for update journey with Lloyd George document type', async () => {
+            renderApp(history, DOCUMENT_TYPE.LLOYD_GEORGE);
+
+            await waitFor(async () => {
+                expect(
+                    screen.getByText('Add Lloyd George files to this record'),
+                ).toBeInTheDocument();
+            });
+        });
+
+        it('should render correct title for update journey with ALL document type', async () => {
+            renderApp(history, DOCUMENT_TYPE.ALL);
+
+            await waitFor(async () => {
+                expect(screen.getByText('Add files to this record')).toBeInTheDocument();
+            });
+        });
+
+        it('should upload files in update journey using drag and drop', async () => {
+            renderApp(history);
+
+            const lgDocumentOne = buildLgFile(1);
+            const dropzone = screen.getByTestId('dropzone');
+
+            fireEvent.drop(dropzone, { dataTransfer: { files: [lgDocumentOne] } });
+
+            const file1 = await screen.findByText(lgDocumentOne.name);
+            expect(file1).toBeInTheDocument();
+
+            const fileSelectedCount = screen.getAllByTestId('file-selected-count');
+            expect(fileSelectedCount).toHaveLength(2);
+            expect(fileSelectedCount[0]).toHaveTextContent('1 file chosen');
+            expect(fileSelectedCount[1]).toHaveTextContent('1 file chosen');
+        });
+
+        it('should upload multiple files in update journey using file input', async () => {
+            renderApp(history);
+
+            const lgDocumentOne = buildLgFile(1);
+            const lgDocumentTwo = buildLgFile(2);
+            const uploadInput = screen.getByTestId('button-input');
+
+            await userEvent.upload(uploadInput, [lgDocumentOne, lgDocumentTwo]);
+
+            const file1 = await screen.findByText(lgDocumentOne.name);
+            const file2 = await screen.findByText(lgDocumentTwo.name);
+
+            expect(file1).toBeInTheDocument();
+            expect(file2).toBeInTheDocument();
+
+            const fileSelectedCount = screen.getAllByTestId('file-selected-count');
+            expect(fileSelectedCount).toHaveLength(2);
+            expect(fileSelectedCount[0]).toHaveTextContent('2 files chosen');
+            expect(fileSelectedCount[1]).toHaveTextContent('2 files chosen');
+        });
+
+        it('should remove individual files in update journey', async () => {
+            renderApp(history);
+
+            const lgDocumentOne = buildLgFile(1);
+            const lgDocumentTwo = buildLgFile(2);
+
+            await userEvent.upload(screen.getByTestId('button-input'), [
+                lgDocumentOne,
+                lgDocumentTwo,
+            ]);
+
+            let removeFile: HTMLElement;
+            await waitFor(async () => {
+                removeFile = await screen.findByRole('button', {
+                    name: `Remove ${lgDocumentTwo.name} from selection`,
+                });
+            });
+
+            await userEvent.click(removeFile!);
+
+            await waitFor(async () => {
+                expect(screen.getByText(lgDocumentOne.name)).toBeInTheDocument();
+                expect(screen.queryByText(lgDocumentTwo.name)).not.toBeInTheDocument();
+            });
+
+            const fileSelectedCount = screen.getAllByTestId('file-selected-count');
+            expect(fileSelectedCount).toHaveLength(2);
+            expect(fileSelectedCount[0]).toHaveTextContent('1 file chosen');
+        });
+
+        it('should navigate to remove all screen when clicking remove all files in update journey', async () => {
+            renderApp(history);
+            const lgDocumentOne = buildLgFile(1);
+
+            await userEvent.upload(screen.getByTestId('button-input'), [lgDocumentOne]);
+
+            await userEvent.click(await screen.findByTestId('remove-all-button'));
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith({
+                    pathname: routeChildren.DOCUMENT_UPLOAD_REMOVE_ALL,
+                    search: 'journey=update',
+                });
+            });
+        });
+
+        it('should navigate to select order screen when continue is clicked in update journey', async () => {
+            // Mock successful PDF parsing
+            vi.mocked(getDocument).mockReturnValue({
+                promise: Promise.resolve({
+                    numPages: 1,
+                    getPage: vi.fn().mockResolvedValue({}),
+                    destroy: vi.fn().mockResolvedValue(undefined),
+                }),
+            } as any);
+
+            renderApp(history);
+            const lgDocumentOne = buildLgFile(1);
+
+            await userEvent.upload(screen.getByTestId('button-input'), [lgDocumentOne]);
+
+            await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith({
+                    pathname: routeChildren.DOCUMENT_UPLOAD_SELECT_ORDER,
+                    search: 'journey=update',
+                });
+            });
+        });
+
+        it('should display patient summary correctly in update journey', async () => {
+            renderApp(history);
+
+            const insetText = screen
+                .getByText('Make sure that all files uploaded are for this patient only:')
+                .closest('.nhsuk-inset-text');
+            expect(insetText).toBeInTheDocument();
+
+            const expectedFullName = getFormattedPatientFullName(patientDetails);
+            expect(screen.getByText(/Patient name/i)).toBeInTheDocument();
+            expect(screen.getByText(expectedFullName)).toBeInTheDocument();
+
+            expect(screen.getByText(/NHS number/i)).toBeInTheDocument();
+            const expectedNhsNumber = formatNhsNumber(patientDetails.nhsNumber);
+            expect(screen.getByText(expectedNhsNumber)).toBeInTheDocument();
+
+            expect(screen.getByText(/Date of birth/i)).toBeInTheDocument();
+            const expectedDob = getFormattedDate(new Date(patientDetails.birthDate));
+            expect(screen.getByText(expectedDob)).toBeInTheDocument();
+        });
+
+        it('should show error when trying to continue without selecting files in update journey', async () => {
+            renderApp(history);
+
+            await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('error-box')).toBeInTheDocument();
+                expect(screen.getByText('There is a problem')).toBeInTheDocument();
+            });
+        });
+
+        it('should navigate to file errors page when user selects invalid file in update journey', async () => {
+            renderApp(history);
+
+            vi.mocked(getDocument).mockImplementation(() => {
+                throw new Error(PDF_PARSING_ERROR_TYPE.INVALID_PDF_STRUCTURE);
+            });
+
+            const lgDocumentOne = buildLgFile(1);
+            const dropzone = screen.getByTestId('dropzone');
+
+            fireEvent.drop(dropzone, {
+                dataTransfer: { files: [lgDocumentOne] },
+            });
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith(
+                    routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS,
+                );
+            });
+        });
+
+        it('should navigate back to verify patient screen when back button is clicked in update journey', async () => {
+            renderApp(history);
+
+            await userEvent.click(await screen.findByTestId('back-button'));
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith(routes.VERIFY_PATIENT);
+            });
+        });
+
+        it('should display "Before you upload" instructions in update journey', async () => {
+            renderApp(history);
+
+            expect(
+                screen.getByRole('heading', { level: 2, name: 'Before you upload' }),
+            ).toBeInTheDocument();
+
+            expect(screen.getByText('You can only upload PDF files')).toBeInTheDocument();
+            expect(screen.getByText('Check your files open correctly')).toBeInTheDocument();
+            expect(screen.getByText('Remove any passwords from files')).toBeInTheDocument();
+        });
     });
 
     const TestApp = (props: Partial<Props>): JSX.Element => {
