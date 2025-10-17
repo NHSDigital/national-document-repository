@@ -1,5 +1,5 @@
 import time
-from typing import Optional
+from typing import Iterator, Optional
 
 import boto3
 from boto3.dynamodb.conditions import Attr, ConditionBase, Key
@@ -283,4 +283,39 @@ class DynamoDBService:
             logger.error(
                 str(e), {"Result": f"Unable to retrieve item from table: {table_name}"}
             )
+            raise e
+
+    def stream_whole_table(
+        self,
+        table_name: str,
+        filter_expression: Optional[str] = None,
+        projection_expression: Optional[str] = None,
+    ) -> Iterator[dict]:
+        """
+        Streams all items from a DynamoDB table using pagination.
+        Yields one item at a time instead of loading everything into memory.
+        """
+        try:
+            table = self.get_table(table_name)
+            scan_kwargs = {}
+
+            if filter_expression:
+                scan_kwargs["FilterExpression"] = filter_expression
+            if projection_expression:
+                scan_kwargs["ProjectionExpression"] = projection_expression
+
+            response = table.scan(**scan_kwargs)
+
+            for item in response.get("Items", []):
+                yield item
+
+            while "LastEvaluatedKey" in response:
+                response = table.scan(
+                    ExclusiveStartKey=response["LastEvaluatedKey"], **scan_kwargs
+                )
+                for item in response.get("Items", []):
+                    yield item
+
+        except ClientError as e:
+            logger.error(str(e), {"Result": f"Unable to stream table: {table_name}"})
             raise e
