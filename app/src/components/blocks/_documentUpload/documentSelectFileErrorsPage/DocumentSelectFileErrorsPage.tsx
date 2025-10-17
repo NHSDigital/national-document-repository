@@ -18,17 +18,6 @@ type Props = {
 const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
     const navigate = useNavigate();
 
-    const fileErrorText = (errorType: UPLOAD_FILE_ERROR_TYPE): string | undefined => {
-        switch (errorType) {
-            case UPLOAD_FILE_ERROR_TYPE.invalidPdf:
-                return fileUploadErrorMessages.invalidPdf.selectFileError;
-            case UPLOAD_FILE_ERROR_TYPE.emptyPdf:
-                return fileUploadErrorMessages.emptyPdf.selectFileError;
-            case UPLOAD_FILE_ERROR_TYPE.passwordProtected:
-                return fileUploadErrorMessages.passwordProtected.selectFileError;
-        }
-    };
-
     useEffect(() => {
         if (documents.length === 0) {
             navigate(routes.HOME);
@@ -47,7 +36,7 @@ const DocumentSelectFileErrorsPage = ({ documents }: Props): JSX.Element => {
             {documents.map((doc) => (
                 <div key={doc.id}>
                     <ErrorMessage className="mb-1">{doc.file.name}</ErrorMessage>
-                    <p>{fileErrorText(doc.error!)}</p>
+                    <p>{fileUploadErrorMessages[doc.error!]?.selectFileError}</p>
                 </div>
             ))}
 
