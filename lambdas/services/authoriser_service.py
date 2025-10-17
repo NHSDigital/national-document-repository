@@ -89,7 +89,7 @@ class AuthoriserService:
             case "/DocumentManifest":
                 deny_resource = not patient_access_is_allowed or is_user_gp_clinical
 
-            case "/CreateDocumentReference":
+            case "/DocumentReference":
                 deny_resource = True
                 if (
                     is_user_gp_admin or is_user_gp_clinical

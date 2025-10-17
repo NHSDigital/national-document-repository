@@ -56,7 +56,7 @@ class S3Service:
             return self.custom_client.generate_presigned_post(
                 s3_bucket_name,
                 s3_object_location,
-                Fields=None,
+                Fields=None, # possibly where the etag is seated
                 Conditions=None,
                 ExpiresIn=self.presigned_url_expiry,
             )

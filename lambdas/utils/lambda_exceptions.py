@@ -20,6 +20,9 @@ class LambdaException(Exception):
 class CreateDocumentRefException(LambdaException):
     pass
 
+class UpdateDocumentRefException(LambdaException):
+    pass
+
 
 class SearchPatientException(LambdaException):
     pass
@@ -94,4 +97,7 @@ class AccessAuditException(LambdaException):
 
 
 class PdfStitchingException(LambdaException):
+    pass
+
+class UpdateFhirDocumentReferenceException(LambdaException):
     pass

@@ -142,7 +142,7 @@ def test_deny_create_document_reference_as_pcse_returns_true(
     expected = True
 
     actual = mock_auth_service.deny_access_policy(
-        "/CreateDocumentReference", RepositoryRole.PCSE.value, "122222222"
+        "/DocumentReference", RepositoryRole.PCSE.value, "122222222"
     )
 
     assert actual == expected
@@ -157,13 +157,13 @@ def test_deny_create_document_reference_as_any_role_on_deceased_patient_returns_
     mock_auth_service.deceased_nhs_numbers.append("122222222")
 
     actual_pcse = mock_auth_service.deny_access_policy(
-        "/CreateDocumentReference", RepositoryRole.PCSE.value, "122222222"
+        "/DocumentReference", RepositoryRole.PCSE.value, "122222222"
     )
     actual_clinical = mock_auth_service.deny_access_policy(
-        "/CreateDocumentReference", RepositoryRole.GP_CLINICAL.value, "122222222"
+        "/DocumentReference", RepositoryRole.GP_CLINICAL.value, "122222222"
     )
     actual_admin = mock_auth_service.deny_access_policy(
-        "/CreateDocumentReference", RepositoryRole.GP_ADMIN.value, "122222222"
+        "/DocumentReference", RepositoryRole.GP_ADMIN.value, "122222222"
     )
 
     assert actual_pcse == expected

@@ -108,6 +108,7 @@ class FeatureFlagService:
                 in [
                     FeatureFlags.UPLOAD_LLOYD_GEORGE_WORKFLOW_ENABLED,
                     FeatureFlags.UPLOAD_LAMBDA_ENABLED,
+                    FeatureFlags.ADD_DOCUMENT_ENABLED,
                 ]
                 and not self.check_if_ods_code_is_in_pilot()
             ):

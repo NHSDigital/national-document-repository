@@ -139,6 +139,7 @@ class DocumentReferenceInfo(BaseModel):
         SnomedCodes.GENERAL_MEDICAL_PRACTICE.value
     )
     attachment: Attachment = Field(default_factory=Attachment)
+    author: Optional[str] = None
 
     def _create_identifier(self, system_suffix: str, value: str) -> Dict[str, Any]:
         """Helper method to create FHIR identifiers.
@@ -252,4 +253,23 @@ class DocumentReferenceInfo(BaseModel):
                     "ods-organization-code", document.custodian or self.custodian
                 )
             ),
+            meta=Meta(versionId = document.version)
+        )
+
+    def create_fhir_document_reference_object_basic(self, original_id: str) -> DocumentReference:
+        return DocumentReference(
+            resourceType="DocumentReference",
+            id=f"{self.snomed_code_doc_type.code}~{original_id}",
+            type=CodeableConcept(
+                coding=self._create_snomed_coding(self.snomed_code_doc_type)
+            ),
+            subject=Reference(**self._create_identifier("nhs-number", self.nhs_number)),
+            content=[DocumentReferenceContent(attachment=self.attachment)],
+            author=[
+                Reference(
+                    **self._create_identifier(
+                        "ods-organization-code", self.author or self.custodian
+                    )
+                )
+            ],
         )

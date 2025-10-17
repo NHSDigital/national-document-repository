@@ -80,7 +80,7 @@ def check_for_patient_already_exist_in_repo(nhs_number: str):
             "Lloyd George already exists for patient, upload cancelled."
         )
 
-
+# refactor to use list of attachment
 def validate_lg_files(file_list: list[DocumentReference], pds_patient_details: Patient):
     nhs_number = pds_patient_details.id
     files_name_list = []
