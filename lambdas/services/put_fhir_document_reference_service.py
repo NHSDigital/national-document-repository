@@ -51,7 +51,7 @@ class PutFhirDocumentReferenceService:
                 404, LambdaError.DocumentReferenceNotFound
             )
 
-        if not current_doc.doc_status == "final":
+        if current_doc.doc_status != "final":
             logger.error("Document is not the latest version.")
             raise UpdateFhirDocumentReferenceException(
                 400, LambdaError.UpdateDocNotLatestVersion
