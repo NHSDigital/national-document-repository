@@ -66,52 +66,6 @@ const DocumentUploadCompleteStage = ({ documents }: Props): React.JSX.Element =>
 
             <h2>What happens next</h2>
 
-            {journey === 'update' && (
-                <>
-                    <p>
-                        You can now view the updated Lloyd George record for this patient in this
-                        service by{' '}
-                        <Link
-                            to=""
-                            onClick={(e): void => {
-                                e.preventDefault();
-                                navigate(routes.SEARCH_PATIENT, { replace: true });
-                            }}
-                            data-testid="search-patient-link"
-                        >
-                            searching using their NHS number
-                        </Link>
-                        {'.'}
-                    </p>
-                    <p>
-                        If you think you've made a mistake, contact the Patient Record Management
-                        team at england.prmteam@nhs.net.
-                    </p>
-                    <p>
-                        You can add a note to the patient's electronic health record to say their
-                        Lloyd George record is stored in this service. Use SNOMED code 'Lloyd George
-                        record folder' 16521000000101.
-                    </p>
-                </>
-            )}
-
-            {journey === 'new' && (
-                <p>
-                    You can now view this patient's record within this service by{' '}
-                    <Link
-                        to=""
-                        onClick={(e): void => {
-                            e.preventDefault();
-                            navigate(routes.SEARCH_PATIENT, { replace: true });
-                        }}
-                        data-testid="search-patient-link"
-                    >
-                        searching using their NHS number
-                    </Link>
-                    {'.'}
-                </p>
-            )}
-
             <p>
                 If you think you've made a mistake, contact the Patient Record Management team at{' '}
                 <a href="mailto:england.prmteam@nhs.net">england.prmteam@nhs.net</a>.
