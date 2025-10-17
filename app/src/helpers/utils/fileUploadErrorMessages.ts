@@ -9,6 +9,8 @@ export enum UPLOAD_FILE_ERROR_TYPE {
     invalidPdf = 'invalidPdf',
     emptyPdf = 'emptyPdf',
     duplicatePositionError = 'duplicatePositionError',
+    duplicateFileName = 'duplicateFileName',
+    invalidFileType = 'invalidFileType',
 }
 
 export enum PDF_PARSING_ERROR_TYPE {
@@ -56,5 +58,15 @@ export const fileUploadErrorMessages: ErrorMessageType = {
     duplicatePositionError: {
         inline: 'You have selected the same position number for two or more files',
         errorBox: 'You have selected the same position number for two or more files',
+    },
+    duplicateFileName: {
+        inline: 'This file has the same name as another file you have selected',
+        errorBox: 'This file has the same name as another file you have selected',
+        selectFileError: 'This file has the same name as another file you have selected',
+    },
+    invalidFileType: {
+        inline: 'This file is not in the correct file format',
+        errorBox: 'This file is not in the correct file format',
+        selectFileError: 'This file is not in the correct file format',
     },
 };

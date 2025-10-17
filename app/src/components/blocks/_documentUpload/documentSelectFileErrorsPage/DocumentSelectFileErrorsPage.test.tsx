@@ -9,7 +9,10 @@ import {
     DOCUMENT_UPLOAD_STATE,
     DOCUMENT_TYPE,
 } from '../../../../types/pages/UploadDocumentsPage/types';
-import { UPLOAD_FILE_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
+import {
+    fileUploadErrorMessages,
+    UPLOAD_FILE_ERROR_TYPE,
+} from '../../../../helpers/utils/fileUploadErrorMessages';
 import { routes } from '../../../../types/generic/routes';
 
 const createFailedDocument = (name: string, error: UPLOAD_FILE_ERROR_TYPE): UploadDocument => ({
@@ -77,25 +80,21 @@ describe('DocumentSelectFileErrorsPage', () => {
     });
 
     it.each([
-        {
-            error: UPLOAD_FILE_ERROR_TYPE.invalidPdf,
-            expectedMessage: 'This file is damaged or unreadable',
-        },
-        {
-            error: UPLOAD_FILE_ERROR_TYPE.emptyPdf,
-            expectedMessage: 'This file is empty',
-        },
-        {
-            error: UPLOAD_FILE_ERROR_TYPE.passwordProtected,
-            expectedMessage: 'This file is password protected',
-        },
-    ])('displays correct error message for "$error" file', ({ error, expectedMessage }) => {
+        UPLOAD_FILE_ERROR_TYPE.invalidPdf,
+        UPLOAD_FILE_ERROR_TYPE.emptyPdf,
+        UPLOAD_FILE_ERROR_TYPE.passwordProtected,
+        UPLOAD_FILE_ERROR_TYPE.duplicateFileName,
+        UPLOAD_FILE_ERROR_TYPE.passwordProtected,
+        UPLOAD_FILE_ERROR_TYPE.invalidFileType,
+    ])('displays correct error message for "$error" file', (error) => {
         const fileName = `file-${error}.pdf`;
         const doc = createFailedDocument(fileName, error);
         renderDocs([doc]);
 
         expect(screen.getByText(fileName)).toBeInTheDocument();
-        expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+        expect(
+            screen.getByText(fileUploadErrorMessages[error].selectFileError!),
+        ).toBeInTheDocument();
     });
 
     it('renders multiple error files correctly', () => {
