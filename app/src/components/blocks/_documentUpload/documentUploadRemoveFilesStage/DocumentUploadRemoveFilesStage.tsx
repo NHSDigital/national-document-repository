@@ -3,7 +3,6 @@ import {
     SetUploadDocuments,
     UploadDocument,
 } from '../../../../types/pages/UploadDocumentsPage/types';
-import { useNavigate } from 'react-router-dom';
 import { routes } from '../../../../types/generic/routes';
 import { Button } from 'nhsuk-react-components';
 import useTitle from '../../../../helpers/hooks/useTitle';

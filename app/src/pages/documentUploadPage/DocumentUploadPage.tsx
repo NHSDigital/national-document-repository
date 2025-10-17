@@ -77,7 +77,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
     const navigate = useEnhancedNavigate();
     const [intervalTimer, setIntervalTimer] = useState(0);
     const [mergedPdfBlob, setMergedPdfBlob] = useState<Blob>();
-    const [journey, setJourney] = useState<JourneyType>(getJourney());
+    const [journey] = useState<JourneyType>(getJourney());
     const config = useConfig();
     const interval = useRef<number>(0);
     const filesErrorPageRef = useRef(false);
@@ -112,8 +112,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
         const journeyParam = getJourney();
 
         if (journeyParam === 'update' && journey !== journeyParam) {
-            console.log(`Journey mismatch - ${journeyParam} !== ${journey}`);
-            window.clearInterval(intervalTimer);
+            globalThis.clearInterval(intervalTimer);
             navigate(routes.SERVER_ERROR);
             return;
         }
