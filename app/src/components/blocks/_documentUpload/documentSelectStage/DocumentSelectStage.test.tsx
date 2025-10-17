@@ -212,7 +212,6 @@ describe('DocumentSelectStage', () => {
 
     describe('Update Journey', () => {
         beforeEach(() => {
-            // Mock globalThis.location.search to include the journey param
             delete (globalThis as any).location;
             globalThis.location = { search: '?journey=update' } as any;
         });
@@ -320,7 +319,6 @@ describe('DocumentSelectStage', () => {
         });
 
         it('should navigate to select order screen when continue is clicked in update journey', async () => {
-            // Mock successful PDF parsing
             vi.mocked(getDocument).mockReturnValue({
                 promise: Promise.resolve({
                     numPages: 1,

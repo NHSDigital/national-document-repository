@@ -8,8 +8,11 @@ import {
     groupUploadErrorsByType,
     UPLOAD_FILE_ERROR_TYPE,
 } from '../../../../helpers/utils/fileUploadErrorMessages';
+import getMergedPdfBlob from '../../../../helpers/utils/pdfMerger';
+import { getJourney, useEnhancedNavigate } from '../../../../helpers/utils/urlManipulations';
 import { routeChildren, routes } from '../../../../types/generic/routes';
 import { SelectRef } from '../../../../types/generic/selectRef';
+import { ErrorMessageListItem } from '../../../../types/pages/genericPageErrors';
 import {
     DOCUMENT_TYPE,
     SetUploadDocuments,
@@ -19,9 +22,6 @@ import BackButton from '../../../generic/backButton/BackButton';
 import PatientSummary, { PatientInfo } from '../../../generic/patientSummary/PatientSummary';
 import ErrorBox from '../../../layout/errorBox/ErrorBox';
 import DocumentUploadLloydGeorgePreview from '../documentUploadLloydGeorgePreview/DocumentUploadLloydGeorgePreview';
-import { ErrorMessageListItem } from '../../../../types/pages/genericPageErrors';
-import getMergedPdfBlob from '../../../../helpers/utils/pdfMerger';
-import { getJourney, useEnhancedNavigate } from '../../../../helpers/utils/urlManipulations';
 
 type Props = {
     documents: UploadDocument[];
@@ -71,13 +71,11 @@ const DocumentSelectOrderStage = ({
         const positionOffset = existingDocuments && existingDocuments.length > 0 ? 1 : 0;
         documents.forEach((doc, index) => {
             const key = documentPositionKey(doc.id);
-            // When there's an offset (existing documents), always recalculate position
-            // Otherwise use existing position or calculate new one
             const defaultPosition =
                 positionOffset > 0 ? index + 1 + positionOffset : doc.position || index + 1;
             setValue(key, defaultPosition);
         });
-    }, [documents.length, existingDocuments]); // Only run when length changes, not on position updates
+    }, [documents.length, existingDocuments]);
 
     const DocumentPositionDropdown = (
         documentId: string,
@@ -85,7 +83,6 @@ const DocumentSelectOrderStage = ({
     ): React.JSX.Element => {
         const key = documentPositionKey(documentId);
 
-        // Calculate position offset based on existing documents
         const positionOffset = existingDocuments && existingDocuments.length > 0 ? 1 : 0;
 
         const { ref: dropdownInputRef, ...dropdownProps } = register(key, {
@@ -94,7 +91,6 @@ const DocumentSelectOrderStage = ({
                     return 'Please select a position for every document';
                 }
 
-                // Check if any other form field has the same value
                 const otherFieldsWithSameValue = Object.keys(fieldValues).filter(
                     (k) => k !== key && Number(fieldValues[k]) === Number(value),
                 );
@@ -235,7 +231,6 @@ const DocumentSelectOrderStage = ({
         position,
         ableToReposition,
         ableToRemove,
-        numberOfPages,
         document,
     }: FileRowParams): JSX.Element => {
         return (
@@ -287,7 +282,6 @@ const DocumentSelectOrderStage = ({
             position: document.position || index + 1 + positionOffset,
             ableToReposition: true,
             ableToRemove: true,
-            numberOfPages: document.numPages,
             document,
         });
     };
@@ -367,8 +361,6 @@ const DocumentSelectOrderStage = ({
                             <Table.Cell className="word-break-keep-all" width="45%">
                                 Filename
                             </Table.Cell>
-                            {/* <Table.Cell className="word-break-keep-all">Pages</Table.Cell> */}
-                            {/* <Table.Cell>Has pages without OCR</Table.Cell> */}
                             <Table.Cell className="word-break-keep-all">Position</Table.Cell>
                             <Table.Cell className="word-break-keep-all">View file</Table.Cell>
                             <Table.Cell className="word-break-keep-all">Remove file</Table.Cell>
@@ -386,7 +378,6 @@ const DocumentSelectOrderStage = ({
                                 position: 1,
                                 ableToReposition: false,
                                 ableToRemove: false,
-                                numberOfPages: 0,
                                 document: existingDocuments[0],
                             })}
                         {documents.length !== 0 && documents.map(renderDocumentFileRow)}

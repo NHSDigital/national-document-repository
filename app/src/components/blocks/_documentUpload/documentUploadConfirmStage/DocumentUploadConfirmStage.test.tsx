@@ -123,7 +123,6 @@ describe('DocumentUploadCompleteStage', () => {
 
     describe('Update Journey', () => {
         beforeEach(() => {
-            // Mock globalThis.location.search to include the journey param
             delete (globalThis as any).location;
             globalThis.location = { search: '?journey=update' } as any;
 

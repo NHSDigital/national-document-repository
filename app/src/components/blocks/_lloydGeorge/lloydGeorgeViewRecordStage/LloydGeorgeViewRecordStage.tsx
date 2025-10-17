@@ -1,24 +1,24 @@
-import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
 import { Button, ChevronLeftIcon } from 'nhsuk-react-components';
-import { DOWNLOAD_STAGE } from '../../../../types/generic/downloadStage';
-import LloydGeorgeRecordDetails from '../lloydGeorgeRecordDetails/LloydGeorgeRecordDetails';
-import { LG_RECORD_STAGE } from '../../../../types/blocks/lloydGeorgeStages';
-import LloydGeorgeRecordError from '../lloydGeorgeRecordError/LloydGeorgeRecordError';
-import useRole from '../../../../helpers/hooks/useRole';
-import BackButton from '../../../generic/backButton/BackButton';
-import { getUserRecordActionLinks } from '../../../../types/blocks/lloydGeorgeActions';
-import RecordCard from '../../../generic/recordCard/RecordCard';
-import useTitle from '../../../../helpers/hooks/useTitle';
-import { routes, routeChildren } from '../../../../types/generic/routes';
-import ProgressBar from '../../../generic/progressBar/ProgressBar';
-import usePatient from '../../../../helpers/hooks/usePatient';
-import { useSessionContext } from '../../../../providers/sessionProvider/SessionProvider';
-import RecordMenuCard from '../../../generic/recordMenuCard/RecordMenuCard';
-import { REPOSITORY_ROLE } from '../../../../types/generic/authRole';
-import PatientSummary, { PatientInfo } from '../../../generic/patientSummary/PatientSummary';
-import { Link, useNavigate, createSearchParams, To, NavigateOptions } from 'react-router-dom';
+import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
+import { createSearchParams, NavigateOptions, To, useNavigate } from 'react-router-dom';
 import useConfig from '../../../../helpers/hooks/useConfig';
+import usePatient from '../../../../helpers/hooks/usePatient';
+import useRole from '../../../../helpers/hooks/useRole';
+import useTitle from '../../../../helpers/hooks/useTitle';
 import { generateFileName } from '../../../../helpers/requests/uploadDocuments';
+import { useSessionContext } from '../../../../providers/sessionProvider/SessionProvider';
+import { getUserRecordActionLinks } from '../../../../types/blocks/lloydGeorgeActions';
+import { LG_RECORD_STAGE } from '../../../../types/blocks/lloydGeorgeStages';
+import { REPOSITORY_ROLE } from '../../../../types/generic/authRole';
+import { DOWNLOAD_STAGE } from '../../../../types/generic/downloadStage';
+import { routeChildren, routes } from '../../../../types/generic/routes';
+import BackButton from '../../../generic/backButton/BackButton';
+import PatientSummary, { PatientInfo } from '../../../generic/patientSummary/PatientSummary';
+import ProgressBar from '../../../generic/progressBar/ProgressBar';
+import RecordCard from '../../../generic/recordCard/RecordCard';
+import RecordMenuCard from '../../../generic/recordMenuCard/RecordMenuCard';
+import LloydGeorgeRecordDetails from '../lloydGeorgeRecordDetails/LloydGeorgeRecordDetails';
+import LloydGeorgeRecordError from '../lloydGeorgeRecordError/LloydGeorgeRecordError';
 
 export type Props = {
     downloadStage: DOWNLOAD_STAGE;
@@ -103,7 +103,7 @@ function LloydGeorgeViewRecordStage({
             search: createSearchParams({ journey: 'update' }).toString(),
         };
         const options: NavigateOptions = {
-            state: { existingDocuments: [{ fileName, blob }] },
+            state: { journey: 'update', existingDocuments: [{ fileName, blob }] },
         };
         navigate(to, options);
     };

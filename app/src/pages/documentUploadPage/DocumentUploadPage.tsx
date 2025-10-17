@@ -1,45 +1,51 @@
+import { AxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
+import DocumentSelectFileErrorsPage from '../../components/blocks/_documentUpload/documentSelectFileErrorsPage/DocumentSelectFileErrorsPage';
+import DocumentSelectOrderStage from '../../components/blocks/_documentUpload/documentSelectOrderStage/DocumentSelectOrderStage';
+import DocumentSelectStage from '../../components/blocks/_documentUpload/documentSelectStage/DocumentSelectStage';
+import DocumentUploadCompleteStage from '../../components/blocks/_documentUpload/documentUploadCompleteStage/DocumentUploadCompleteStage';
+import DocumentUploadConfirmStage from '../../components/blocks/_documentUpload/documentUploadConfirmStage/DocumentUploadConfirmStage';
+import DocumentUploadInfectedStage from '../../components/blocks/_documentUpload/documentUploadInfectedStage/DocumentUploadInfectedStage';
+import DocumentUploadingStage from '../../components/blocks/_documentUpload/documentUploadingStage/DocumentUploadingStage';
+import DocumentUploadRemoveFilesStage from '../../components/blocks/_documentUpload/documentUploadRemoveFilesStage/DocumentUploadRemoveFilesStage';
+import useBaseAPIHeaders from '../../helpers/hooks/useBaseAPIHeaders';
+import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
+import useConfig from '../../helpers/hooks/useConfig';
+import usePatient from '../../helpers/hooks/usePatient';
+import uploadDocuments, {
+    generateFileName,
+    getDocumentStatus,
+    uploadDocumentToS3,
+} from '../../helpers/requests/uploadDocuments';
+import { errorCodeToParams, errorToParams } from '../../helpers/utils/errorToParams';
+import { isLocal, isMock } from '../../helpers/utils/isLocal';
+import {
+    markDocumentsAsUploading,
+    setSingleDocument,
+} from '../../helpers/utils/uploadDocumentHelpers';
+import {
+    getJourney,
+    getLastURLPath,
+    JourneyType,
+    useEnhancedNavigate,
+} from '../../helpers/utils/urlManipulations';
+import { routeChildren, routes } from '../../types/generic/routes';
+import {
+    DocumentStatusResult,
+    S3UploadFields,
+    UploadSession,
+} from '../../types/generic/uploadResult';
 import {
     DOCUMENT_STATUS,
     DOCUMENT_TYPE,
     DOCUMENT_UPLOAD_STATE,
     UploadDocument,
 } from '../../types/pages/UploadDocumentsPage/types';
-import {
-    DocumentStatusResult,
-    S3UploadFields,
-    UploadSession,
-} from '../../types/generic/uploadResult';
-import uploadDocuments, {
-    generateFileName,
-    getDocumentStatus,
-    uploadDocumentToS3,
-} from '../../helpers/requests/uploadDocuments';
-import usePatient from '../../helpers/hooks/usePatient';
-import useBaseAPIUrl from '../../helpers/hooks/useBaseAPIUrl';
-import useBaseAPIHeaders from '../../helpers/hooks/useBaseAPIHeaders';
-import { AxiosError } from 'axios';
-import { isLocal, isMock } from '../../helpers/utils/isLocal';
-import { routeChildren, routes } from '../../types/generic/routes';
-import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import { errorCodeToParams, errorToParams } from '../../helpers/utils/errorToParams';
-import { getLastURLPath, useEnhancedNavigate } from '../../helpers/utils/urlManipulations';
-import {
-    markDocumentsAsUploading,
-    setSingleDocument,
-} from '../../helpers/utils/uploadDocumentHelpers';
-import DocumentSelectStage from '../../components/blocks/_documentUpload/documentSelectStage/DocumentSelectStage';
-import DocumentSelectOrderStage from '../../components/blocks/_documentUpload/documentSelectOrderStage/DocumentSelectOrderStage';
-import DocumentUploadConfirmStage from '../../components/blocks/_documentUpload/documentUploadConfirmStage/DocumentUploadConfirmStage';
-import DocumentUploadingStage from '../../components/blocks/_documentUpload/documentUploadingStage/DocumentUploadingStage';
-import { v4 as uuidv4 } from 'uuid';
-import DocumentUploadCompleteStage from '../../components/blocks/_documentUpload/documentUploadCompleteStage/DocumentUploadCompleteStage';
-import DocumentUploadRemoveFilesStage from '../../components/blocks/_documentUpload/documentUploadRemoveFilesStage/DocumentUploadRemoveFilesStage';
-import useConfig from '../../helpers/hooks/useConfig';
-import DocumentUploadInfectedStage from '../../components/blocks/_documentUpload/documentUploadInfectedStage/DocumentUploadInfectedStage';
-import DocumentSelectFileErrorsPage from '../../components/blocks/_documentUpload/documentSelectFileErrorsPage/DocumentSelectFileErrorsPage';
 
 type LocationState = {
+    journey?: JourneyType;
     existingDocuments?: [
         {
             docType: DOCUMENT_TYPE | null;
@@ -71,6 +77,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
     const navigate = useEnhancedNavigate();
     const [intervalTimer, setIntervalTimer] = useState(0);
     const [mergedPdfBlob, setMergedPdfBlob] = useState<Blob>();
+    const [journey, setJourney] = useState<JourneyType>(getJourney());
     const config = useConfig();
     const interval = useRef<number>(0);
     const filesErrorPageRef = useRef(false);
@@ -79,11 +86,10 @@ const DocumentUploadPage = (): React.JSX.Element => {
     const MAX_POLLING_TIME = 120000;
 
     useEffect(() => {
-        const searchParams = new URLSearchParams(location.search);
-        const journey = searchParams.get('journey');
-
-        if (journey === 'upload' && !location.state?.existingDocuments?.[0]?.blob) {
-            // TODO: request new record
+        const journeyParam = getJourney();
+        if (journeyParam === 'update' && !location.state?.existingDocuments?.[0]?.blob) {
+            // No existing documents found for update journey
+            navigate(routes.SERVER_ERROR);
             return;
         }
 
@@ -103,6 +109,15 @@ const DocumentUploadPage = (): React.JSX.Element => {
     }, []);
 
     useEffect(() => {
+        const journeyParam = getJourney();
+
+        if (journeyParam === 'update' && journey !== journeyParam) {
+            console.log(`Journey mismatch - ${journeyParam} !== ${journey}`);
+            window.clearInterval(intervalTimer);
+            navigate(routes.SERVER_ERROR);
+            return;
+        }
+
         if (interval.current * UPDATE_DOCUMENT_STATE_FREQUENCY_MILLISECONDS > MAX_POLLING_TIME) {
             window.clearInterval(intervalTimer);
             navigate(routes.SERVER_ERROR);
