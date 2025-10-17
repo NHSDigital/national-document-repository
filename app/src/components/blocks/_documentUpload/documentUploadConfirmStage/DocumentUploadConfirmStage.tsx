@@ -2,11 +2,11 @@ import { Button, Table } from 'nhsuk-react-components';
 import useTitle from '../../../../helpers/hooks/useTitle';
 import { DOCUMENT_TYPE, UploadDocument } from '../../../../types/pages/UploadDocumentsPage/types';
 import BackButton from '../../../generic/backButton/BackButton';
-import { useNavigate } from 'react-router-dom';
 import { routeChildren, routes } from '../../../../types/generic/routes';
 import { useState } from 'react';
 import Pagination from '../../../generic/pagination/Pagination';
 import PatientSummary, { PatientInfo } from '../../../generic/patientSummary/PatientSummary';
+import { getJourney, useEnhancedNavigate } from '../../../../helpers/utils/urlManipulations';
 
 type Props = {
     documents: UploadDocument[];
@@ -14,8 +14,9 @@ type Props = {
 
 const DocumentUploadConfirmStage = ({ documents }: Props) => {
     const [currentPage, setCurrentPage] = useState<number>(0);
-    const navigate = useNavigate();
+    const navigate = useEnhancedNavigate();
     const pageSize = 10;
+    const journey = getJourney();
 
     const pageTitle = 'Check your files before uploading';
     useTitle({ pageTitle });
@@ -44,8 +45,9 @@ const DocumentUploadConfirmStage = ({ documents }: Props) => {
             </div>
 
             <p>
-                Files will be combined into a single PDF document to create a Lloyd George record
-                for this patient.
+                {journey === 'update'
+                    ? 'Files will be added to the existing Lloyd George record to create a single PDF document.'
+                    : 'Files will be combined into a single PDF document to create a Lloyd George record for this patient.'}
             </p>
 
             <h4>Files to be uploaded</h4>
@@ -64,7 +66,7 @@ const DocumentUploadConfirmStage = ({ documents }: Props) => {
                                 data-testid="change-files-button"
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    navigate(routes.DOCUMENT_UPLOAD);
+                                    navigate.withParams(routes.DOCUMENT_UPLOAD);
                                 }}
                             >
                                 Change files
@@ -104,7 +106,7 @@ const DocumentUploadConfirmStage = ({ documents }: Props) => {
 
             <Button
                 data-testid="confirm-button"
-                onClick={() => navigate(routeChildren.DOCUMENT_UPLOAD_UPLOADING)}
+                onClick={() => navigate.withParams(routeChildren.DOCUMENT_UPLOAD_UPLOADING)}
             >
                 Confirm file order and upload files
             </Button>

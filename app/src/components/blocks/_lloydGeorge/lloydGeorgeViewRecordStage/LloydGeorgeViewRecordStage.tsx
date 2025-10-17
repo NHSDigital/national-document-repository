@@ -16,8 +16,9 @@ import { useSessionContext } from '../../../../providers/sessionProvider/Session
 import RecordMenuCard from '../../../generic/recordMenuCard/RecordMenuCard';
 import { REPOSITORY_ROLE } from '../../../../types/generic/authRole';
 import PatientSummary, { PatientInfo } from '../../../generic/patientSummary/PatientSummary';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, createSearchParams, To, NavigateOptions } from 'react-router-dom';
 import useConfig from '../../../../helpers/hooks/useConfig';
+import { generateFileName } from '../../../../helpers/requests/uploadDocuments';
 
 export type Props = {
     downloadStage: DOWNLOAD_STAGE;
@@ -40,6 +41,7 @@ function LloydGeorgeViewRecordStage({
     resetDocState,
 }: Props) {
     const patientDetails = usePatient();
+    const navigate = useNavigate();
     const [session, setUserSession] = useSessionContext();
     const config = useConfig();
 
@@ -90,6 +92,22 @@ function LloydGeorgeViewRecordStage({
 
     const menuClass = showMenu ? '--menu' : '--upload';
 
+    const handleAddFilesClick = async (): Promise<void> => {
+        const fileName = generateFileName(patientDetails);
+
+        const response = await fetch(pdfObjectUrl);
+        const blob = await response.blob();
+
+        const to: To = {
+            pathname: routes.DOCUMENT_UPLOAD,
+            search: createSearchParams({ journey: 'update' }).toString(),
+        };
+        const options: NavigateOptions = {
+            state: { existingDocuments: [{ fileName, blob }] },
+        };
+        navigate(to, options);
+    };
+
     return (
         <div className="lloydgeorge_record-stage">
             {session.isFullscreen && (
@@ -99,7 +117,7 @@ function LloydGeorgeViewRecordStage({
                             reverse
                             data-testid="back-link"
                             className="exit-fullscreen-button"
-                            onClick={() => {
+                            onClick={(): void => {
                                 setFullScreen(false);
                             }}
                         >
@@ -110,7 +128,7 @@ function LloydGeorgeViewRecordStage({
                         <a
                             className="sign-out-link"
                             href={routes.LOGOUT}
-                            onClick={() => {
+                            onClick={(): void => {
                                 setFullScreen(false);
                             }}
                         >
@@ -153,16 +171,11 @@ function LloydGeorgeViewRecordStage({
 
                     {hasRecordInStorage && config.featureFlags.uploadLloydGeorgeWorkflowEnabled && (
                         <>
-                            <h2>Uploading files</h2>
-                            <p>
-                                You cannot currently add more files to this patient's record. This
-                                feature is coming soon. If you have more files for this patient,
-                                store them following the{' '}
-                                <Link to="https://transform.england.nhs.uk/information-governance/guidance/records-management-code/records-management-code-of-practice/">
-                                    Records Management Code of Practice
-                                </Link>
-                                {'.'}
-                            </p>
+                            <h2 className="title">Add Files</h2>
+                            <p>You can add more files to this patient's record.</p>
+                            <Button onClick={handleAddFilesClick} data-testid="add-files-btn">
+                                Add Files
+                            </Button>
                         </>
                     )}
                 </div>

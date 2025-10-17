@@ -21,9 +21,9 @@ import useBaseAPIHeaders from '../../helpers/hooks/useBaseAPIHeaders';
 import { AxiosError } from 'axios';
 import { isLocal, isMock } from '../../helpers/utils/isLocal';
 import { routeChildren, routes } from '../../types/generic/routes';
-import { Outlet, Route, Routes, useNavigate } from 'react-router-dom';
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { errorCodeToParams, errorToParams } from '../../helpers/utils/errorToParams';
-import { getLastURLPath } from '../../helpers/utils/urlManipulations';
+import { getLastURLPath, useEnhancedNavigate } from '../../helpers/utils/urlManipulations';
 import {
     markDocumentsAsUploading,
     setSingleDocument,
@@ -39,16 +39,36 @@ import useConfig from '../../helpers/hooks/useConfig';
 import DocumentUploadInfectedStage from '../../components/blocks/_documentUpload/documentUploadInfectedStage/DocumentUploadInfectedStage';
 import DocumentSelectFileErrorsPage from '../../components/blocks/_documentUpload/documentSelectFileErrorsPage/DocumentSelectFileErrorsPage';
 
+type LocationState = {
+    existingDocuments?: [
+        {
+            docType: DOCUMENT_TYPE | null;
+            blob: Blob | null;
+            fileName: string | null;
+        },
+    ];
+};
+
+type LocationParams<T> = {
+    pathname: string;
+    state: T | undefined;
+    search: string;
+    hash: string;
+    key: string;
+};
+
 const DocumentUploadPage = (): React.JSX.Element => {
     const patientDetails = usePatient();
     const nhsNumber: string = patientDetails?.nhsNumber ?? '';
     const baseUrl = useBaseAPIUrl();
+    const location: LocationParams<LocationState> = useLocation();
     const baseHeaders = useBaseAPIHeaders();
     const [documents, setDocuments] = useState<Array<UploadDocument>>([]);
+    const [existingDocuments, setExistingDocuments] = useState<Array<UploadDocument>>([]);
     const [uploadSession, setUploadSession] = useState<UploadSession | null>(null);
     const completeRef = useRef(false);
     const virusReference = useRef(false);
-    const navigate = useNavigate();
+    const navigate = useEnhancedNavigate();
     const [intervalTimer, setIntervalTimer] = useState(0);
     const [mergedPdfBlob, setMergedPdfBlob] = useState<Blob>();
     const config = useConfig();
@@ -57,6 +77,30 @@ const DocumentUploadPage = (): React.JSX.Element => {
 
     const UPDATE_DOCUMENT_STATE_FREQUENCY_MILLISECONDS = 5000;
     const MAX_POLLING_TIME = 120000;
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const journey = searchParams.get('journey');
+
+        if (journey === 'upload' && !location.state?.existingDocuments?.[0]?.blob) {
+            // TODO: request new record
+            return;
+        }
+
+        const newDocuments: Array<UploadDocument> =
+            location.state?.existingDocuments?.map(
+                (doc) =>
+                    ({
+                        id: uuidv4(),
+                        file: new File([doc.blob!], doc.fileName!, { type: 'application/pdf' }),
+                        state: DOCUMENT_UPLOAD_STATE.SELECTED,
+                        docType: DOCUMENT_TYPE.LLOYD_GEORGE,
+                        progress: 0,
+                    }) as UploadDocument,
+            ) ?? [];
+
+        setExistingDocuments(newDocuments);
+    }, []);
 
     useEffect(() => {
         if (interval.current * UPDATE_DOCUMENT_STATE_FREQUENCY_MILLISECONDS > MAX_POLLING_TIME) {
@@ -81,7 +125,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
         } else if (allFinished && !completeRef.current) {
             completeRef.current = true;
             window.clearInterval(intervalTimer);
-            navigate(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
+            navigate.withParams(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
         }
     }, [
         baseHeaders,
@@ -206,7 +250,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
                     })),
                 );
                 window.clearInterval(intervalTimer);
-                navigate(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
+                navigate.withParams(routeChildren.DOCUMENT_UPLOAD_COMPLETED);
             } else {
                 navigate(routes.SERVER_ERROR + errorToParams(error));
             }
@@ -320,6 +364,7 @@ const DocumentUploadPage = (): React.JSX.Element => {
                             documents={documents}
                             setDocuments={setDocuments}
                             setMergedPdfBlob={setMergedPdfBlob}
+                            existingDocuments={existingDocuments}
                         />
                     }
                 />

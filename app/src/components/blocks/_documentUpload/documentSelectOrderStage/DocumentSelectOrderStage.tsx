@@ -1,7 +1,7 @@
 import { Button, Select, Table } from 'nhsuk-react-components';
 import { Dispatch, JSX, SetStateAction, useEffect, useRef } from 'react';
 import { FieldErrors, FieldValues, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import useTitle from '../../../../helpers/hooks/useTitle';
 import {
     fileUploadErrorMessages,
@@ -21,24 +21,29 @@ import ErrorBox from '../../../layout/errorBox/ErrorBox';
 import DocumentUploadLloydGeorgePreview from '../documentUploadLloydGeorgePreview/DocumentUploadLloydGeorgePreview';
 import { ErrorMessageListItem } from '../../../../types/pages/genericPageErrors';
 import getMergedPdfBlob from '../../../../helpers/utils/pdfMerger';
+import { getJourney, useEnhancedNavigate } from '../../../../helpers/utils/urlManipulations';
 
 type Props = {
     documents: UploadDocument[];
     setDocuments: SetUploadDocuments;
     setMergedPdfBlob: Dispatch<SetStateAction<Blob | undefined>>;
+    existingDocuments: UploadDocument[] | undefined;
 };
+
 type FormData = {
     [key: string]: number | null;
 };
+
 type UploadFilesError = ErrorMessageListItem<UPLOAD_FILE_ERROR_TYPE>;
 
 const DocumentSelectOrderStage = ({
     documents,
     setDocuments,
     setMergedPdfBlob,
-}: Props): JSX.Element => {
-    const navigate = useNavigate();
-
+    existingDocuments,
+}: Readonly<Props>): JSX.Element => {
+    const navigate = useEnhancedNavigate();
+    const journey = getJourney();
     const documentPositionKey = (documentId: string): string => {
         return `${documentId}`;
     };
@@ -63,17 +68,25 @@ const DocumentSelectOrderStage = ({
     };
 
     useEffect(() => {
-        documents.forEach((doc) => {
+        const positionOffset = existingDocuments && existingDocuments.length > 0 ? 1 : 0;
+        documents.forEach((doc, index) => {
             const key = documentPositionKey(doc.id);
-            setValue(key, doc.position || documents.findIndex((d) => d.id === doc.id) + 1);
+            // When there's an offset (existing documents), always recalculate position
+            // Otherwise use existing position or calculate new one
+            const defaultPosition =
+                positionOffset > 0 ? index + 1 + positionOffset : doc.position || index + 1;
+            setValue(key, defaultPosition);
         });
-    }, [documents.length]); // Only run when documents array length changes
+    }, [documents.length, existingDocuments]); // Only run when length changes, not on position updates
 
     const DocumentPositionDropdown = (
         documentId: string,
         currentPosition: number | undefined,
     ): React.JSX.Element => {
         const key = documentPositionKey(documentId);
+
+        // Calculate position offset based on existing documents
+        const positionOffset = existingDocuments && existingDocuments.length > 0 ? 1 : 0;
 
         const { ref: dropdownInputRef, ...dropdownProps } = register(key, {
             validate: (value, fieldValues) => {
@@ -110,7 +123,7 @@ const DocumentSelectOrderStage = ({
                         {hasErr && (
                             <span className="nhsuk-error-message" id={`${key}-error`}>
                                 <span className="nhsuk-u-visually-hidden">Error:</span>
-                                <>{formState.errors[key]?.message}</>
+                                {formState.errors[key]?.message}
                             </span>
                         )}
                         <Select
@@ -119,14 +132,12 @@ const DocumentSelectOrderStage = ({
                             aria-label="Select document position"
                             className="nhsuk-select"
                             data-testid={key}
-                            defaultValue={currentPosition}
                             id={`${key}-select`}
-                            key={`${key}-select`}
                             selectRef={dropdownInputRef as SelectRef}
                             {...dropdownProps}
                         >
                             {documents.map((_, index) => {
-                                const position = index + 1;
+                                const position = index + 1 + positionOffset;
                                 return (
                                     <option
                                         key={`${documentId}_position_${position}`}
@@ -177,11 +188,11 @@ const DocumentSelectOrderStage = ({
 
     const submitDocuments = (): void => {
         updateDocumentPositions();
-        if (documents.length === 1) {
-            navigate(routeChildren.DOCUMENT_UPLOAD_UPLOADING);
+        if (documents.length !== 1) {
+            navigate.withParams(routeChildren.DOCUMENT_UPLOAD_UPLOADING);
             return;
         }
-        navigate(routeChildren.DOCUMENT_UPLOAD_CONFIRMATION);
+        navigate.withParams(routeChildren.DOCUMENT_UPLOAD_CONFIRMATION);
     };
 
     const errorMessageList = (formStateErrors: FieldErrors<FormData>): UploadFilesError[] =>
@@ -204,6 +215,81 @@ const DocumentSelectOrderStage = ({
         const url = URL.createObjectURL(blob);
 
         window.open(url);
+    };
+
+    type FileRowParams = {
+        id: string;
+        index: number;
+        filename: string;
+        position: number;
+        ableToReposition: boolean;
+        ableToRemove: boolean;
+        numberOfPages?: number;
+        document?: UploadDocument;
+    };
+
+    const renderFileRow = ({
+        id,
+        index,
+        filename,
+        position,
+        ableToReposition,
+        ableToRemove,
+        numberOfPages,
+        document,
+    }: FileRowParams): JSX.Element => {
+        return (
+            <Table.Row key={id}>
+                <Table.Cell scope="row" className="header-cell nhsuk-table__header">
+                    {id === 'existing-documents' ? <b>{filename}</b> : filename}
+                </Table.Cell>
+                <Table.Cell className="position-cell">
+                    {ableToReposition && DocumentPositionDropdown(id, position)}
+                    {!ableToReposition && position}
+                </Table.Cell>
+                <Table.Cell className="view-cell">
+                    {document && (
+                        <Link
+                            to=""
+                            onClick={(): Promise<void> => viewPdfFile(document.file)}
+                            aria-label="Preview - opens in a new tab"
+                            data-testid={`document-preview-${document.id}`}
+                        >
+                            View
+                        </Link>
+                    )}
+                </Table.Cell>
+                <Table.Cell className="remove-cell">
+                    {ableToRemove && document && (
+                        <button
+                            type="button"
+                            aria-label={`Remove ${document.file.name} from selection`}
+                            className="link-button"
+                            onClick={(): void => {
+                                onRemove(index);
+                            }}
+                        >
+                            Remove
+                        </button>
+                    )}
+                    {!ableToRemove && '-'}
+                </Table.Cell>
+            </Table.Row>
+        );
+    };
+
+    const renderDocumentFileRow = (document: UploadDocument, index: number): JSX.Element => {
+        const positionOffset = existingDocuments && existingDocuments.length > 0 ? 1 : 0;
+        return renderFileRow({
+            id: document.id,
+            index: index,
+            filename: document.file.name,
+            position: document.position || index + 1 + positionOffset,
+            ableToReposition: true,
+            ableToRemove: true,
+            numberOfPages: document.numPages,
+            document,
+        });
     };
 
     return (
@@ -232,16 +318,43 @@ const DocumentSelectOrderStage = ({
                 </PatientSummary>
             </div>
 
-            <p>When you upload your files, they will be combined into a single PDF document.</p>
+            {journey === 'update' && (
+                <>
+                    <p>
+                        When you upload your files, they will be added to the end of the patient's
+                        existing Lloyd George record.
+                    </p>
 
-            <p>If you have more than one file, they may not be in the correct order:</p>
-            <ul>
-                <li>
-                    put your files in the order you need them to appear in the final document by
-                    changing the position number
-                </li>
-                <li>the file marked '1' will be at the start of the final document</li>
-            </ul>
+                    <p>
+                        If you have added more than one file, they may not be in the correct order:
+                    </p>
+                    <ul>
+                        <li>you cannot change the order of the existing files</li>
+                        <li>
+                            change the order number to put the files you've added in the order you
+                            want
+                        </li>
+                    </ul>
+                </>
+            )}
+
+            {journey !== 'update' && (
+                <>
+                    <p>
+                        When you upload your files, they will be combined into a single PDF
+                        document.
+                    </p>
+
+                    <p>If you have more than one file, they may not be in the correct order:</p>
+                    <ul>
+                        <li>
+                            put your files in the order you need them to appear in the final
+                            document by changing the position number
+                        </li>
+                        <li>the file marked '1' will be at the start of the final document</li>
+                    </ul>
+                </>
+            )}
 
             <form
                 onSubmit={handleSubmit(submitDocuments, handleErrors)}
@@ -254,7 +367,7 @@ const DocumentSelectOrderStage = ({
                             <Table.Cell className="word-break-keep-all" width="45%">
                                 Filename
                             </Table.Cell>
-                            <Table.Cell className="word-break-keep-all">Pages</Table.Cell>
+                            {/* <Table.Cell className="word-break-keep-all">Pages</Table.Cell> */}
                             {/* <Table.Cell>Has pages without OCR</Table.Cell> */}
                             <Table.Cell className="word-break-keep-all">Position</Table.Cell>
                             <Table.Cell className="word-break-keep-all">View file</Table.Cell>
@@ -263,83 +376,59 @@ const DocumentSelectOrderStage = ({
                     </Table.Head>
 
                     <Table.Body>
+                        {journey === 'update' &&
+                            existingDocuments &&
+                            // Existing Lloyd George Record row
+                            renderFileRow({
+                                id: 'existing-documents',
+                                index: 1,
+                                filename: 'Existing Lloyd George record',
+                                position: 1,
+                                ableToReposition: false,
+                                ableToRemove: false,
+                                numberOfPages: 0,
+                                document: existingDocuments[0],
+                            })}
+                        {documents.length !== 0 && documents.map(renderDocumentFileRow)}
                         {documents.length === 0 && (
                             <Table.Row>
                                 <Table.Cell colSpan={5}>
                                     <p>
-                                        You have removed all files. Go back to&nbsp;
+                                        {journey === 'update'
+                                            ? 'You have removed all additional files. Go back to '
+                                            : 'You have removed all files. Go back to '}
                                         <button
                                             className="govuk-link"
                                             onClick={(e): void => {
                                                 e.preventDefault();
-                                                navigate(routes.DOCUMENT_UPLOAD);
+                                                navigate.withParams(routes.DOCUMENT_UPLOAD);
                                             }}
                                         >
                                             choose files
                                         </button>
-                                        .
+                                        {journey === 'update' ? ' to add more.' : '.'}
                                     </p>
                                 </Table.Cell>
                             </Table.Row>
                         )}
-                        {documents.length !== 0 &&
-                            documents.map((document: UploadDocument, index: number) => {
-                                return (
-                                    <Table.Row key={document.id} id={document.file.name}>
-                                        <th scope="row" className="nhsuk-table__header">
-                                            {document.file.name}
-                                        </th>
-                                        <Table.Cell>{document.numPages}</Table.Cell>
-                                        {/* <Table.Cell>
-                                                {(document.pageInfo?.filter(p => !p).length ?? 0) > 0 ? 'Yes' : 'No'}
-                                            </Table.Cell> */}
-                                        <Table.Cell>
-                                            {DocumentPositionDropdown(
-                                                document.id,
-                                                document.position ?? index + 1,
-                                            )}
-                                        </Table.Cell>
-                                        <Table.Cell>
-                                            <Link
-                                                to=""
-                                                onClick={() => viewPdfFile(document.file)}
-                                                aria-label="Preview - opens in a new tab"
-                                                data-testid={`document-preview-${document.id}`}
-                                            >
-                                                View
-                                            </Link>
-                                        </Table.Cell>
-                                        <Table.Cell>
-                                            <button
-                                                type="button"
-                                                aria-label={`Remove ${document.file.name} from selection`}
-                                                className="link-button"
-                                                onClick={(): void => {
-                                                    onRemove(index);
-                                                }}
-                                            >
-                                                Remove
-                                            </button>
-                                        </Table.Cell>
-                                    </Table.Row>
-                                );
-                            })}
                     </Table.Body>
                 </Table>
+
                 <div>
                     <h2>Preview this Lloyd George record</h2>
                     <p>
                         This shows how the final record will look when combined into a single
-                        document.
+                        document.{' '}
+                        {journey === 'update' &&
+                            'Any files added will appear after the existing Lloyd George record.'}
                     </p>
                     <p>
                         Preview may take longer to load if there are many files or if individual
                         files are large.
                     </p>
+
                     <DocumentUploadLloydGeorgePreview
-                        documents={documents
-                            .filter((doc) => doc.docType === DOCUMENT_TYPE.LLOYD_GEORGE)
-                            .sort((a, b) => a.position! - b.position!)}
+                        documents={getDocumentsForPreview()}
                         setMergedPdfBlob={setMergedPdfBlob}
                     />
                 </div>
@@ -349,7 +438,6 @@ const DocumentSelectOrderStage = ({
                         id="form-submit"
                         data-testid="form-submit-button"
                         className="mt-4"
-                        role="button"
                         name="continue"
                     >
                         Continue
@@ -358,6 +446,18 @@ const DocumentSelectOrderStage = ({
             </form>
         </>
     );
+
+    function getDocumentsForPreview(): UploadDocument[] {
+        if (journey !== 'update' || !existingDocuments || existingDocuments.length === 0) {
+            return documents
+                .filter((doc) => doc.docType === DOCUMENT_TYPE.LLOYD_GEORGE)
+                .sort((a, b) => a.position! - b.position!);
+        }
+
+        return [...existingDocuments, ...documents]
+            .filter((doc) => doc.docType === DOCUMENT_TYPE.LLOYD_GEORGE)
+            .sort((a, b) => a.position! - b.position!);
+    }
 };
 
 export default DocumentSelectOrderStage;

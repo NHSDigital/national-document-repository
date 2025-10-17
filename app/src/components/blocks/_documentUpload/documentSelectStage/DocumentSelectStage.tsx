@@ -1,7 +1,6 @@
 import { Button, Fieldset, Table, TextInput } from 'nhsuk-react-components';
 import { getDocument } from 'pdfjs-dist';
-import { JSX, Ref, RefObject, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { JSX, RefObject, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useTitle from '../../../../helpers/hooks/useTitle';
 import {
@@ -24,6 +23,7 @@ import LinkButton from '../../../generic/linkButton/LinkButton';
 import PatientSummary, { PatientInfo } from '../../../generic/patientSummary/PatientSummary';
 import ErrorBox from '../../../layout/errorBox/ErrorBox';
 import { ErrorMessageListItem } from '../../../../types/pages/genericPageErrors';
+import { getJourney, useEnhancedNavigate } from '../../../../helpers/utils/urlManipulations';
 
 export type Props = {
     setDocuments: SetUploadDocuments;
@@ -45,8 +45,9 @@ const DocumentSelectStage = ({
     const scrollToRef = useRef<HTMLDivElement>(null);
     const fileInputAreaRef = useRef<HTMLFieldSetElement>(null);
     const [lastErrorsLength, setLastErrorsLength] = useState(0);
+    const journey = getJourney();
 
-    const navigate = useNavigate();
+    const navigate = useEnhancedNavigate();
 
     const validateFileType = (file: File): boolean => {
         switch (documentType) {
@@ -197,7 +198,7 @@ const DocumentSelectStage = ({
             return;
         }
 
-        navigate(routeChildren.DOCUMENT_UPLOAD_SELECT_ORDER);
+        navigate.withParams(routeChildren.DOCUMENT_UPLOAD_SELECT_ORDER);
     };
 
     const DocumentRow = (document: UploadDocument, index: number): JSX.Element => {
@@ -224,15 +225,13 @@ const DocumentSelectStage = ({
     };
 
     const pageTitle = (): string => {
-        let title = 'files';
-
-        switch (documentType) {
-            case DOCUMENT_TYPE.LLOYD_GEORGE:
-                title = 'Lloyd George files';
-                break;
+        if (documentType === DOCUMENT_TYPE.LLOYD_GEORGE && journey === 'new') {
+            return 'Choose Lloyd George files to upload';
+        } else if (documentType === DOCUMENT_TYPE.LLOYD_GEORGE && journey === 'update') {
+            return 'Add Lloyd George files to this record';
         }
 
-        return `Choose ${title} to upload`;
+        return 'Choose Lloyd George files to upload';
     };
 
     useTitle({ pageTitle: pageTitle() });
@@ -299,16 +298,13 @@ const DocumentSelectStage = ({
             <div>
                 <h2 className="nhsuk-heading-m">Before you upload</h2>
                 <ul>
-                    <li>you can only upload PDF files</li>
+                    <li>You can only upload PDF files</li>
+                    <li>Check your files open correctly</li>
+                    <li>Remove any passwords from files</li>
                     <li>
-                        upload all the Lloyd George files you have for this patient now - you won't
-                        be able to add more later
+                        If there is a problem with your files during upload, you'll need to resolve
+                        these before continuing
                     </li>
-                    <li>
-                        if there's a problem with your files during upload, you'll need to fix these
-                        before continuing
-                    </li>
-                    <li>remove any passwords from files</li>
                 </ul>
                 <p>
                     Uploading may take longer if there are many files or if individual files are
@@ -411,7 +407,7 @@ const DocumentSelectStage = ({
                         className="remove-all-button mb-5"
                         data-testid="remove-all-button"
                         onClick={(): void => {
-                            navigate(routeChildren.DOCUMENT_UPLOAD_REMOVE_ALL);
+                            navigate.withParams(routeChildren.DOCUMENT_UPLOAD_REMOVE_ALL);
                         }}
                     >
                         Remove all files
