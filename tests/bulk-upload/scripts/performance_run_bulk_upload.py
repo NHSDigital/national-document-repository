@@ -48,13 +48,24 @@ if __name__ == "__main__":
         help="Start the Bulk Upload",
     )
 
+    parser.add_argument(
+        "--use-bulk-upload-metadata-processor",
+        action="store_true",
+        help="Use BulkUploadMetadataProcessor Lambda",
+    )
+
     args = parser.parse_args()
 
     if not args.environment:
         args.environment = input("Please enter the name of the environment: ")
 
     bulk_upload_lambda_name = f"{args.environment}_BulkUploadLambda"
+    bulk_upload_metadata_lambda_name = f"{args.environment}_BulkUploadMetadataLambda"
     search_lambda_name = f"{args.environment}_SearchPatientDetailsLambda"
+
+    if args.use_bulk_upload_metadata_processor:
+        bulk_upload_metadata_lambda_name = f"{args.environment}_BulkUploadMetadataProcessor"
+
     if args.disable_pds_stub or (
         sys.stdin.isatty()
         and input("Would you like to disable the FHIR Stub: ").lower() == "y"
@@ -69,4 +80,4 @@ if __name__ == "__main__":
     if args.start_bulk_upload or input(
         "Would you like to start the Bulk Upload Process:"
     ):
-        invoke_lambda(f"{args.environment}_BulkUploadMetadataLambda")
+        invoke_lambda(bulk_upload_metadata_lambda_name)

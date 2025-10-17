@@ -127,7 +127,7 @@ class DocumentReference(BaseModel):
         key_parts = []
 
         if "sub_folder" in data:
-            key_parts.append(data["sub_folder"])
+            key_parts = data["sub_folder"].split("/")
             if "doc_type" in data:
                 key_parts.append(data["doc_type"])
 

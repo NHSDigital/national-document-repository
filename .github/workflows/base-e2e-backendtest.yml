@@ -33,7 +33,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          repository: "nhsconnect/national-document-repository"
+          repository: "NHSDigital/national-document-repository"
           ref: ${{ inputs.build_branch }}
 
       - name: AWS Role

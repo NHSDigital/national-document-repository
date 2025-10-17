@@ -5,7 +5,6 @@ from enums.document_retention import DocumentRetentionDays
 from enums.lambda_error import LambdaError
 from enums.snomed_codes import SnomedCodes
 from enums.supported_document_types import SupportedDocumentTypes
-from lambdas.tests.unit.helpers.data.test_stitch_trace import get_list_test_stitch_trace
 from services.document_deletion_service import DocumentDeletionService
 from tests.unit.conftest import (
     MOCK_ARF_TABLE_NAME,
@@ -24,6 +23,8 @@ from tests.unit.helpers.data.test_documents import (
 from utils.common_query_filters import NotDeleted
 from utils.exceptions import DocumentServiceException
 from utils.lambda_exceptions import DocumentDeletionServiceException
+
+from lambdas.tests.unit.helpers.data.test_stitch_trace import get_list_test_stitch_trace
 
 TEST_DOC_STORE_REFERENCES = create_test_doc_store_refs()
 TEST_LG_DOC_STORE_REFERENCES = create_test_lloyd_george_doc_store_refs()

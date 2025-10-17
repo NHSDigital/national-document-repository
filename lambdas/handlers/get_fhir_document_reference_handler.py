@@ -27,6 +27,7 @@ logger = LoggingService(__name__)
         "APPCONFIG_CONFIGURATION",
         "APPCONFIG_ENVIRONMENT",
         "LLOYD_GEORGE_DYNAMODB_NAME",
+        "PDM_DYNAMODB_NAME",
         "PRESIGNED_ASSUME_ROLE",
         "CLOUDFRONT_URL",
     ]

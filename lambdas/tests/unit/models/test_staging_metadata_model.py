@@ -1,6 +1,6 @@
 import json
 
-from models.staging_metadata import StagingMetadata
+from models.staging_metadata import StagingSqsMetadata
 from tests.unit.helpers.data.bulk_upload.test_data import (
     EXPECTED_SQS_MSG_FOR_PATIENT_123456789,
     EXPECTED_SQS_MSG_FOR_PATIENT_1234567890,
@@ -22,13 +22,13 @@ def test_serialise_staging_data_to_json():
 
 def test_deserialise_json_to_staging_data():
     assert (
-        StagingMetadata.model_validate(
+        StagingSqsMetadata.model_validate(
             json.loads(EXPECTED_SQS_MSG_FOR_PATIENT_1234567890)
         )
         == patient_1
     )
     assert (
-        StagingMetadata.model_validate(
+        StagingSqsMetadata.model_validate(
             json.loads(EXPECTED_SQS_MSG_FOR_PATIENT_123456789)
         )
         == patient_2

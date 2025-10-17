@@ -4,7 +4,7 @@ from enums.metadata_field_names import DocumentReferenceMetadataFields
 from enums.upload_status import UploadStatus
 from models.document_reference import DocumentReference
 from models.report.bulk_upload_report import BulkUploadReport
-from models.staging_metadata import StagingMetadata
+from models.staging_metadata import StagingSqsMetadata
 from services.base.dynamo_service import DynamoDBService
 from utils.audit_logging_setup import LoggingService
 
@@ -29,7 +29,7 @@ class BulkUploadDynamoRepository:
 
     def write_report_upload_to_dynamo(
         self,
-        staging_metadata: StagingMetadata,
+        staging_metadata: StagingSqsMetadata,
         upload_status: UploadStatus,
         reason: str = None,
         pds_ods_code: str = "",

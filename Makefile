@@ -90,7 +90,6 @@ env:
 	./lambdas/venv/bin/pip3 install -r $(REPORTS_REQUIREMENTS) --no-cache-dir
 	./lambdas/venv/bin/pip3 install -r $(ALERTING_REQUIREMENTS) --no-cache-dir
 
-
 github_env:
 	rm -rf lambdas/venv || true
 	python3 -m venv ./lambdas/venv
@@ -138,7 +137,7 @@ clean-install:
 
 install-pdfjs:
 	mkdir -p ./app/public/pdfjs
-	wget https://github.com/mozilla/pdf.js/releases/download/v4.10.38/pdfjs-4.10.38-dist.zip -O ./app/public/pdfjs/pdfjs.zip
+	wget https://github.com/mozilla/pdf.js/releases/download/v5.4.296/pdfjs-5.4.296-dist.zip -O ./app/public/pdfjs/pdfjs.zip
 	unzip -o -d ./app/public/pdfjs ./app/public/pdfjs/pdfjs.zip
 	rm ./app/public/pdfjs/pdfjs.zip
 

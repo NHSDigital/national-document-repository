@@ -1,6 +1,6 @@
 # Build the App
 FROM node:24-alpine AS builder
-RUN apk add unzip wget
+RUN apk update && apk -u list && apk upgrade && apk add unzip wget && rm -rf /var/cache/apk/*
 WORKDIR /app
 
 COPY package.json ./
@@ -10,13 +10,14 @@ COPY ./ ./
 RUN npm install --legacy-peer-deps
 RUN cp ./node_modules/pdfjs-dist/build/pdf.worker.min.mjs ./public/
 RUN mkdir -p ./public/pdfjs
-RUN wget https://github.com/mozilla/pdf.js/releases/download/v4.10.38/pdfjs-4.10.38-dist.zip -O ./public/pdfjs/pdfjs.zip
+RUN wget https://github.com/mozilla/pdf.js/releases/download/v5.4.296/pdfjs-5.4.296-dist.zip -O ./public/pdfjs/pdfjs.zip
 RUN unzip -o -d ./public/pdfjs ./public/pdfjs/pdfjs.zip
 RUN rm ./public/pdfjs/pdfjs.zip
 RUN npm run build
 
 # Host the App
 FROM nginx:latest
+RUN apt update && apt list --upgradable && apt upgrade -y && rm -rf /var/lib/apt/lists/*
 ARG CONTAINER_PORT
 ARG CLOUDFRONT_DOMAIN_NAME
 WORKDIR /usr/share/nginx/html
