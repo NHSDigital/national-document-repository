@@ -1,7 +1,6 @@
 import { Button, Select, Table } from 'nhsuk-react-components';
 import { Dispatch, JSX, SetStateAction, useEffect, useRef } from 'react';
 import { FieldErrors, FieldValues, useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
 import useTitle from '../../../../helpers/hooks/useTitle';
 import {
     fileUploadErrorMessages,
@@ -247,14 +246,15 @@ const DocumentSelectOrderStage = ({
                 </Table.Cell>
                 <Table.Cell className="view-cell">
                     {document && (
-                        <Link
-                            to=""
+                        <button
+                            type="button"
+                            className="link-button"
                             onClick={(): Promise<void> => viewPdfFile(document.file)}
                             aria-label="Preview - opens in a new tab"
                             data-testid={`document-preview-${document.id}`}
                         >
                             View
-                        </Link>
+                        </button>
                     )}
                 </Table.Cell>
                 <Table.Cell className="remove-cell">
