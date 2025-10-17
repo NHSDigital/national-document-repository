@@ -170,7 +170,7 @@ class DocumentManifestJobService:
             attr_operator=AttributeOperator.EQUAL,
             filter_value=nhs_number,
         ).build()
-        response = self.dynamo_service.query_table_by_index(
+        response = self.dynamo_service.query_table(
             table_name=self.zip_trace_table,
             index_name="JobIdIndex",
             search_key="JobId",
@@ -180,7 +180,7 @@ class DocumentManifestJobService:
         )
 
         try:
-            zip_trace = DocumentManifestZipTrace.model_validate(response["Items"][0])
+            zip_trace = DocumentManifestZipTrace.model_validate(response[0])
             return zip_trace
         except (KeyError, IndexError, ValidationError) as e:
             logger.error(

@@ -36,16 +36,15 @@ class DynamoDBService:
             logger.error(str(e), {"Result": "Unable to connect to DB"})
             raise e
 
-    def query_table_by_index(
+    def query_table(
         self,
         table_name,
-        index_name,
         search_key,
         search_condition: str,
+        index_name: str = None,
         requested_fields: list[str] = None,
         query_filter: Attr | ConditionBase = None,
-        exclusive_start_key: dict = None,
-    ):
+    ) -> list[dict]:
         try:
             table = self.get_table(table_name)
 
@@ -62,61 +61,21 @@ class DynamoDBService:
 
             if query_filter:
                 query_params["FilterExpression"] = query_filter
-            if exclusive_start_key:
-                query_params["ExclusiveStartKey"] = exclusive_start_key
+            items = []
+            while True:
+                results = table.query(**query_params)
 
-            results = table.query(**query_params)
+                if results is None or "Items" not in results:
+                    logger.error(f"Unusable results in DynamoDB: {results!r}")
+                    raise DynamoServiceException("Unrecognised response from DynamoDB")
 
-            if results is None or "Items" not in results:
-                logger.error(f"Unusable results in DynamoDB: {results!r}")
-                raise DynamoServiceException("Unrecognised response from DynamoDB")
+                items += results["Items"]
 
-            return results
-        except ClientError as e:
-            logger.error(str(e), {"Result": f"Unable to query table: {table_name}"})
-            raise e
-
-    def query_with_pagination(
-        self, table_name: str, search_key: str, search_condition: str
-    ):
-
-        try:
-            table = self.get_table(table_name)
-            results = table.query(
-                KeyConditionExpression=Key(search_key).eq(search_condition)
-            )
-            if results is None or "Items" not in results:
-                logger.error(f"Unusable results in DynamoDB: {results!r}")
-                raise DynamoServiceException("Unrecognised response from DynamoDB")
-
-            dynamodb_scan_result = results["Items"]
-
-            while "LastEvaluatedKey" in results:
-                start_key_for_next_page = results["LastEvaluatedKey"]
-                results = table.query(
-                    KeyConditionExpression=Key(search_key).eq(search_condition),
-                    ExclusiveStartKey=start_key_for_next_page,
-                )
-                dynamodb_scan_result.extend(results["Items"])
-            return dynamodb_scan_result
-
-        except ClientError as e:
-            logger.error(str(e), {"Result": f"Unable to query table: {table_name}"})
-            raise e
-
-    def query_all_fields(self, table_name: str, search_key: str, search_condition: str):
-        """
-        Allow querying dynamodb table without explicitly defining the fields to retrieve.
-        """
-        try:
-            table = self.get_table(table_name)
-            results = table.query(
-                KeyConditionExpression=Key(search_key).eq(search_condition)
-            )
-            if results is None or "Items" not in results:
-                logger.error(f"Unusable results in DynamoDB: {results!r}")
-                raise DynamoServiceException("Unrecognised response from DynamoDB")
-            return results
+                if "LastEvaluatedKey" in results:
+                    query_params["ExclusiveStartKey"] = results["LastEvaluatedKey"]
+                else:
+                    break
+            return items
         except ClientError as e:
             logger.error(str(e), {"Result": f"Unable to query table: {table_name}"})
             raise e

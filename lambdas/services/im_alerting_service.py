@@ -235,7 +235,7 @@ class IMAlertingService:
         logger.info(f"Checking if {alarm_name} already exists on alarm table")
 
         try:
-            results = self.dynamo_service.query_all_fields(
+            results = self.dynamo_service.query_table(
                 table_name=self.table_name,
                 search_key="AlarmNameMetric",
                 search_condition=alarm_name,
