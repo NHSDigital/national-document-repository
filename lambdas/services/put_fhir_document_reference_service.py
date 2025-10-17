@@ -24,13 +24,6 @@ logger = LoggingService(__name__)
 
 class PutFhirDocumentReferenceService:
     def __init__(self):
-        presigned_aws_role_arn = os.getenv("PRESIGNED_ASSUME_ROLE")
-        self.s3_service = S3Service(custom_aws_role=presigned_aws_role_arn)
-        self.dynamo_service = DynamoDBService()
-
-        self.lg_dynamo_table = os.getenv("LLOYD_GEORGE_DYNAMODB_NAME")
-        self.arf_dynamo_table = os.getenv("DOCUMENT_STORE_DYNAMODB_NAME")
-        self.staging_bucket_name = os.getenv("STAGING_STORE_BUCKET_NAME")
         self.document_service = DocumentService()
 
     def process_fhir_document_reference(self, fhir_document: str) -> str:
