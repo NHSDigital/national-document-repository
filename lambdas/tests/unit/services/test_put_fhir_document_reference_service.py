@@ -23,16 +23,9 @@ def valid_nhs_number():
 
 @pytest.fixture
 def mock_service(set_env, mocker):
-    mock_s3 = mocker.patch("services.put_fhir_document_reference_service.S3Service")
-    mock_dynamo = mocker.patch(
-        "services.put_fhir_document_reference_service.DynamoDBService"
-    )
     mock_document_service = mocker.patch("services.put_fhir_document_reference_service.DocumentService")
-    mock_document_service.s3_service = mock_s3
 
     service = PutFhirDocumentReferenceService()
-    service.s3_service = mock_s3.return_value
-    service.dynamo_service = mock_dynamo.return_value
     service.document_service = mock_document_service.return_value
 
     yield service
