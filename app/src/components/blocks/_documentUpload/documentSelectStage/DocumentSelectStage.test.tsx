@@ -8,7 +8,7 @@ import { JSX, useRef, useState } from 'react';
 import * as ReactRouter from 'react-router-dom';
 import usePatient from '../../../../helpers/hooks/usePatient';
 import { buildLgFile, buildPatientDetails } from '../../../../helpers/test/testBuilders';
-import { PDF_PARSING_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
+import { PDF_PARSING_ERROR_TYPE, UPLOAD_FILE_ERROR_TYPE } from '../../../../helpers/utils/fileUploadErrorMessages';
 import { getFormattedDate } from '../../../../helpers/utils/formatDate';
 import { formatNhsNumber } from '../../../../helpers/utils/formatNhsNumber';
 import { routeChildren, routes } from '../../../../types/generic/routes';
@@ -208,6 +208,43 @@ describe('DocumentSelectStage', () => {
                 });
             },
         );
+
+        it('should navigate to file errors page when user selects a file that is not a PDF', async () => {
+            renderApp(history);
+            const dropzone = screen.getByTestId('dropzone');
+            const nonPdfFile = {...lgDocumentOne, type: 'text/plain' };
+            fireEvent.drop(dropzone, {
+                dataTransfer: { files: [nonPdfFile] },
+            });
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith(
+                    routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS,
+                );
+            });
+        });
+
+        it('should navigate to file errors page when user selects a file that is a duplicate file name', async () => {
+            renderApp(history);
+            const dropzone = screen.getByTestId('dropzone');
+            fireEvent.drop(dropzone, {
+                dataTransfer: { files: [lgDocumentOne] },
+            });
+
+            await waitFor(() => {
+                expect(screen.getByText(lgDocumentOne.name)).toBeInTheDocument();
+            });
+
+            fireEvent.drop(dropzone, {
+                dataTransfer: { files: [lgDocumentOne] },
+            });
+
+            await waitFor(() => {
+                expect(mockedUseNavigate).toHaveBeenCalledWith(
+                    routeChildren.DOCUMENT_UPLOAD_FILE_ERRORS,
+                );
+            });
+        });
     });
 
     const TestApp = (props: Partial<Props>): JSX.Element => {
