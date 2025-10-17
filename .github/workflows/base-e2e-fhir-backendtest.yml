@@ -1,0 +1,62 @@
+# .github/workflows/terraform-dev
+name: "Z-BASE FHIR API E2E Test: E2e shared actions for running FHIR API tests on the NDR Backend"
+
+on:
+  workflow_call:
+    inputs:
+      build_branch:
+        description: "Branch with e2e tests."
+        required: true
+        type: "string"
+      environment:
+        description: "Which Environment type are we using"
+        required: true
+        type: "string"
+      sandbox:
+        description: "Sandbox to run the smoke tests on."
+        required: true
+        type: "string"
+    secrets:
+      AWS_ASSUME_ROLE:
+        required: true
+
+permissions:
+  pull-requests: write
+  id-token: write
+  contents: read
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          repository: "nhsconnect/national-document-repository"
+          ref: ${{ inputs.build_branch }}
+
+      - name: AWS Role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE }}
+          role-skip-session-tagging: true
+          mask-aws-account-id: true
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Make virtual environment
+        run: |
+          make env
+
+      - name: Start virtual environment
+        run: |
+          source ./lambdas/venv/bin/activate
+          echo PATH=$PATH >> $GITHUB_ENV
+
+      - name: Run E2e Tests
+        run: make test-fhir-api-e2e WORKSPACE=${{ inputs.sandbox }}

@@ -25,7 +25,7 @@ from utils.dynamo_utils import (
     create_update_expression,
     parse_dynamo_record,
 )
-from utils.lambda_exceptions import CreateDocumentRefException, InvalidDocTypeException
+from utils.lambda_exceptions import InvalidDocTypeException
 
 from lambdas.enums.snomed_codes import SnomedCodes
 

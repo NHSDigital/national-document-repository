@@ -1,9 +1,10 @@
 import pytest
 from enums.lambda_error import LambdaError
-from lambdas.enums.snomed_codes import SnomedCodes
-from tests.unit.conftest import MOCK_PDM_BUCKET, MOCK_LG_BUCKET
-from utils.s3_utils import DocTypeS3BucketRouter
+from tests.unit.conftest import MOCK_LG_BUCKET, MOCK_PDM_BUCKET
 from utils.lambda_exceptions import InvalidDocTypeException
+from utils.s3_utils import DocTypeS3BucketRouter
+
+from lambdas.enums.snomed_codes import SnomedCodes
 
 
 @pytest.mark.parametrize(

@@ -5,7 +5,7 @@ from io import BytesIO
 
 import pytest
 from enums.lambda_error import LambdaError
-from enums.snomed_codes import SnomedCodes, SnomedCode
+from enums.snomed_codes import SnomedCode, SnomedCodes
 from services.get_fhir_document_reference_service import GetFhirDocumentReferenceService
 from tests.unit.conftest import MOCK_LG_TABLE_NAME, MOCK_PDM_TABLE_NAME
 from tests.unit.helpers.data.test_documents import create_test_doc_store_refs
